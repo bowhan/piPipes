@@ -158,7 +158,6 @@ draw_agg = function (t1, name) {
 		geom_line(size=1.5) + 
 		theme_minimal() + 
 		scale_color_manual( values= colors[1:length(levels (plots$ChIP))]) + 
-		theme(text=element_text(family="Helvetica")) + 
 		ylab(paste(name, "ChIP Signal"))
 }
 

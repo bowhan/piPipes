@@ -9,7 +9,7 @@
 source (paste (Sys.getenv ("PIPELINE_DIRECTORY"),"/bin/pipipe.R",sep=""))
 
 pkgTest ("ggplot2")
-pkgTest ("extrafont")
+#pkgTest ("extrafont")
 pkgTest ("gplots")
 pkgTest ("multicore")
 pkgTest ("scales")
