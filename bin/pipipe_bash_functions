@@ -1,0 +1,61 @@
+
+function echo2 {
+ISO_8601='%Y-%m-%d %H:%M:%S %Z'
+case $2 in 
+	error)	echo -e $COLOR_RED_BOLD"[`date "+$ISO_8601"`] Error: $1${COLOR_END}" && exit 1 ;;
+	warning)	echo -e $COLOR_MAGENTA"[`date "+$ISO_8601"`] Warning: $1${COLOR_END}" ;;
+	*)	echo -e $COLOR_GREEN"[`date "+$ISO_8601"`] $1${COLOR_END}";;
+esac
+}
+export -f echo2
+
+function checkBin {
+	echo2 "${1} is using: \t" && which "$1" 2>/dev/null
+	[[ $? != 0 ]] && echo2 "Cannot find software/function ${1}! Please make sure that you have installed the pipeline correctly.\n$0 has to be located in the same directory of the other components in order for it to find the other scripts. Exiting...\n" "error"
+}
+export -f checkBin
+
+function check_genome {
+	for GENOME_SUPPORTED in `cat $PIPELINE_DIRECTORY/common/genome_supported.txt`;
+	do
+		[ "$GENOME_SUPPORTED" == "$1" ] && SUPPORTED=1
+	done
+	[[ "$SUPPORTED" != 1 ]] && echo2 "The genome \"${1}\" is not currently supported. Currently supported organisms: `cat $PIPELINE_DIRECTORY/genome_supported.txt`; Please use \"pipipe install\" to install new genome" "error"
+}
+export -f check_genome
+
+# count reads for bed2 format
+function bedwc {
+	awk '{a[$7]=$4}END{COUNTER=0; for (b in a) {COUNTER+=a[b]} printf "%d" , COUNTER}' $1
+}
+export -f bedwc
+
+# produce length distribution for bed2 format
+function bed2lendis {
+	awk '{l=$3-$2; if (l>m) m=l; c[l]+=$4/$5;}END{for (d=1;d<=m;++d) {printf "%d\t%.0f\n", d, (c[d]?c[d]:0)} }' $1
+}
+export -f bed2lendis
+
+# merge bed2
+function mergeMirBed2 {
+	awk -v d1=$3 -v d2=$4 'BEGIN{OFS="\t";} \
+		{ \
+			if (ARGIND==1) { \
+				mir[$1]=1; \
+				ct1[$1"_"$2"_"$3"_"$5]=$4; \
+			} else { \
+				mir[$1]=1;\
+				ct2[$1"_"$2"_"$3"_"$5]=$4;\
+			}\
+		}\
+		END {\
+				for (m in mir) {\
+					for (x=-6;x<7;++x) {\
+						for (y=-6;y<7;++y) {\
+							print m, x, y, ct1[m"_"x"_"y"_"1]?(ct1[m"_"x"_"y"_"1]*d1):0, ct2[m"_"x"_"y"_"1]?(ct2[m"_"x"_"y"_"1]*d2):0, ct1[m"_"x"_"y"_"3]?(ct1[m"_"x"_"y"_"3]*d1):0, ct2[m"_"x"_"y"_"3]?(ct2[m"_"x"_"y"_"3]*d2):0;\
+						}\
+					}\
+				}\
+		}' $1  $2 
+}
+export -f mergeMirBed2

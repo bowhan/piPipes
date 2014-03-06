@@ -1,0 +1,60 @@
+# variables for small RNA pipeline intersecting
+	rtRNA=$COMMON_FOLDER/UCSC.RepeatMask.bed.rtRNA.gz
+	# piRNA clusters annoated in Li, et al, Mol Cell, 2013
+	piRNA_Cluster=$COMMON_FOLDER/mm9.piRNAcluster.bed.gz
+	piRNA_Cluster_EXON=$COMMON_FOLDER/piRNA.cluster.bed6.gz
+	prepachytene_piRNA_Cluster=$COMMON_FOLDER/piRNA.cluster.prepachytene.bed12.gz
+	prepachytene_piRNA_Cluster_EXON=$COMMON_FOLDER/piRNA.cluster.prepachytene.bed6.gz
+	hybrid_piRNA_Cluster=$COMMON_FOLDER/piRNA.cluster.hybrid.bed12.gz
+	hybrid_piRNA_Cluster_EXON=$COMMON_FOLDER/piRNA.cluster.hybrid.bed6.gz
+	pachytene_piRNA_Cluster=$COMMON_FOLDER/piRNA.cluster.pachytene.bed12.gz
+	pachytene_piRNA_Cluster_EXON=$COMMON_FOLDER/piRNA.cluster.pachytene.bed6.gz
+	# NM transcripts annotated in Zamore lab, 2013
+	Zamore_NM=$COMMON_FOLDER/Zamore.NM.bed12.gz
+	Zamore_NM_EXON=$COMMON_FOLDER/Zamore.NM.bed6.gz
+	# NR transcripts annotated in Zamore lab, 2013
+	refSeq_GENE=$COMMON_FOLDER/UCSC.refSeq.Genes.bed6.gz
+	Zamore_NR=$COMMON_FOLDER/Zamore.NR.bed12.gz
+	Zamore_NR_EXON=$COMMON_FOLDER/Zamore.NR.bed6.gz
+	refSeq_EXON=$COMMON_FOLDER/UCSC.refSeq.Exon.bed.gz
+	refSeq_INTRON=$COMMON_FOLDER/UCSC.refSeq.Intron.bed.gz
+	refSeq_5UTR=$COMMON_FOLDER/UCSC.refSeq.5UTR.bed.gz
+	refSeq_3UTR=$COMMON_FOLDER/UCSC.refSeq.3UTR.bed.gz
+	repeatMasker=$COMMON_FOLDER/UCSC.RepeatMask.bed
+	repeatMasker_DNA=$COMMON_FOLDER/UCSC.RepeatMask.bed.DNA.gz
+	repeatMasker_SINE=$COMMON_FOLDER/UCSC.RepeatMask.bed.SINE.gz
+	repeatMasker_LINE=$COMMON_FOLDER/UCSC.RepeatMask.bed.LINE.gz
+	repeatMasker_LTR=$COMMON_FOLDER/UCSC.RepeatMask.bed.LTR.gz
+	repeatMasker_Satellite=$COMMON_FOLDER/UCSC.RepeatMask.bed.Satellite.gz
+	repeatMasker_Simple_repeat=$COMMON_FOLDER/UCSC.RepeatMask.bed.Simple_repeat.gz
+	declare -a TARGETS=( \
+	"piRNA_Cluster_EXON" \
+	"prepachytene_piRNA_Cluster_EXON" \
+	"hybrid_piRNA_Cluster_EXON" \
+	"pachytene_piRNA_Cluster_EXON" \
+	"Zamore_NM_EXON" \
+	"Zamore_NR_EXON" \
+	"refSeq_GENE" \
+	"refSeq_EXON" \
+	"refSeq_INTRON" \
+	"refSeq_5UTR" \
+	"refSeq_3UTR" \
+	"repeatMasker" \
+	"repeatMasker_DNA" \
+	"repeatMasker_SINE" \
+	"repeatMasker_LINE" \
+	"repeatMasker_LTR" \
+	"repeatMasker_Satellite" \
+	"repeatMasker_Simple_repeat" \
+	)
+
+# variables for small RNA direct mapping
+	declare -a DIRECT_MAPPING=( "repBase" "piRNAcluster" )
+# gtf files for rnaseq/deg/cage htseq-count
+	Genes_repBase_Cluster=$COMMON_FOLDER/mm9.genes+repBase+cluster.gtf
+	declare -a HTSEQ_TARGETS=( "Genes_repBase_Cluster" )
+	
+	
+	
+	
+	
