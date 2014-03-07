@@ -1,5 +1,5 @@
 /*
- * This script is part of the pipipe, an integrated pipeline developed in the Zamore lab and the Weng lab
+ * This script is part of the piper, an integrated pipeline developed in the Zamore lab and the Weng lab
  * Bo Han (bowhan@me.com)
  */
 
@@ -129,7 +129,7 @@ int main (int argc, char** argv) {
 	string usage=R"(
 This program convert BED2 format to bedGraph format.
 =========
-BED2 format is defined in the pipipe pipeline developed 
+BED2 format is defined in the piper pipeline developed 
 the Zamore and Weng labs to describe small RNA coordinates
 with number_of_time_sequenced and number_of_times_mapped
 been the 4th and 5th field of the normal BED format.

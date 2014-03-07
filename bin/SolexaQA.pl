@@ -16,7 +16,7 @@
 
 # Released under GNU General Public License version 3
 
-# this code has been slightly modified in pipipe in order to just determine the version of the fastq file without performing other fancy funcion
+# this code has been slightly modified in piper in order to just determine the version of the fastq file without performing other fancy funcion
 
 use strict;
 use warnings;
@@ -262,7 +262,7 @@ FILE_LOOP: foreach my $input_file ( @files ){
 	
 	# count number of lines in file
 	my $line_counter = 0;
-	while( <INPUT> && ($line_counter <= 4*$automatic_detection_lines) ){ # pipipe: most like will be able to determine
+	while( <INPUT> && ($line_counter <= 4*$automatic_detection_lines) ){ # piper: most like will be able to determine
 		$line_counter++;
 	}
     
@@ -296,7 +296,7 @@ FILE_LOOP: foreach my $input_file ( @files ){
 			die "Error: File format cannot be determined\n";
 		}
 	}
-	print STDOUT $format,"\n"; # pipipe: only need the format information
+	print STDOUT $format,"\n"; # piper: only need the format information
     exit;
 	################# Once format detected, hashes are initialized ###########
 	

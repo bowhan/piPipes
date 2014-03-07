@@ -1,7 +1,7 @@
 
 # genome installation pipeline
-# pipipe 
-# https://github.com/bowhan/pipipe.git
+# piper 
+# https://github.com/bowhan/piper.git
 # An integrated pipeline for piRNA and transposon analysis 
 # from small RNA Seq, RNASeq, CAGE/Degradome/RACE, ChIP-Seq and Genomic-Seq
 # Wei Wang (wei.wang2@umassmed.edu)
@@ -28,7 +28,7 @@ Please email $CONTACT_EMAILS for any questions or bugs.
 Thank you for using it. 
 
 ${UNDERLINE}usage${RESET}:
-	pipipe install \ 
+	piper install \ 
 		-g [dm3|mm9|...] \  
 		-l http://www.link.to.iGenome.tar.gz \ 
 		-D 
@@ -39,7 +39,7 @@ OPTIONS:
 ${REQUIRED}[ required ]
 	-g      Name of the genome to install
 ${OPTIONAL}[ optional ]
-	-l      Link to the iGenome, this is required if your genome is not in pipipe
+	-l      Link to the iGenome, this is required if your genome is not in piper
 	-D      Only do downloading but not other computation
 		 This is designed be used when the user wants to separate downloading and other works. For instance, only the
 		 head node on a hpcc has internet access but it is not appropriate to be used to build index.
@@ -85,7 +85,7 @@ checkBin "bowtie2-build"
 checkBin "bwa"
 checkBin "gtfToGenePred"
 checkBin "genePredToBed"
-checkBin "bedtools_pipipe"
+checkBin "bedtools_piper"
 checkBin "mrfast"
 
 ##############################
@@ -112,7 +112,7 @@ esac
 # install R packages if not available #
 #######################################
 echo2 "Testing/Installing missing R packages"
-[ ! -f $PIPELINE_DIRECTORY/common/.R_pkg_installed ] && Rscript $PIPELINE_DIRECTORY/bin/pipipe_install_packages.R 1>&2 && touch $PIPELINE_DIRECTORY/common/.R_pkg_installed
+[ ! -f $PIPELINE_DIRECTORY/common/.R_pkg_installed ] && Rscript $PIPELINE_DIRECTORY/bin/piper_install_packages.R 1>&2 && touch $PIPELINE_DIRECTORY/common/.R_pkg_installed
 
 #################
 # Download only #
@@ -185,7 +185,7 @@ esac
 echo2 "Extracting sequence from iGenome gtf file"
 ln -s $IGENOME_DIR_NAME/UCSC/$GENOME/Annotation/Genes/genes.gtf ${GENOME}.genes.gtf
 [ ! -s ${GENOME}.genes.bed12 ] && gtfToGenePred ${GENOME}.genes.gtf ${GENOME}.genes.gp && genePredToBed ${GENOME}.genes.gp ${GENOME}.genes.bed12
-[ ! -s ${GENOME}.genes.fa ] && bedtools_pipipe getfasta -fi ${GENOME}.fa -bed ${GENOME}.genes.bed12 -fo ${GENOME}.genes.fa -name -split -s
+[ ! -s ${GENOME}.genes.fa ] && bedtools_piper getfasta -fi ${GENOME}.fa -bed ${GENOME}.genes.bed12 -fo ${GENOME}.genes.fa -name -split -s
 
 # STAR index for the genome
 echo2 "Building STAR index for genome"
@@ -210,8 +210,8 @@ echo2 "Building index for microRNA hairpin"
 [ ! -s ${GENOME}.hairpin.fa ] && awk '{if ($1~/^>/) print $1; else {gsub ("U","T", $0); print}}' $IGENOME_DIR_NAME/UCSC/$GENOME/Annotation/SmallRNA/precursor.fa > ${GENOME}.hairpin.fa
 [ ! -s ${GENOME}.mature.fa ] &&  awk '{if ($1~/^>/) print $1; else {gsub ("U","T", $0); print}}' $IGENOME_DIR_NAME/UCSC/$GENOME/Annotation/SmallRNA/mature.fa > ${GENOME}.mature.fa
 [ ! -s BowtieIndex/hairpin.sizes ] && bowtie-build ${GENOME}.hairpin.fa BowtieIndex/hairpin && faSize -tab -detailed ${GENOME}.hairpin.fa > BowtieIndex/hairpin.sizes
-[ ! -s mature2hairpin.uniq.bed ]  && bowtie -S -f -v 0 -m 1 --best --strata --max ${GENOME}.mature.multiMapper.fa BowtieIndex/hairpin ${GENOME}.mature.fa 1> /dev/stdout 2> /dev/null | samtools view -uS - | bedtools_pipipe bamtobed -i - | awk '$6=="+"' > mature2hairpin.uniq.bed
-[ ! -s mature2hairpin.multi.bed ] && bowtie -S -f -v 0 -a   --best --strata BowtieIndex/hairpin ${GENOME}.mature.multiMapper.fa 1> /dev/stdout 2> /dev/null | samtools view -uS - | bedtools_pipipe bamtobed -i - | awk '$6=="+"' > mature2hairpin.multi.bed
+[ ! -s mature2hairpin.uniq.bed ]  && bowtie -S -f -v 0 -m 1 --best --strata --max ${GENOME}.mature.multiMapper.fa BowtieIndex/hairpin ${GENOME}.mature.fa 1> /dev/stdout 2> /dev/null | samtools view -uS - | bedtools_piper bamtobed -i - | awk '$6=="+"' > mature2hairpin.uniq.bed
+[ ! -s mature2hairpin.multi.bed ] && bowtie -S -f -v 0 -a   --best --strata BowtieIndex/hairpin ${GENOME}.mature.multiMapper.fa 1> /dev/stdout 2> /dev/null | samtools view -uS - | bedtools_piper bamtobed -i - | awk '$6=="+"' > mature2hairpin.multi.bed
 [ ! -s mature2hairpin.allMapper.bed ] && cat mature2hairpin.uniq.bed mature2hairpin.multi.bed > mature2hairpin.allMapper.bed
 
 # repBase | transposon indexes # the pipiline should include the repBase.fa
@@ -223,7 +223,7 @@ echo2 "Building Bowtie/BWA index for repBase transposon annotation"
 # piRNA cluster indexes
 echo2 "Building Bowtie/BWA index for piRNA cluster"
 [ ! -s ${GENOME}.piRNAcluster.bed.gz ] && echo2 "Missing ${GENOME}.piRNAcluster.bed.gz, you are using a genome that is not optimized, some functions of the pipeline won't work." "warning"
-[ ! -s ${GENOME}.piRNAcluster.fa ] && bedtools_pipipe getfasta -fi ${GENOME}.fa -bed ${GENOME}.piRNAcluster.bed.gz -fo ${GENOME}.piRNAcluster.fa -name -split -s
+[ ! -s ${GENOME}.piRNAcluster.fa ] && bedtools_piper getfasta -fi ${GENOME}.fa -bed ${GENOME}.piRNAcluster.bed.gz -fo ${GENOME}.piRNAcluster.fa -name -split -s
 [ ! -s BowtieIndex/piRNAcluster.sizes ] && bowtie-build ${GENOME}.piRNAcluster.fa BowtieIndex/piRNAcluster && faSize -tab -detailed ${GENOME}.piRNAcluster.fa > BowtieIndex/piRNAcluster.sizes
 
 # genes + repBase + cluster indexes
@@ -233,9 +233,9 @@ echo2 "Building Bowtie/BWA index for repBase + piRNA cluster + genes"
 [ ! -s Bowtie2Index/gene+cluster+repBase.sizes ] && bowtie2-build ${GENOME}.gene+cluster+repBase.fa Bowtie2Index/gene+cluster+repBase && faSize -tab -detailed ${GENOME}.gene+cluster+repBase.fa > Bowtie2Index/gene+cluster+repBase.sizes
 
 # unzipping the UCSC.RepeatMask.bed.gz shipped with the pipeline
-# if the pipipe already has this in the github, just unzip it
+# if the piper already has this in the github, just unzip it
 [ ! -s UCSC.RepeatMask.bed -a -s UCSC.RepeatMask.bed.gz ] && gunzip UCSC.RepeatMask.bed.gz 
-# if the pipipe does not have it, download it from UCSC
+# if the piper does not have it, download it from UCSC
 [ ! -s UCSC.RepeatMask.bed -a ! -s UCSC.RepeatMask.bed.gz ] && \
 	mkdir -p rmsk && \
 	cd rmsk && \
@@ -258,7 +258,7 @@ mm9)
 	[ ! -s ${GENOME}.genes+repBase+cluster.gtf ] && cat Zamore.NM.gtf Zamore.NR.gtf UCSC.RepeatMask.gtf > ${GENOME}.genes+repBase+cluster.gtf && rm -rf Zamore.NM.gtf Zamore.NR.gtf UCSC.RepeatMask.gtf
 ;;
 *)	
-	echo2 "This is a genome that has not been optimized in pipipe. Please contact the authors." "warning"
+	echo2 "This is a genome that has not been optimized in piper. Please contact the authors." "warning"
 	[ ! -s UCSC.RepeatMask.gtf ] && awk 'BEGIN{FS=OFS="\t"}{ if (!c[$4]) c[$4]=0; ++c[$4]; $4=$4"."c[$4]; print $0}' UCSC.RepeatMask.bed | bedToGenePred stdin /dev/stdout | genePredToGtf file stdin /dev/stdout | awk '$3=="exon"' > UCSC.RepeatMask.gtf
 	[ ! -s ${GENOME}.piRNAcluster.gtf ] && zcat ${GENOME}.piRNAcluster.bed.gz | bedToGenePred stdin /dev/stdout | genePredToGtf file stdin /dev/stdout | awk '$3=="exon"' > ${GENOME}.piRNAcluster.gtf
 	[ ! -s ${GENOME}.genes+repBase+cluster.htseq.gtf ] && cat ${GENOME}.genes.gtf  UCSC.RepeatMask.gtf  ${GENOME}.piRNAcluster.gtf  >  ${GENOME}.genes+repBase+cluster.htseq.gtf && rm -rf UCSC.RepeatMask.gtf  ${GENOME}.piRNAcluster.gtf

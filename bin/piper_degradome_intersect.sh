@@ -1,6 +1,6 @@
 
-# degradome pipeline from pipipe: https://github.com/bowhan/pipipe.git
-# pipipe: https://github.com/bowhan/pipipe.git
+# degradome pipeline from piper: https://github.com/bowhan/piper.git
+# piper: https://github.com/bowhan/piper.git
 # An integrated pipeline for small RNA analysis 
 # from small RNA Seq, RNASeq, CAGE/Degradome, ChIP-Seq and Genomic-Seq
 # Wei Wang (wei.wang2@umassmed.edu)
@@ -17,7 +17,7 @@ unique_species=`cut -f3 $total_lib_stats_file`
 export ext_len=30 # extend 30nt up/downstream
 
 # intersect with the bed without strand information
-bedtools_pipipe intersect -split -wo -f 0.5 -a $bed -b $feature_bed > ${bed}.intersect_with_${feature_name} && \
+bedtools_piper intersect -split -wo -f 0.5 -a $bed -b $feature_bed > ${bed}.intersect_with_${feature_name} && \
 awk -v lib_uniq_reads=$unique_reads \
 	-v lib_all_reads=$all_reads \
 	-v lib_unique_species=$unique_species \
@@ -68,9 +68,9 @@ awk -v lib_uniq_reads=$unique_reads \
 
 # for (i=1;i<=1;++i): species
 # for (i=1;i<=$4;++i): reads
-awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$9])) {printed[$9]=1; if ($2>=ext_len) { for (i=1;i<=1;++i) { if ($6=="+") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}' ${bed}.intersect_with_${feature_name} | bedtools_pipipe getfasta -fi $GENOME_FA -bed stdin -fo stdout -s -name -tab | pipipe_nuc_percentage.py $ext_len > ${bed}.intersect_with_${feature_name}.species.5end_60.percentage
+awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$9])) {printed[$9]=1; if ($2>=ext_len) { for (i=1;i<=1;++i) { if ($6=="+") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}' ${bed}.intersect_with_${feature_name} | bedtools_piper getfasta -fi $GENOME_FA -bed stdin -fo stdout -s -name -tab | piper_nuc_percentage.py $ext_len > ${bed}.intersect_with_${feature_name}.species.5end_60.percentage
 
-Rscript $PIPELINE_DIRECTORY/bin/pipipe_draw_degradome_features.R \
+Rscript $PIPELINE_DIRECTORY/bin/piper_draw_degradome_features.R \
 	${bed}.intersect_with_${feature_name} \
 	${ext_len} \
 	${bed}.intersect_with_${feature_name}.species.5end_60.percentage \

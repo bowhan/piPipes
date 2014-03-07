@@ -1,4 +1,4 @@
-# pipipe: https://github.com/bowhan/pipipe.git
+# piper: https://github.com/bowhan/piper.git
 # An integrated pipeline for small RNA analysis 
 # from small RNA Seq, RNASeq, CAGE/Degradome, ChIP-Seq and Genomic-Seq
 # Wei Wang (wei.wang2@umassmed.edu)

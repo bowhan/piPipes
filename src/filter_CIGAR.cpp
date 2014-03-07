@@ -1,5 +1,5 @@
 /*
- * This script is part of the pipipe, an integrated pipeline developed in the Zamore lab and the Weng lab
+ * This script is part of the piper, an integrated pipeline developed in the Zamore lab and the Weng lab
  * Bo Han (bowhan@me.com)
  */
 
@@ -13,7 +13,7 @@
 using namespace std;
 int main (int argc, char** argv) {
 	std::string usage = R"(
-This program filter the CIGAR field of a sam file; and is part of the pipipe package developped in the Zamore and Zlab in UMASS Med School. 
+This program filter the CIGAR field of a sam file; and is part of the piper package developped in the Zamore and Zlab in UMASS Med School. 
 Contact Bo.Han@umassmed.edu or bowhan@me.com for questions, suggestions and bugs. 
 Thank you!
 )";

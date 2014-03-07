@@ -1,7 +1,7 @@
 
 # Degradome/RACE/CAGE pipeline
-# pipipe 
-# https://github.com/bowhan/pipipe.git
+# piper 
+# https://github.com/bowhan/piper.git
 # An integrated pipeline for piRNA and transposon analysis 
 # from small RNA Seq, RNASeq, CAGE/Degradome/RACE, ChIP-Seq and Genomic-Seq
 # Wei Wang (wei.wang2@umassmed.edu)
@@ -28,7 +28,7 @@ Please email $CONTACT_EMAILS for any questions or bugs.
 Thank you for using it. 
 
 ${UNDERLINE}usage${RESET}:
-	pipipe deg -l left.fq -r right.fq -g dm3 -o output_directory [current directory] -c cpu [8] 
+	piper deg -l left.fq -r right.fq -g dm3 -o output_directory [current directory] -c cpu [8] 
 	
 Currently, only Paired-End input is accepted. And \1 should be in the same direction as the transcripts, 
 opposite to dUTR based RNASeq. 
@@ -110,12 +110,12 @@ checkBin "Rscript"
 checkBin "bowtie2"
 checkBin "STAR"
 checkBin "ParaFly"
-checkBin "bedtools_pipipe"
+checkBin "bedtools_piper"
 checkBin "bedGraphToBigWig"
 checkBin "express"
 checkBin "cufflinks"
 checkBin "htseq-count" # the user need to install this separately
-checkBin "pipipe_filter_CIGAR"
+checkBin "piper_filter_CIGAR"
 
 #############
 # Variables #
@@ -241,7 +241,7 @@ NormScale=`echo ${UniquReads} | awk '{printf "%f",1000000.0/$1}'`
 echo2 "Processing mapping results"
 # we dump the ones with softclipping on the 5' end
 [ ! -f .${JOBUID}.status.${STEP}.genome_bam_processing ] && \
-	pipipe_filter_CIGAR -5 -i ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.Aligned.out.sam | \
+	piper_filter_CIGAR -5 -i ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.Aligned.out.sam | \
 	samtools view -uS -f0x2 - 2>/dev/null | \
 	samtools sort -o -@ $CPU - foo > \
 	${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.bam && \
@@ -261,12 +261,12 @@ echo2 "Making bigWig from sorted bam \1 reads without 5' soft-clipping"
 	awk 'BEGIN{FS=OFS="\t"}{ if ($5==1) print $0 > "/dev/stderr"; $4=1; $5=1.0/$5; print $0 > "/dev/stdout"}' \
 		2> ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.f0x40.noS.unique.bed12 | \
 	sort -k1,3 -k6,12 --parallel=$CPU | \
-	bedtools_pipipe groupby -i - -g 1,2,3,6,7,8,9,10,11,12 -c 4,5 -o sum,sum | \
+	bedtools_piper groupby -i - -g 1,2,3,6,7,8,9,10,11,12 -c 4,5 -o sum,sum | \
 	awk 'BEGIN{FS=OFS="\t"}{print $1,$2,$3,$11,$12,$4,$5,$6,NR,$8,$9,$10}' > \
 		${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.f0x40.noS.all.bed12 && \
 	paraFile=${BW_OUTDIR}/${RANDOM}${RANDOM}.makeBigWig.para && \
-	echo "bedtools_pipipe genomecov -5 -scale $NormScale -bg -strand + -i ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.f0x40.noS.unique.bed12 -g $CHROM > ${BW_OUTDIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.f0x40.noS.unique.Watson.bedGraph && bedGraphToBigWig ${BW_OUTDIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.f0x40.noS.unique.Watson.bedGraph $CHROM ${BW_OUTDIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.f0x40.noS.unique.Watson.bigWig"  >  $paraFile && \
-	echo "bedtools_pipipe genomecov -5 -scale $NormScale -bg -strand - -i ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.f0x40.noS.unique.bed12 -g $CHROM | awk 'BEGIN{OFS=\"\t\"}{\$4 = -\$4; print \$0}' > ${BW_OUTDIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.f0x40.noS.unique.Crick.bedGraph && bedGraphToBigWig ${BW_OUTDIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.f0x40.noS.unique.Crick.bedGraph $CHROM ${BW_OUTDIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.f0x40.noS.unique.Crick.bigWig" >> $paraFile && \
+	echo "bedtools_piper genomecov -5 -scale $NormScale -bg -strand + -i ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.f0x40.noS.unique.bed12 -g $CHROM > ${BW_OUTDIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.f0x40.noS.unique.Watson.bedGraph && bedGraphToBigWig ${BW_OUTDIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.f0x40.noS.unique.Watson.bedGraph $CHROM ${BW_OUTDIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.f0x40.noS.unique.Watson.bigWig"  >  $paraFile && \
+	echo "bedtools_piper genomecov -5 -scale $NormScale -bg -strand - -i ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.f0x40.noS.unique.bed12 -g $CHROM | awk 'BEGIN{OFS=\"\t\"}{\$4 = -\$4; print \$0}' > ${BW_OUTDIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.f0x40.noS.unique.Crick.bedGraph && bedGraphToBigWig ${BW_OUTDIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.f0x40.noS.unique.Crick.bedGraph $CHROM ${BW_OUTDIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.f0x40.noS.unique.Crick.bigWig" >> $paraFile && \
 	ParaFly -c $paraFile -CPU $CPU -failed_cmds ${paraFile}.failedCommands 1>&2 && \
 	rm -rf ${paraFile} ${paraFile}.completed && \
 	touch .${JOBUID}.status.${STEP}.make_bigWig
@@ -296,7 +296,7 @@ STEP=$((STEP+1))
 ##########################################
 echo2 "Quantifying genomic features from genomic mapping using BEDTools"
 [ ! -f .${JOBUID}.status.${STEP}.bedtools ] && \
-	bash $DEBUG pipipe_intersect_degradome_with_genomic_features.sh \
+	bash $DEBUG piper_intersect_degradome_with_genomic_features.sh \
 		${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.f0x40.noS.all.bed12 \
 		$SUMMARY_DIR/${PREFIX}.summary \
 		$CPU \

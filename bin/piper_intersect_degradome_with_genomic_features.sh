@@ -1,6 +1,6 @@
 #!/bin/bash
-# Degradome pipeline from pipipe: https://github.com/bowhan/pipipe.git
-# pipipe: https://github.com/bowhan/pipipe.git
+# Degradome pipeline from piper: https://github.com/bowhan/piper.git
+# piper: https://github.com/bowhan/piper.git
 # An integrated pipeline for piRNA analysis 
 # from small RNA Seq, RNASeq, CAGE/Degradome, ChIP-Seq and Genomic-Seq
 # Wei Wang (wei.wang2@umassmed.edu)
@@ -28,13 +28,13 @@ SEED=${RANDOM}${RANDOM}${RANDOM}${RANDOM} # random name
 . $COMMON_FOLDER/genomic_features # reading the information to intersect with, as well as some other annotation files
 ALL_BED=`basename ${GENOME_ALLMAP_BED12%bed*}x_rpmk_rtRNA.bed12` # names for the file genernated here
 # get rid of tRNA, rRNA, snoRNA...
-bedtools_pipipe intersect -v -wa -split -a $GENOME_ALLMAP_BED12 -b $rtRNA | tee $INTERSECT_OUTDIR/${ALL_BED} | awk '{all_reads+=$5; if ($5==1) {unique_reads+=$4; ++unique_species}}END{printf "%d\t%d\t%d\n", unique_reads, all_reads, unique_species;}' > $INTERSECT_OUTDIR/.stats
+bedtools_piper intersect -v -wa -split -a $GENOME_ALLMAP_BED12 -b $rtRNA | tee $INTERSECT_OUTDIR/${ALL_BED} | awk '{all_reads+=$5; if ($5==1) {unique_reads+=$4; ++unique_species}}END{printf "%d\t%d\t%d\n", unique_reads, all_reads, unique_species;}' > $INTERSECT_OUTDIR/.stats
 print_header $SUMMARY
 # doing intersecting and counting
 para_file=$INTERSECT_OUTDIR/${SEED}.intersect.para
 for t in ${TARGETS[@]}
 do \
-	echo "bash $DEBUG pipipe_degradome_intersect.sh $INTERSECT_OUTDIR/${ALL_BED}  ${t} ${!t} $INTERSECT_OUTDIR/.stats" >> $para_file
+	echo "bash $DEBUG piper_degradome_intersect.sh $INTERSECT_OUTDIR/${ALL_BED}  ${t} ${!t} $INTERSECT_OUTDIR/.stats" >> $para_file
 done
 ParaFly -c $para_file -CPU $CPU -failed_cmds ${para_file}.failedCommands 1>&2 && \
 rm -rf ${para_file}*

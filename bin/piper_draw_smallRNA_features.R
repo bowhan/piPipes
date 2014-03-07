@@ -1,5 +1,5 @@
-# small RNA pipeline from pipipe: https://github.com/bowhan/pipipe.git
-# pipipe: https://github.com/bowhan/pipipe.git
+# small RNA pipeline from piper: https://github.com/bowhan/piper.git
+# piper: https://github.com/bowhan/piper.git
 # An integrated pipeline for small RNA analysis 
 # from small RNA Seq, RNASeq, CAGE/Degradome, ChIP-Seq and Genomic-Seq
 # Wei Wang (wei.wang2@umassmed.edu)
@@ -8,7 +8,7 @@
 # University of Massachusetts Medical School
 
 
-source (paste (Sys.getenv ("PIPELINE_DIRECTORY"),"/bin/pipipe.R",sep=""))
+source (paste (Sys.getenv ("PIPELINE_DIRECTORY"),"/bin/piper.R",sep=""))
 
 pkgTest ("ggplot2")
 pkgTest ("scales")

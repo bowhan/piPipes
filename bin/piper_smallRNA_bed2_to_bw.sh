@@ -1,6 +1,6 @@
 
-# small RNA pipeline from pipipe: https://github.com/bowhan/pipipe.git
-# pipipe: https://github.com/bowhan/pipipe.git
+# small RNA pipeline from piper: https://github.com/bowhan/piper.git
+# piper: https://github.com/bowhan/piper.git
 # An integrated pipeline for small RNA analysis 
 # from small RNA Seq, RNASeq, CAGE/Degradome, ChIP-Seq and Genomic-Seq
 # Wei Wang (wei.wang2@umassmed.edu)
@@ -20,8 +20,8 @@ para_file=$OUTDIR/${RANDOM}${RANDOM}${RANDOM}.make_bigWig.para
 ( sort --parallel=$CPU --temporary-directory=$OUTDIR -k1,1 $INPUT_BED2 | tee $OUTDIR/${INPUT_BED_NAME%bed2}sorted.bed2  | awk '$5==1' > $OUTDIR/${INPUT_BED_NAME%bed2}sorted.uniq.bed2 ) || \
 ( sort                                               -k1,1 $INPUT_BED2 | tee $OUTDIR/${INPUT_BED_NAME%bed2}sorted.bed2  | awk '$5==1' > $OUTDIR/${INPUT_BED_NAME%bed2}sorted.uniq.bed2 )
 # making bedgraph
-pipipe_bed2_to_bedGraph -i $OUTDIR/${INPUT_BED_NAME%bed2}sorted.bed2 -c $CHROM -p $CPU -o $OUTDIR/${INPUT_BED_NAME%bed2}sorted.
-pipipe_bed2_to_bedGraph -i $OUTDIR/${INPUT_BED_NAME%bed2}sorted.uniq.bed2 -c $CHROM -p $CPU  -o $OUTDIR/${INPUT_BED_NAME%bed2}sorted.uniq.
+piper_bed2_to_bedGraph -i $OUTDIR/${INPUT_BED_NAME%bed2}sorted.bed2 -c $CHROM -p $CPU -o $OUTDIR/${INPUT_BED_NAME%bed2}sorted.
+piper_bed2_to_bedGraph -i $OUTDIR/${INPUT_BED_NAME%bed2}sorted.uniq.bed2 -c $CHROM -p $CPU  -o $OUTDIR/${INPUT_BED_NAME%bed2}sorted.uniq.
 # making bigWig
 echo -e "awk -v depth=$NormScale 'BEGIN{FS=OFS=\"\\\\t\"} {\$4*=depth; print}' $OUTDIR/${INPUT_BED_NAME%bed2}sorted.Watson.bedGraph > $OUTDIR/${INPUT_BED_NAME%bed2}sorted.Watson.bedGraph.normalized && bedGraphToBigWig $OUTDIR/${INPUT_BED_NAME%bed2}sorted.Watson.bedGraph.normalized $CHROM $OUTDIR/${INPUT_BED_NAME%bed2}sorted.Watson.bigWig" > $para_file
 echo -e "awk -v depth=$NormScale 'BEGIN{FS=OFS=\"\\\\t\"} {\$4*=depth; print}' $OUTDIR/${INPUT_BED_NAME%bed2}sorted.Crick.bedGraph  > $OUTDIR/${INPUT_BED_NAME%bed2}sorted.Crick.bedGraph.normalized && bedGraphToBigWig $OUTDIR/${INPUT_BED_NAME%bed2}sorted.Crick.bedGraph.normalized $CHROM $OUTDIR/${INPUT_BED_NAME%bed2}sorted.Crick.bigWig" >> $para_file

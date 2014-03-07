@@ -1,7 +1,7 @@
 
 # small RNA pipeline single library mode
-# pipipe 
-# https://github.com/bowhan/pipipe.git
+# piper 
+# https://github.com/bowhan/piper.git
 # An integrated pipeline for piRNA and transposon analysis 
 # from small RNA Seq, RNASeq, CAGE/Degradome/RACE, ChIP-Seq and Genomic-Seq
 # Wei Wang (wei.wang2@umassmed.edu)
@@ -28,7 +28,7 @@ Please email $CONTACT_EMAILS for any questions or bugs.
 Thank you for using it. 
 
 ${UNDERLINE}usage${RESET}:
-	pipipe small \ 
+	piper small \ 
 		-i input.fq[.gz] \ 
 		-g dm3 \ 
 		-o output_directory [current working directory] \ 
@@ -106,10 +106,10 @@ checkBin "gs"
 checkBin "Rscript"
 checkBin "bowtie"
 checkBin "ParaFly"
-checkBin "bedtools_pipipe"
+checkBin "bedtools_piper"
 checkBin "bedGraphToBigWig"
-checkBin "pipipe_fastq_to_insert"
-checkBin "pipipe_insertBed_to_bed2"
+checkBin "piper_fastq_to_insert"
+checkBin "piper_insertBed_to_bed2"
 
 #############
 # Variables #
@@ -142,7 +142,7 @@ echo2 "Beginning running [${PACKAGE_NAME}] small RNA pipeline single library mod
 echo2 "Converting fastq format into insert format" 
 INSERT=$READS_DIR/${PREFIX}.insert # insert file, a format with two fields delimited by a tab. Sequence and number of times it was read, used to save time/space; quality information is lost
 [ ! -f .${JOBUID}.status.${STEP}.fq2insert ] && \
-	pipipe_fastq_to_insert ${INPUT_FASTQ} ${INSERT} && \
+	piper_fastq_to_insert ${INPUT_FASTQ} ${INSERT} && \
 	touch .${JOBUID}.status.${STEP}.fq2insert
 [ ! -f .${JOBUID}.status.${STEP}.fq2insert ] && echo2 "fq2insert failed" "error"
 STEP=$((STEP+1))
@@ -191,8 +191,8 @@ x_rRNA_HAIRPIN_GENOME_LOG=$GENOMIC_MAPPING_DIR/${PREFIX}.x_rRNA.hairpin.${GENOME
 		$x_rRNA_INSERT \
 		2> /dev/null  | \
 	samtools view -bSF 0x4 - 2>/dev/null | \
-	bedtools_pipipe bamtobed -i - | awk '$6=="+"' > ${PREFIX}.x_rRNA.hairpin.v${hairpin_MM}a.bed && \
-	pipipe_insertBed_to_bed2 $x_rRNA_INSERT ${PREFIX}.x_rRNA.hairpin.v${hairpin_MM}a.bed > $x_rRNA_HAIRPIN_BED2 && \
+	bedtools_piper bamtobed -i - | awk '$6=="+"' > ${PREFIX}.x_rRNA.hairpin.v${hairpin_MM}a.bed && \
+	piper_insertBed_to_bed2 $x_rRNA_INSERT ${PREFIX}.x_rRNA.hairpin.v${hairpin_MM}a.bed > $x_rRNA_HAIRPIN_BED2 && \
 	rm -rf ${PREFIX}.x_rRNA.hairpin.v${hairpin_MM}a.bed && \
 	bed2lendis $x_rRNA_HAIRPIN_BED2 > $x_rRNA_HAIRPIN_BED2_LENDIS && \
 	bowtie -r -v $genome_MM -a --best --strata -p $CPU \
@@ -201,8 +201,8 @@ x_rRNA_HAIRPIN_GENOME_LOG=$GENOMIC_MAPPING_DIR/${PREFIX}.x_rRNA.hairpin.${GENOME
 		$x_rRNA_HAIRPIN_INSERT \
 		2> $x_rRNA_HAIRPIN_GENOME_LOG | \
 	samtools view -uS -F0x4 - 2>/dev/null | \
-	bedtools_pipipe bamtobed -i - > ${PREFIX}.x_rRNA.hairpin.${GENOME}v${genome_MM}a.bed && \
-	pipipe_insertBed_to_bed2 $x_rRNA_HAIRPIN_INSERT ${PREFIX}.x_rRNA.hairpin.${GENOME}v${genome_MM}a.bed > $x_rRNA_HAIRPIN_GENOME_BED2 && \
+	bedtools_piper bamtobed -i - > ${PREFIX}.x_rRNA.hairpin.${GENOME}v${genome_MM}a.bed && \
+	piper_insertBed_to_bed2 $x_rRNA_HAIRPIN_INSERT ${PREFIX}.x_rRNA.hairpin.${GENOME}v${genome_MM}a.bed > $x_rRNA_HAIRPIN_GENOME_BED2 && \
 	rm -rf ${PREFIX}.x_rRNA.hairpin.${GENOME}v${genome_MM}a.bed && \
 	hairpinReads=`bedwc $x_rRNA_HAIRPIN_BED2` && echo $hairpinReads > .${JOBUID}.hairpinReads
 	touch .${JOBUID}.status.${STEP}.hairpin_mapping
@@ -212,7 +212,7 @@ hairpinReads=`cat .${JOBUID}.hairpinReads`
 # run miRNA heterogeneity analysis
 echo2 "Calculate microRNA heterogeneity"
 [ ! -f .${JOBUID}.status.${STEP}.miRNA_pipeline ] && \
-	pipipe_calculate_miRNA_heterogeneity $COMMON_FOLDER/mature2hairpin.uniq.bed  ${x_rRNA_HAIRPIN_BED2} 1> ${x_rRNA_HAIRPIN_BED2%.bed*}.sum 2> ${x_rRNA_HAIRPIN_BED2%.bed*}.hetergeneity.log
+	piper_calculate_miRNA_heterogeneity $COMMON_FOLDER/mature2hairpin.uniq.bed  ${x_rRNA_HAIRPIN_BED2} 1> ${x_rRNA_HAIRPIN_BED2%.bed*}.sum 2> ${x_rRNA_HAIRPIN_BED2%.bed*}.hetergeneity.log
 	touch .${JOBUID}.status.${STEP}.miRNA_pipeline
 STEP=$((STEP+1))
 
@@ -249,8 +249,8 @@ for COUNTER in `seq 0 $((${#PreMappingList[@]}-1))`; do \
 			${!TARGET} \
 			$INPUT \
 			2> ${PREFIX1}.log | \
-		samtools view -bSF 0x4 - 2>/dev/null | bedtools_pipipe bamtobed -i - > ${PREFIX1}.${TARGET}.v${MM}a.bed && \
-		pipipe_insertBed_to_bed2 $INPUT ${PREFIX1}.${TARGET}.v${MM}a.bed > ${PREFIX1}.${TARGET}.v${MM}a.bed2 && \
+		samtools view -bSF 0x4 - 2>/dev/null | bedtools_piper bamtobed -i - > ${PREFIX1}.${TARGET}.v${MM}a.bed && \
+		piper_insertBed_to_bed2 $INPUT ${PREFIX1}.${TARGET}.v${MM}a.bed > ${PREFIX1}.${TARGET}.v${MM}a.bed2 && \
 		rm -rf ${PREFIX1}.${TARGET}.v${MM}a.bed && \
 		touch .${JOBUID}.status.${STEP}.${TARGET}_mapping
 	STEP=$((STEP+1))
@@ -280,8 +280,8 @@ echo2 "Mapping to genome, with ${genome_MM} mismatch(es) allowed"
 		${INPUT} \
 		2> $GENOME_ALLMAP_LOG | \
 	samtools view -uS -F0x4 - 2>/dev/null | \
-	bedtools_pipipe bamtobed -i - > ${INSERT%.insert}.${GENOME}v${genome_MM}a.insert.bed && \
-	pipipe_insertBed_to_bed2 $INPUT ${INSERT%.insert}.${GENOME}v${genome_MM}a.insert.bed > ${GENOME_ALLMAP_BED2} && \
+	bedtools_piper bamtobed -i - > ${INSERT%.insert}.${GENOME}v${genome_MM}a.insert.bed && \
+	piper_insertBed_to_bed2 $INPUT ${INSERT%.insert}.${GENOME}v${genome_MM}a.insert.bed > ${GENOME_ALLMAP_BED2} && \
 	rm -rf ${INSERT%.insert}.${GENOME}v${genome_MM}a.insert.bed && \
 	touch .${JOBUID}.status.${STEP}.genome_mapping
 [ ! -f .${JOBUID}.status.${STEP}.genome_mapping ] && echo2 "Genome mapping failed" "error"
@@ -323,12 +323,12 @@ echo2 "Plotting length distribution"
 [ ! -f .${JOBUID}.status.${STEP}.plotting_length_dis ] && \
 	awk '{a[$7]=$4}END{m=0; for (b in a){c[length(b)]+=a[b]; if (length(b)>m) m=length(b)} for (d=1;d<=m;++d) {print d"\t"(c[d]?c[d]:0)}}' ${GENOME_ALLMAP_BED2}  | sort -k1,1n > ${GENOME_ALLMAP_BED2}.lendis && \
 	awk '{a[$7]=$4}END{m=0; for (b in a){c[length(b)]+=a[b]; if (length(b)>m) m=length(b)} for (d=1;d<=m;++d) {print d"\t"(c[d]?c[d]:0)}}' ${GENOME_UNIQUEMAP_BED2}  | sort -k1,1n > ${GENOME_UNIQUEMAP_BED2}.lendis && \
-	Rscript --slave ${PIPELINE_DIRECTORY}/bin/pipipe_draw_lendis.R ${GENOME_ALLMAP_BED2}.lendis $PDF_DIR/`basename ${GENOME_ALLMAP_BED2}`.x_hairpin 2>/dev/null && \
-	Rscript --slave ${PIPELINE_DIRECTORY}/bin/pipipe_draw_lendis.R ${GENOME_UNIQUEMAP_BED2}.lendis $PDF_DIR/`basename ${GENOME_UNIQUEMAP_BED2}`.x_hairpin 2>/dev/null && \
+	Rscript --slave ${PIPELINE_DIRECTORY}/bin/piper_draw_lendis.R ${GENOME_ALLMAP_BED2}.lendis $PDF_DIR/`basename ${GENOME_ALLMAP_BED2}`.x_hairpin 2>/dev/null && \
+	Rscript --slave ${PIPELINE_DIRECTORY}/bin/piper_draw_lendis.R ${GENOME_UNIQUEMAP_BED2}.lendis $PDF_DIR/`basename ${GENOME_UNIQUEMAP_BED2}`.x_hairpin 2>/dev/null && \
 	awk '{ct[$1]+=$2}END{for (l in ct) {print l"\t"ct[l]}}' ${GENOME_ALLMAP_BED2}.lendis $x_rRNA_HAIRPIN_BED2_LENDIS | sort -k1,1n > ${GENOME_ALLMAP_BED2}.+hairpin.lendis && \
 	awk '{ct[$1]+=$2}END{for (l in ct) {print l"\t"ct[l]}}' ${GENOME_UNIQUEMAP_BED2}.lendis $x_rRNA_HAIRPIN_BED2_LENDIS | sort -k1,1n > ${GENOME_UNIQUEMAP_BED2}.+hairpin.lendis && \
-	Rscript --slave ${PIPELINE_DIRECTORY}/bin/pipipe_draw_lendis.R ${GENOME_ALLMAP_BED2}.+hairpin.lendis $PDF_DIR/`basename ${GENOME_ALLMAP_BED2}`.+hairpin 2>/dev/null && \
-	Rscript --slave ${PIPELINE_DIRECTORY}/bin/pipipe_draw_lendis.R ${GENOME_UNIQUEMAP_BED2}.+hairpin.lendis $PDF_DIR/`basename ${GENOME_UNIQUEMAP_BED2}`.+hairpin 2>/dev/null && \
+	Rscript --slave ${PIPELINE_DIRECTORY}/bin/piper_draw_lendis.R ${GENOME_ALLMAP_BED2}.+hairpin.lendis $PDF_DIR/`basename ${GENOME_ALLMAP_BED2}`.+hairpin 2>/dev/null && \
+	Rscript --slave ${PIPELINE_DIRECTORY}/bin/piper_draw_lendis.R ${GENOME_UNIQUEMAP_BED2}.+hairpin.lendis $PDF_DIR/`basename ${GENOME_UNIQUEMAP_BED2}`.+hairpin 2>/dev/null && \
 	touch .${JOBUID}.status.${STEP}.plotting_length_dis
 STEP=$((STEP+1))
 
@@ -350,7 +350,7 @@ echo -e "genome multiple mapping reads (-rRNA; -miRNA_hairpin)\t${multipMapCount
 ####################################
 echo2 "Intersecting with genomic features with bedtools"
 [ ! -f .${JOBUID}.status.${STEP}.intersect_with_genomic_features ] && \
-bash $DEBUG pipipe_intersect_smallRNA_with_genomic_features.sh \
+bash $DEBUG piper_intersect_smallRNA_with_genomic_features.sh \
 	${GENOME_ALLMAP_BED2} \
 	$SUMMARY_DIR/`basename ${GENOME_ALLMAP_BED2%.bed2}` \
 	$CPU \
@@ -367,7 +367,7 @@ echo $NormScale > .depth
 # make BW files
 echo2 "Making bigWig files for genome browser"
 [ ! -f .${JOBUID}.status.${STEP}.make_bigWig ] && \
-	bash $DEBUG pipipe_smallRNA_bed2_to_bw.sh \
+	bash $DEBUG piper_smallRNA_bed2_to_bw.sh \
 		${GENOME_UNIQUEMAP_HAIRPIN_BED2} \
 		${CHROM} \
 		${NormScale} \
@@ -391,10 +391,10 @@ for t in "${DIRECT_MAPPING[@]}"; do \
 		2> ${TRN_OUTDIR}/${t}.log | \
 	samtools view -uS -F0x4 - 2>/dev/null | \
 	samtools sort -o -@ $CPU - foo | \
-	bedtools_pipipe bamtobed -i - > $TRN_OUTDIR/${INSERT%.insert}.${t}.a${transposon_MM}.insert.bed && \
-	pipipe_insertBed_to_bed2 $INPUT $TRN_OUTDIR/${INSERT%.insert}.${t}.a${transposon_MM}.insert.bed > $TRN_OUTDIR/${INSERT%.insert}.${t}.a${transposon_MM}.insert.bed2 && \
-	pipipe_bed2Summary -5 -i $TRN_OUTDIR/${INSERT%.insert}.${t}.a${transposon_MM}.insert.bed2 -c $COMMON_FOLDER/BowtieIndex/${t}.sizes -o $TRN_OUTDIR/${INSERT%.insert}.${t}.a${transposon_MM}.summary && \
-	Rscript --slave ${PIPELINE_DIRECTORY}/bin/pipipe_draw_summary.R $TRN_OUTDIR/${INSERT%.insert}.${t}.a${transposon_MM}.summary $TRN_OUTDIR/${INSERT%.insert}.${t}.a${transposon_MM} $CPU $NormScale 1>&2 && \
+	bedtools_piper bamtobed -i - > $TRN_OUTDIR/${INSERT%.insert}.${t}.a${transposon_MM}.insert.bed && \
+	piper_insertBed_to_bed2 $INPUT $TRN_OUTDIR/${INSERT%.insert}.${t}.a${transposon_MM}.insert.bed > $TRN_OUTDIR/${INSERT%.insert}.${t}.a${transposon_MM}.insert.bed2 && \
+	piper_bed2Summary -5 -i $TRN_OUTDIR/${INSERT%.insert}.${t}.a${transposon_MM}.insert.bed2 -c $COMMON_FOLDER/BowtieIndex/${t}.sizes -o $TRN_OUTDIR/${INSERT%.insert}.${t}.a${transposon_MM}.summary && \
+	Rscript --slave ${PIPELINE_DIRECTORY}/bin/piper_draw_summary.R $TRN_OUTDIR/${INSERT%.insert}.${t}.a${transposon_MM}.summary $TRN_OUTDIR/${INSERT%.insert}.${t}.a${transposon_MM} $CPU $NormScale 1>&2 && \
 	PDFs=$TRN_OUTDIR/${INSERT%.insert}.${t}.a${transposon_MM}*pdf && \
 	gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=$PDF_DIR/${INSERT%.insert}.${t}.pdf ${PDFs} && \
 	rm -rf $PDFs && \

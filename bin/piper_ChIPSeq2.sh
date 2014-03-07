@@ -1,7 +1,7 @@
 
 # ChIP Seq pipeline dual library mode
-# pipipe 
-# https://github.com/bowhan/pipipe.git
+# piper 
+# https://github.com/bowhan/piper.git
 # An integrated pipeline for piRNA and transposon analysis 
 # from small RNA Seq, RNASeq, CAGE/Degradome/RACE, ChIP-Seq and Genomic-Seq
 # Wei Wang (wei.wang2@umassmed.edu)
@@ -28,7 +28,7 @@ Please email $CONTACT_EMAILS for any questions or bugs.
 Thank you for using it. 
 
 ${UNDERLINE}usage${RESET}:
-	pipipe chip2	\ 
+	piper chip2	\ 
 		-a chipseq_pipiline_output_dir1 \ 
 		-b chipseq_pipiline_output_dir2 \ 
 		-g dm3 \ 
@@ -210,7 +210,7 @@ STEP=$((STEP+1))
 ############################################
 echo2 "Aggregating signal on each genomic features"
 [ ! -f .${JOBUID}.status.${STEP}.aggregate_beds ] && \
-	bash $DEBUG pipipe_aggregate_bw_on_beds.sh \
+	bash $DEBUG piper_aggregate_bw_on_beds.sh \
 	$AGG_DIR \
 	$EXT_LEN \
 	`ls $SAMPLE_A_DIR/bigWig/*ppois.bigWig`,`ls $SAMPLE_A_DIR/bigWig/*FE.bigWig`,`ls $SAMPLE_A_DIR/bigWig/*logLR.bigWig`,`ls $SAMPLE_B_DIR/bigWig/*ppois.bigWig`,`ls $SAMPLE_B_DIR/bigWig/*FE.bigWig`,`ls $SAMPLE_B_DIR/bigWig/*logLR.bigWig` \

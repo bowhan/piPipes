@@ -1,10 +1,10 @@
-# small RNA pipeline from pipipe: https://github.com/bowhan/pipipe.git
+# small RNA pipeline from piper: https://github.com/bowhan/piper.git
 # Wei Wang (wei.wang2@umassmed.edu)
 # Bo W Han (bowhan@me.com)
 # the Zamore lab and the Weng lab
 # University of Massachusetts Medical School
 
-source (paste (Sys.getenv ("PIPELINE_DIRECTORY"),"/bin/pipipe.R",sep=""))
+source (paste (Sys.getenv ("PIPELINE_DIRECTORY"),"/bin/piper.R",sep=""))
 
 pkgTest ("ggplot2")
 pkgTest ("scales")

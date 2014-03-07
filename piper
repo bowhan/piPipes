@@ -1,6 +1,6 @@
 #! /bin/bash
-# pipipe 
-# https://github.com/bowhan/pipipe.git
+# piper 
+# https://github.com/bowhan/piper.git
 # An integrated pipeline for piRNA and transposon analysis 
 # from small RNA Seq, RNASeq, CAGE/Degradome/RACE, ChIP-Seq and Genomic-Seq
 # Wei Wang (wei.wang2@umassmed.edu)
@@ -18,11 +18,11 @@ export COLOR_RED="\e[31;40m"; export  COLOR_GREEN="\e[32;40m"; export  COLOR_YEL
 export RESET=`echo -ne '\e[0m'`; export BOLD=`echo -ne '\e[1m'`; export UNDERLINE=`echo -ne '\e[4m'`; export BLINK=`echo -ne '\e[5m'`; 
 export SMALLRNA_COLOR=`echo -ne $COLOR_RED`; export RNASEQ_COLOR=`echo -ne $COLOR_GREEN`; export DEG_COLOR=`echo -ne $COLOR_YELLOW`; export CHIP_COLOR=`echo -ne $COLOR_MAGENTA`; export GENOME_COLOR=`echo -ne $COLOR_CYAN`; 
 export COMMENT=`echo -ne $COLOR_BLUE`; export REQUIRED=`echo -ne $COLOR_RED_LIGHT`;  export OPTIONAL=`echo -ne $COLOR_GREEN_LIGHT`
-export PACKAGE_NAME="pipipe"
+export PACKAGE_NAME="piper"
 export CONTACT_EMAILS=${UNDERLINE}"wei.wang2@umassmed.edu, bo.han@umassmed.edu"$RESET
 export PIPELINE_DIRECTORY=$(dirname `readlink -f $0`)
 export PATH=${PIPELINE_DIRECTORY}/bin:$PATH
-. $PIPELINE_DIRECTORY/bin/pipipe_bash_functions
+. $PIPELINE_DIRECTORY/bin/piper_bash_functions
 
 ################
 # DEBUG switch #
@@ -32,12 +32,12 @@ export DEBUG='-x'
 #########
 # Intro #
 #########
-export PIPIPE_INTRO='
+export piper_INTRO='
 Integrated, shell based pipeline collections for piRNA/transposon analysis of small RNA-Seq, RNA-Seq,
 Degradome/RACE/CAGE-Seq, ChIP-Seq and Genomic-Seq. 
 
-pipipe is generic with respect to the genomes it supports. Please visit our github website 
-<github.com/bowhan/pipipe.git> for more information. 
+piper is generic with respect to the genomes it supports. Please visit our github website 
+<github.com/bowhan/piper.git> for more information. 
 Most of the pipelines offer two modes: 
 1. Single library mode performs the mapping and analysis on a single library. 
 2. Dual library mode performs pair-wise comparision between two libraries, using the outputs from 
@@ -47,7 +47,7 @@ single library mode.
 export INSTALL_USAGE='
 install
 =======
-Due to the limitation on the size of files by github, pipipe does not ship with all of the genome
+Due to the limitation on the size of files by github, piper does not ship with all of the genome
 sequences and annotation. Thus we provide this pipeline to download genome assemly files
 from illumina iGenome project. Please make sure internet is available during this process. 
 This pipeline will also install R packages that are unavaiable in your current system.
@@ -134,14 +134,14 @@ cat << EOF
 ======
 $BLINK$BOLD$PACKAGE_NAME$RESET
 ======
-$PIPIPE_INTRO
+$piper_INTRO
 ${UNDERLINE}usage${RESET}:
 
 $COMMENT# to install genome and R packages in one step$RESET
 $0	install -g dm3|mm9|hg19...	
 $COMMENT# to only download the genome and install R packages (if the node is not appropriate to be used for building indexes); then run (1).$RESET
 $0	install -g dm3|mm9|hg19 -D	
-$COMMENT# to use iGenome that pipipe does not know (yet)$RESET
+$COMMENT# to use iGenome that piper does not know (yet)$RESET
 $0	install -g hg18 -l ftp://igenome:G3nom3s4u@ussd-ftp.illumina.com/Homo_sapiens/UCSC/hg18/Homo_sapiens_UCSC_hg18.tar.gz	
 
 $COMMENT# run small RNA pipeline for fly sample, use 24 CPUs and output to out_dir$RESET
@@ -186,23 +186,23 @@ if [ $# -lt 1 ]; then usage; exit 1; fi
 PROGRAM=`echo ${1} | tr '[A-Z]' '[a-z]'`
 case $PROGRAM in
 i|install)
-	shift && bash $DEBUG pipipe_install_genomes.sh "$@" ;; # genome installation pipeline
+	shift && bash $DEBUG piper_install_genomes.sh "$@" ;; # genome installation pipeline
 s|small|smallrna|smallrna-seq|sra)
-	shift && bash $DEBUG pipipe_smallRNA.sh "$@" ;; # small RNA pipeline, single library mode
+	shift && bash $DEBUG piper_smallRNA.sh "$@" ;; # small RNA pipeline, single library mode
 s2|small2|smallrna2|smallrna-seq2|sra2)
-	shift && bash $DEBUG pipipe_smallRNA2.sh "$@" ;; # small RNA pipeline, dual library mode
+	shift && bash $DEBUG piper_smallRNA2.sh "$@" ;; # small RNA pipeline, dual library mode
 r|rnaseq|rna-seq|rsq|rna)
-	shift && bash $DEBUG pipipe_RNASeq.sh "$@" ;; # RNASeq pipeline, single library mode
+	shift && bash $DEBUG piper_RNASeq.sh "$@" ;; # RNASeq pipeline, single library mode
 r2|rnaseq2|rna-seq2|rsq2|rna2)
-	shift && bash $DEBUG pipipe_RNASeq2.sh "$@" ;; # RNASeq pipeline, dual library mode
+	shift && bash $DEBUG piper_RNASeq2.sh "$@" ;; # RNASeq pipeline, dual library mode
 d|deg|degseq|deg-seq|degradome|race|cage|cage-seq|cageseq)
-	shift && bash $DEBUG pipipe_DegradomeSeq.sh "$@" ;; # degradome/CAGE/RACE pipeline
+	shift && bash $DEBUG piper_DegradomeSeq.sh "$@" ;; # degradome/CAGE/RACE pipeline
 c|chip|chipseq|chip-seq)
-	shift && bash $DEBUG pipipe_ChIPSeq.sh "$@" ;; # ChIP-Seq pipeline, single library mode
+	shift && bash $DEBUG piper_ChIPSeq.sh "$@" ;; # ChIP-Seq pipeline, single library mode
 c2|chip2|chipseq2|chip-seq2)
-	shift && bash $DEBUG pipipe_ChIPSeq2.sh "$@" ;; # ChIP-Seq pipeline, dual library mode
+	shift && bash $DEBUG piper_ChIPSeq2.sh "$@" ;; # ChIP-Seq pipeline, dual library mode
 g|genomic|genome|genome-seq|genomeseq|dna|dnaseq|dna-seq)
-	shift && bash $DEBUG pipipe_GenomeSeq.sh "$@" ;; # Genome-Seq library
+	shift && bash $DEBUG piper_GenomeSeq.sh "$@" ;; # Genome-Seq library
 *)
 	echo2 "unrecognized option \"${1}\"! \nplease type \"${PACKAGE_NAME}\" without options to see usage." "error" ;;
 esac

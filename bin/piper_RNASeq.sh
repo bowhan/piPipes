@@ -1,7 +1,7 @@
 
 # RNASeq pipeline single library mode
-# pipipe 
-# https://github.com/bowhan/pipipe.git
+# piper 
+# https://github.com/bowhan/piper.git
 # An integrated pipeline for piRNA and transposon analysis 
 # from small RNA Seq, RNASeq, CAGE/Degradome/RACE, ChIP-Seq and Genomic-Seq
 # Wei Wang (wei.wang2@umassmed.edu)
@@ -28,7 +28,7 @@ Please email $CONTACT_EMAILS for any questions or bugs.
 Thank you for using it. 
 
 ${UNDERLINE}usage${RESET}:
-	pipipe rna \ 
+	piper rna \ 
 		-l left.fq \ 
 		-r right.fq \ 
 		-g dm3 \ 
@@ -131,7 +131,7 @@ checkBin "Rscript"
 checkBin "bowtie2"
 checkBin "STAR"
 checkBin "ParaFly"
-checkBin "bedtools_pipipe"
+checkBin "bedtools_piper"
 checkBin "bedGraphToBigWig"
 checkBin "express"
 checkBin "cufflinks"
@@ -262,7 +262,7 @@ echo -e "genomie_unmappable_reads:\t${UnMapReads}" >> $TABLE
 #######################
 echo2 "Processing mapping results"
 [ ! -f .${JOBUID}.status.${STEP}.genome_bam_processing ] && \
-	samtools view -bS ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.Aligned.out.sam 2>/dev/null | tee ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.Aligned.out.bam | bedtools_pipipe bamtobed -bedpe -mate1 -i - > ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.bedpe && \
+	samtools view -bS ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.Aligned.out.sam 2>/dev/null | tee ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.Aligned.out.bam | bedtools_piper bamtobed -bedpe -mate1 -i - > ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.bedpe && \
 	samtools sort -@ $CPU ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.Aligned.out.bam ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.sorted && \
 	samtools index ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.bam && \
 	awk 'BEGIN{FS=OFS="\t"}{if (ARGIND==1) {++ct[$7]} else {$8=1.0/ct[$7]; print $0 > "/dev/stdout"; if (ct[$7]==1) print $0 > "/dev/stderr"}}' ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.bedpe ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.bedpe \
@@ -303,11 +303,11 @@ echo -ne "$NormScale" > .${JOBUID}.cufflinks_depth
 # in order to make bigWig for unique mappers, we need to reverse the strand of one of the end
 echo2 "Making bigWig from sorted bam"
 [ ! -f .${JOBUID}.status.${STEP}.make_bigWig ] && \
-	bedtools_pipipe bamtobed -bed12 -tag NH -i ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.bam | \
+	bedtools_piper bamtobed -bed12 -tag NH -i ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.bam | \
 	awk -v strand=$END_TO_REVERSE_STRAND 'BEGIN{FS=OFS="\t"}{e=substr($4,length($4)); if (e==strand) $6=($6=="+"?"-":"+"); if ($5==1) print $0; }' > ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.unique.bed12 && \
 	para_file=${BW_OUTDIR}/${RANDOM}${RANDOM}.makeBigWigPE.para && \
-	echo "bedtools_pipipe genomecov -scale $NormScale -split -bg -strand + -i ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.unique.bed12 -g $CHROM > ${BW_OUTDIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.unique.Watson.bedGraph && bedGraphToBigWig ${BW_OUTDIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.unique.Watson.bedGraph $CHROM ${BW_OUTDIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.unique.Watson.bigWig"  >  $para_file && \
-	echo "bedtools_pipipe genomecov -scale $NormScale -split -bg -strand - -i ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.unique.bed12 -g $CHROM | awk 'BEGIN{OFS=\"\t\"}{\$4 = -\$4; print \$0}' > ${BW_OUTDIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.unique.Crick.bedGraph && bedGraphToBigWig ${BW_OUTDIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.unique.Crick.bedGraph $CHROM ${BW_OUTDIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.unique.Crick.bigWig" >> $para_file && \
+	echo "bedtools_piper genomecov -scale $NormScale -split -bg -strand + -i ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.unique.bed12 -g $CHROM > ${BW_OUTDIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.unique.Watson.bedGraph && bedGraphToBigWig ${BW_OUTDIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.unique.Watson.bedGraph $CHROM ${BW_OUTDIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.unique.Watson.bigWig"  >  $para_file && \
+	echo "bedtools_piper genomecov -scale $NormScale -split -bg -strand - -i ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.unique.bed12 -g $CHROM | awk 'BEGIN{OFS=\"\t\"}{\$4 = -\$4; print \$0}' > ${BW_OUTDIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.unique.Crick.bedGraph && bedGraphToBigWig ${BW_OUTDIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.unique.Crick.bedGraph $CHROM ${BW_OUTDIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.unique.Crick.bigWig" >> $para_file && \
 	ParaFly -c $para_file -CPU $CPU -failed_cmds ${para_file}.failedCommands 1>&2 && \
 	rm -rf ${para_file} ${para_file}.completed && \
 	touch .${JOBUID}.status.${STEP}.make_bigWig

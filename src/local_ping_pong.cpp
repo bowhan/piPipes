@@ -1,5 +1,5 @@
 /*
- * This script is part of the pipipe, an integrated pipeline developed in the Zamore lab and the Weng lab
+ * This script is part of the piper, an integrated pipeline developed in the Zamore lab and the Weng lab
  * Bo Han (bowhan@me.com)
 **/
 

@@ -1,6 +1,6 @@
 
-# ChIP-Seq pipeline from pipipe: https://github.com/bowhan/pipipe.git
-# pipipe: https://github.com/bowhan/pipipe.git
+# ChIP-Seq pipeline from piper: https://github.com/bowhan/piper.git
+# piper: https://github.com/bowhan/piper.git
 # An integrated pipeline for small RNA analysis 
 # from small RNA Seq, RNASeq, CAGE/Degradome, ChIP-Seq and Genomic-Seq
 # Wei Wang (wei.wang2@umassmed.edu)
@@ -18,9 +18,9 @@ if [ "$#" == "3" ];
 then
 	for t in ${TARGETS[@]}
 	do \
-		echo "bwtool agg ${EXT_LEN}:${EXT_LEN} -starts -long-form=${t}start,'Poisson Pvalue,Fold Enriched,logLR' ${!t} $BIGWIG_FILES $OUTDIR/${t}.starts.txt && Rscript --slave ${PIPELINE_DIRECTORY}/bin/pipipe_draw_aggregate.R $OUTDIR/${t}.starts.txt $PDF_DIR/${t}.starts $t" >> $para_file
-		echo "bwtool agg ${EXT_LEN}:${EXT_LEN} -ends -long-form=${t}end,'Poisson Pvalue,Fold Enriched,logLR' ${!t} $BIGWIG_FILES $OUTDIR/${t}.ends.txt && Rscript --slave ${PIPELINE_DIRECTORY}/bin/pipipe_draw_aggregate.R $OUTDIR/${t}.ends.txt $PDF_DIR/${t}.ends $t" >> $para_file
-		echo "bwtool agg ${EXT_LEN}:${EXT_LEN}:${EXT_LEN} -long-form=${t}meta,'Poisson Pvalue,Fold Enriched,logLR' ${!t} $BIGWIG_FILES $OUTDIR/${t}.meta.txt && Rscript --slave ${PIPELINE_DIRECTORY}/bin/pipipe_draw_aggregate.R $OUTDIR/${t}.meta.txt  $PDF_DIR/${t}.meta $t" >> $para_file
+		echo "bwtool agg ${EXT_LEN}:${EXT_LEN} -starts -long-form=${t}start,'Poisson Pvalue,Fold Enriched,logLR' ${!t} $BIGWIG_FILES $OUTDIR/${t}.starts.txt && Rscript --slave ${PIPELINE_DIRECTORY}/bin/piper_draw_aggregate.R $OUTDIR/${t}.starts.txt $PDF_DIR/${t}.starts $t" >> $para_file
+		echo "bwtool agg ${EXT_LEN}:${EXT_LEN} -ends -long-form=${t}end,'Poisson Pvalue,Fold Enriched,logLR' ${!t} $BIGWIG_FILES $OUTDIR/${t}.ends.txt && Rscript --slave ${PIPELINE_DIRECTORY}/bin/piper_draw_aggregate.R $OUTDIR/${t}.ends.txt $PDF_DIR/${t}.ends $t" >> $para_file
+		echo "bwtool agg ${EXT_LEN}:${EXT_LEN}:${EXT_LEN} -long-form=${t}meta,'Poisson Pvalue,Fold Enriched,logLR' ${!t} $BIGWIG_FILES $OUTDIR/${t}.meta.txt && Rscript --slave ${PIPELINE_DIRECTORY}/bin/piper_draw_aggregate.R $OUTDIR/${t}.meta.txt  $PDF_DIR/${t}.meta $t" >> $para_file
 	done
 	ParaFly -c $para_file -CPU $CPU -failed_cmds ${para_file}.failedCommands 1>&2 && \
 	rm -rf ${para_file}*
@@ -39,14 +39,14 @@ else
 	shift; shift; shift
 	
 	t=`basename $1` 
-	echo "bwtool agg ${EXT_LEN}:${EXT_LEN} -starts -long-form=\"condition1_starts,${SAMPLE_A_NAME}_Poisson_Pvalue,${SAMPLE_A_NAME}_Fold_Enriched,${SAMPLE_A_NAME}_logLR,${SAMPLE_B_NAME}_Poisson_Pvalue,${SAMPLE_B_NAME}_Fold_Enriched,${SAMPLE_B_NAME}_logLR\" ${1} $BIGWIG_FILES $OUTDIR/${t%.bed}.starts.txt && Rscript --slave ${PIPELINE_DIRECTORY}/bin/pipipe_draw_aggregate.R   $OUTDIR/${t%.bed}.starts.txt $PDF_DIR/${t%.bed}.starts. ${t}.TSS" >> $para_file
-	echo "bwtool agg ${EXT_LEN}:${EXT_LEN} -ends -long-form=\"condition1_ends,${SAMPLE_A_NAME}_Poisson_Pvalue,${SAMPLE_A_NAME}_Fold_Enriched,${SAMPLE_A_NAME}_logLR,${SAMPLE_B_NAME}_Poisson_Pvalue,${SAMPLE_B_NAME}_Fold_Enriched,${SAMPLE_B_NAME}_logLR\" ${1} $BIGWIG_FILES $OUTDIR/${t%.bed}.ends.txt && Rscript --slave ${PIPELINE_DIRECTORY}/bin/pipipe_draw_aggregate.R       $OUTDIR/${t%.bed}.ends.txt   $PDF_DIR/${t%.bed}.ends ${t}.TES" >> $para_file
-	echo "bwtool agg ${EXT_LEN}:${EXT_LEN}:${EXT_LEN} -long-form=\"condition1_meta,${SAMPLE_A_NAME}_Poisson_Pvalue,${SAMPLE_A_NAME}_Fold_Enriched,${SAMPLE_A_NAME}_logLR,${SAMPLE_B_NAME}_Poisson_Pvalue,${SAMPLE_B_NAME}_Fold_Enriched,${SAMPLE_B_NAME}_logLR\" ${1} $BIGWIG_FILES $OUTDIR/${t%.bed}.meta.txt && Rscript --slave ${PIPELINE_DIRECTORY}/bin/pipipe_draw_aggregate.R  $OUTDIR/${t%.bed}.meta.txt   $PDF_DIR/${t%.bed}.meta ${t}.mega" >> $para_file
+	echo "bwtool agg ${EXT_LEN}:${EXT_LEN} -starts -long-form=\"condition1_starts,${SAMPLE_A_NAME}_Poisson_Pvalue,${SAMPLE_A_NAME}_Fold_Enriched,${SAMPLE_A_NAME}_logLR,${SAMPLE_B_NAME}_Poisson_Pvalue,${SAMPLE_B_NAME}_Fold_Enriched,${SAMPLE_B_NAME}_logLR\" ${1} $BIGWIG_FILES $OUTDIR/${t%.bed}.starts.txt && Rscript --slave ${PIPELINE_DIRECTORY}/bin/piper_draw_aggregate.R   $OUTDIR/${t%.bed}.starts.txt $PDF_DIR/${t%.bed}.starts. ${t}.TSS" >> $para_file
+	echo "bwtool agg ${EXT_LEN}:${EXT_LEN} -ends -long-form=\"condition1_ends,${SAMPLE_A_NAME}_Poisson_Pvalue,${SAMPLE_A_NAME}_Fold_Enriched,${SAMPLE_A_NAME}_logLR,${SAMPLE_B_NAME}_Poisson_Pvalue,${SAMPLE_B_NAME}_Fold_Enriched,${SAMPLE_B_NAME}_logLR\" ${1} $BIGWIG_FILES $OUTDIR/${t%.bed}.ends.txt && Rscript --slave ${PIPELINE_DIRECTORY}/bin/piper_draw_aggregate.R       $OUTDIR/${t%.bed}.ends.txt   $PDF_DIR/${t%.bed}.ends ${t}.TES" >> $para_file
+	echo "bwtool agg ${EXT_LEN}:${EXT_LEN}:${EXT_LEN} -long-form=\"condition1_meta,${SAMPLE_A_NAME}_Poisson_Pvalue,${SAMPLE_A_NAME}_Fold_Enriched,${SAMPLE_A_NAME}_logLR,${SAMPLE_B_NAME}_Poisson_Pvalue,${SAMPLE_B_NAME}_Fold_Enriched,${SAMPLE_B_NAME}_logLR\" ${1} $BIGWIG_FILES $OUTDIR/${t%.bed}.meta.txt && Rscript --slave ${PIPELINE_DIRECTORY}/bin/piper_draw_aggregate.R  $OUTDIR/${t%.bed}.meta.txt   $PDF_DIR/${t%.bed}.meta ${t}.mega" >> $para_file
 	
 	t=`basename $2`
-	echo "bwtool agg ${EXT_LEN}:${EXT_LEN} -starts -long-form=\"condition2_starts,${SAMPLE_A_NAME}_Poisson_Pvalue,${SAMPLE_A_NAME}_Fold_Enriched,${SAMPLE_A_NAME}_logLR,${SAMPLE_B_NAME}_Poisson_Pvalue,${SAMPLE_B_NAME}_Fold_Enriched,${SAMPLE_B_NAME}_logLR\" ${2} $BIGWIG_FILES $OUTDIR/${t%.bed}.starts.txt && Rscript --slave ${PIPELINE_DIRECTORY}/bin/pipipe_draw_aggregate.R   $OUTDIR/${t%.bed}.starts.txt $PDF_DIR/${t%.bed}.starts. ${t}.TSS" >> $para_file
-	echo "bwtool agg ${EXT_LEN}:${EXT_LEN} -ends -long-form=\"condition2_ends,${SAMPLE_A_NAME}_Poisson_Pvalue,${SAMPLE_A_NAME}_Fold_Enriched,${SAMPLE_A_NAME}_logLR,${SAMPLE_B_NAME}_Poisson_Pvalue,${SAMPLE_B_NAME}_Fold_Enriched,${SAMPLE_B_NAME}_logLR\" ${2} $BIGWIG_FILES $OUTDIR/${t%.bed}.ends.txt && Rscript --slave ${PIPELINE_DIRECTORY}/bin/pipipe_draw_aggregate.R       $OUTDIR/${t%.bed}.ends.txt   $PDF_DIR/${t%.bed}.ends ${t}.TES" >> $para_file
-	echo "bwtool agg ${EXT_LEN}:${EXT_LEN}:${EXT_LEN} -long-form=\"condition2_meta,${SAMPLE_A_NAME}_Poisson_Pvalue,${SAMPLE_A_NAME}_Fold_Enriched,${SAMPLE_A_NAME}_logLR,${SAMPLE_B_NAME}_Poisson_Pvalue,${SAMPLE_B_NAME}_Fold_Enriched,${SAMPLE_B_NAME}_logLR\" ${2} $BIGWIG_FILES $OUTDIR/${t%.bed}.meta.txt && Rscript --slave ${PIPELINE_DIRECTORY}/bin/pipipe_draw_aggregate.R  $OUTDIR/${t%.bed}.meta.txt   $PDF_DIR/${t%.bed}.meta ${t}.mega" >> $para_file
+	echo "bwtool agg ${EXT_LEN}:${EXT_LEN} -starts -long-form=\"condition2_starts,${SAMPLE_A_NAME}_Poisson_Pvalue,${SAMPLE_A_NAME}_Fold_Enriched,${SAMPLE_A_NAME}_logLR,${SAMPLE_B_NAME}_Poisson_Pvalue,${SAMPLE_B_NAME}_Fold_Enriched,${SAMPLE_B_NAME}_logLR\" ${2} $BIGWIG_FILES $OUTDIR/${t%.bed}.starts.txt && Rscript --slave ${PIPELINE_DIRECTORY}/bin/piper_draw_aggregate.R   $OUTDIR/${t%.bed}.starts.txt $PDF_DIR/${t%.bed}.starts. ${t}.TSS" >> $para_file
+	echo "bwtool agg ${EXT_LEN}:${EXT_LEN} -ends -long-form=\"condition2_ends,${SAMPLE_A_NAME}_Poisson_Pvalue,${SAMPLE_A_NAME}_Fold_Enriched,${SAMPLE_A_NAME}_logLR,${SAMPLE_B_NAME}_Poisson_Pvalue,${SAMPLE_B_NAME}_Fold_Enriched,${SAMPLE_B_NAME}_logLR\" ${2} $BIGWIG_FILES $OUTDIR/${t%.bed}.ends.txt && Rscript --slave ${PIPELINE_DIRECTORY}/bin/piper_draw_aggregate.R       $OUTDIR/${t%.bed}.ends.txt   $PDF_DIR/${t%.bed}.ends ${t}.TES" >> $para_file
+	echo "bwtool agg ${EXT_LEN}:${EXT_LEN}:${EXT_LEN} -long-form=\"condition2_meta,${SAMPLE_A_NAME}_Poisson_Pvalue,${SAMPLE_A_NAME}_Fold_Enriched,${SAMPLE_A_NAME}_logLR,${SAMPLE_B_NAME}_Poisson_Pvalue,${SAMPLE_B_NAME}_Fold_Enriched,${SAMPLE_B_NAME}_logLR\" ${2} $BIGWIG_FILES $OUTDIR/${t%.bed}.meta.txt && Rscript --slave ${PIPELINE_DIRECTORY}/bin/piper_draw_aggregate.R  $OUTDIR/${t%.bed}.meta.txt   $PDF_DIR/${t%.bed}.meta ${t}.mega" >> $para_file
 
 	ParaFly -c $para_file -CPU $CPU -failed_cmds ${para_file}.failedCommands 1>&2 && \
 	rm -rf ${para_file}*
