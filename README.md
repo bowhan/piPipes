@@ -1,5 +1,5 @@
-![LOGO](https://dl.dropboxusercontent.com/u/5238651/piper%20logo.jpg "RTI UMASSMED HHMI")
-piper
+![LOGO](https://dl.dropboxusercontent.com/u/5238651/pipipe%20logo.jpg "RTI UMASSMED HHMI")
+Piper
 =====
 
 Integrated pipeline collections developed in the [Zamore Lab](http://www.umassmed.edu/zamore) and [ZLab](http://zlab.umassmed.edu/zlab) to analyze piRNA/transposon for different Next Generation Sequencing (*small RNA-Seq, RNA-Seq, Genomic-Seq, ChIP-Seq, CAGE-Seq and Degradome-Seq*). **piper** provides generic interface for different organisms/genomes with a particular optimization for fruit-fly and mouse, which were the main focus in our labs as well as the piRNA field.
