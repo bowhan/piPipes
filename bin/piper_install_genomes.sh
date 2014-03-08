@@ -88,6 +88,38 @@ checkBin "genePredToBed"
 checkBin "bedtools_piper"
 checkBin "mrfast"
 
+#################################################
+# to define the length range of siRNA and piRNA #
+#################################################
+# reading variables from the user
+echo2 "Please input parameters for small RNA seq \n( If you have installed this genome before and don't want to change the parameters, please press ENTER to skip )" "warning"
+echo2 "How many mismatches should be allowed for rRNA mapping by bowtie?"
+read rRNA_MM
+[ ! -z $rRNA_MM ] && echo "export rRNA_MM=$rRNA_MM" > $PIPELINE_DIRECTORY/common/$GENOME/variables
+echo2 "How many mismatches should be allowed for microRNA hairping mapping by bowtie?"
+read hairpin_MM 
+[ ! -z $hairpin_MM ] && echo "export hairpin_MM=$hairpin_MM" >> $PIPELINE_DIRECTORY/common/$GENOME/variables
+echo2 "How many mismatches should be allowed for genome mapping by bowtie?"
+read genome_MM 
+[ ! -z $genome_MM ] && echo "export genome_MM=$genome_MM" >> $PIPELINE_DIRECTORY/common/$GENOME/variables
+echo2 "How many mismatches should be allowed for trasnposons/piRNAcluster mapping by bowtie?"
+read transposon_MM 
+[ ! -z $transposon_MM ] && echo "export transposon_MM=$transposon_MM" >> $PIPELINE_DIRECTORY/common/$GENOME/variables
+echo2 "What is the shortest length for siRNA?"
+read siRNA_bot 
+[ ! -z $siRNA_bot ] && echo "export siRNA_bot=$siRNA_bot" >> $PIPELINE_DIRECTORY/common/$GENOME/variables
+echo2 "What is the longest length for siRNA?"
+read siRNA_top 
+[ ! -z $siRNA_top ] && echo "export siRNA_top=$siRNA_top" >> $PIPELINE_DIRECTORY/common/$GENOME/variables
+echo2 "What is the shortest length for piRNA?"
+read piRNA_bot 
+[ ! -z $piRNA_bot ] && echo "export piRNA_bot=$piRNA_bot" >> $PIPELINE_DIRECTORY/common/$GENOME/variables
+echo2 "What is the longest length for piRNA?"
+read piRNA_top 
+[ ! -z $piRNA_top ] && echo "export piRNA_top=$piRNA_top" >> $PIPELINE_DIRECTORY/common/$GENOME/variables
+echo2 "Done. If you would like to change the variables, please edit file: $PIPELINE_DIRECTORY/common/$GENOME/variables manually" "warning"
+echo2 "------------------------------------------"
+
 ##############################
 # beginning running pipeline #
 ##############################
@@ -147,7 +179,7 @@ echo2 "Uncompressing genome $GENOME"
 #############################
 echo2 "Preparing genomic sequence/annotation and making indexes"
 	
-# patch for dm3; iGenome does not have chrU and X-TAS, hence add it manually
+# patch for dm3; iGenome does not have chrU and X-TAS, hence add it manually. Indexes have to be rebuild as well. 
 case $GENOME in	
 dm3)	
 	mkdir -p BowtieIndex
@@ -258,33 +290,12 @@ mm9)
 	[ ! -s ${GENOME}.genes+repBase+cluster.gtf ] && cat Zamore.NM.gtf Zamore.NR.gtf UCSC.RepeatMask.gtf > ${GENOME}.genes+repBase+cluster.gtf && rm -rf Zamore.NM.gtf Zamore.NR.gtf UCSC.RepeatMask.gtf
 ;;
 *)	
-	echo2 "This is a genome that has not been optimized in piper. Please contact the authors." "warning"
+	# echo2 "This is a genome that has not been optimized in piper. Please contact the authors." "warning"
 	[ ! -s UCSC.RepeatMask.gtf ] && awk 'BEGIN{FS=OFS="\t"}{ if (!c[$4]) c[$4]=0; ++c[$4]; $4=$4"."c[$4]; print $0}' UCSC.RepeatMask.bed | bedToGenePred stdin /dev/stdout | genePredToGtf file stdin /dev/stdout | awk '$3=="exon"' > UCSC.RepeatMask.gtf
 	[ ! -s ${GENOME}.piRNAcluster.gtf ] && zcat ${GENOME}.piRNAcluster.bed.gz | bedToGenePred stdin /dev/stdout | genePredToGtf file stdin /dev/stdout | awk '$3=="exon"' > ${GENOME}.piRNAcluster.gtf
 	[ ! -s ${GENOME}.genes+repBase+cluster.htseq.gtf ] && cat ${GENOME}.genes.gtf  UCSC.RepeatMask.gtf  ${GENOME}.piRNAcluster.gtf  >  ${GENOME}.genes+repBase+cluster.htseq.gtf && rm -rf UCSC.RepeatMask.gtf  ${GENOME}.piRNAcluster.gtf
 ;;
 esac
-
-# reading variables from the user
-echo2 "Please input parameters for small RNA Seq (If you have installed this genome before and don't want to change the parameters, please press \"ctrl+c\" )" "warning"
-echo2 "How many mismatches should be allowed for rRNA mapping by bowtie?"
-read rRNA_MM && echo "export rRNA_MM=$rRNA_MM" > $PIPELINE_DIRECTORY/common/$GENOME/variables
-echo2 "How many mismatches should be allowed for microRNA hairping mapping by bowtie?"
-read hairpin_MM && echo "export hairpin_MM=$hairpin_MM" >> $PIPELINE_DIRECTORY/common/$GENOME/variables
-echo2 "How many mismatches should be allowed for genome mapping by bowtie?"
-read genome_MM && echo "export genome_MM=$genome_MM" >> $PIPELINE_DIRECTORY/common/$GENOME/variables
-echo2 "How many mismatches should be allowed for trasnposons/piRNAcluster mapping by bowtie?"
-read transposon_MM && echo "export transposon_MM=$transposon_MM" >> $PIPELINE_DIRECTORY/common/$GENOME/variables
-echo2 "What is the shortest length for siRNA?"
-read siRNA_bot && echo "export siRNA_bot=$siRNA_bot" >> $PIPELINE_DIRECTORY/common/$GENOME/variables
-echo2 "What is the longest length for siRNA?"
-read siRNA_top && echo "export siRNA_top=$siRNA_top" >> $PIPELINE_DIRECTORY/common/$GENOME/variables
-echo2 "What is the shortest length for piRNA?"
-read piRNA_bot && echo "export piRNA_bot=$piRNA_bot" >> $PIPELINE_DIRECTORY/common/$GENOME/variables
-echo2 "What is the longest length for piRNA?"
-read piRNA_top && echo "export piRNA_top=$piRNA_top" >> $PIPELINE_DIRECTORY/common/$GENOME/variables
-echo2 "------------------------------------------"
-echo2 "Done. If you would like to change the variables, please edit file: $PIPELINE_DIRECTORY/common/$GENOME/variables"
 
 echo $GENOME >> $PIPELINE_DIRECTORY/common/genome_supported.txt
 

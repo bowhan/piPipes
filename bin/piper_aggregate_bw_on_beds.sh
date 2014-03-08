@@ -18,9 +18,9 @@ if [ "$#" == "3" ];
 then
 	for t in ${TARGETS[@]}
 	do \
-		echo "bwtool agg ${EXT_LEN}:${EXT_LEN} -starts -long-form=${t}start,'Poisson Pvalue,Fold Enriched,logLR' ${!t} $BIGWIG_FILES $OUTDIR/${t}.starts.txt && Rscript --slave ${PIPELINE_DIRECTORY}/bin/piper_draw_aggregate.R $OUTDIR/${t}.starts.txt $PDF_DIR/${t}.starts $t" >> $para_file
-		echo "bwtool agg ${EXT_LEN}:${EXT_LEN} -ends -long-form=${t}end,'Poisson Pvalue,Fold Enriched,logLR' ${!t} $BIGWIG_FILES $OUTDIR/${t}.ends.txt && Rscript --slave ${PIPELINE_DIRECTORY}/bin/piper_draw_aggregate.R $OUTDIR/${t}.ends.txt $PDF_DIR/${t}.ends $t" >> $para_file
-		echo "bwtool agg ${EXT_LEN}:${EXT_LEN}:${EXT_LEN} -long-form=${t}meta,'Poisson Pvalue,Fold Enriched,logLR' ${!t} $BIGWIG_FILES $OUTDIR/${t}.meta.txt && Rscript --slave ${PIPELINE_DIRECTORY}/bin/piper_draw_aggregate.R $OUTDIR/${t}.meta.txt  $PDF_DIR/${t}.meta $t" >> $para_file
+		echo "bwtool agg ${EXT_LEN}:${EXT_LEN} -starts -long-form=${t}start,'Poisson P value,Fold Enriched,logLR' ${!t} $BIGWIG_FILES $OUTDIR/${t}.starts.txt && Rscript --slave ${PIPELINE_DIRECTORY}/bin/piper_draw_aggregate.R $OUTDIR/${t}.starts.txt $PDF_DIR/${t}.starts $t" >> $para_file
+		echo "bwtool agg ${EXT_LEN}:${EXT_LEN} -ends -long-form=${t}end,'Poisson P value,Fold Enriched,logLR' ${!t} $BIGWIG_FILES $OUTDIR/${t}.ends.txt && Rscript --slave ${PIPELINE_DIRECTORY}/bin/piper_draw_aggregate.R $OUTDIR/${t}.ends.txt $PDF_DIR/${t}.ends $t" >> $para_file
+		echo "bwtool agg ${EXT_LEN}:${EXT_LEN}:${EXT_LEN} -long-form=${t}meta,'Poisson P value,Fold Enriched,logLR' ${!t} $BIGWIG_FILES $OUTDIR/${t}.meta.txt && Rscript --slave ${PIPELINE_DIRECTORY}/bin/piper_draw_aggregate.R $OUTDIR/${t}.meta.txt  $PDF_DIR/${t}.meta $t" >> $para_file
 	done
 	ParaFly -c $para_file -CPU $CPU -failed_cmds ${para_file}.failedCommands 1>&2 && \
 	rm -rf ${para_file}*

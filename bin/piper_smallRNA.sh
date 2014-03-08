@@ -31,6 +31,7 @@ ${UNDERLINE}usage${RESET}:
 	piper small \ 
 		-i input.fq[.gz] \ 
 		-g dm3 \ 
+		-N uniqueXmiRNA [unique] \ 
 		-o output_directory [current working directory] \ 
 		-c cpu [8] 
 	
@@ -44,6 +45,16 @@ ${REQUIRED}[ required ]
 		 Check "$PIPELINE_DIRECTORY/common/genome_supported.txt" for genome assemblies currently installed; 
 		 Use "install" to install new genome
 ${OPTIONAL}[ optional ]
+	-N      Normalization method, choose from " input | rRNA | unique | uniqueXmiRNA | all | allXmiRNA | miRNA "
+	 	 unique:	use non-rRNA genomic unique mappers <default>.
+	 	 input:	use the number of reads input to the pipeline, this will include genome unmappers. But might be useful when you have additional sequence in the genome, like a transgene.
+	 	 rRNA:	use the number of reads mapped to rRNA.
+	 	 uniqueXmiRNA:	use non-rRNA genomic unique mappers excluding microRNAs <for oxidized library for piRNA mutant>.
+	 	 all:	use non-rRNA genomic all mappers including microRNAs.
+	 	 allXmiRNA:	use non-rRNA genomic all mappers excluding microRNAs. 
+	 	 miRNA:	use microRNAs. normalized to: reads per millions of miRNA <for unoxidized library for piRNA mutant>.
+		 *Different normalization methods, including "siRNA", are available in the dual library mode.
+		 *You are able to run the same library multiple times with different normalization method. They will not collapse.
 	-c      Number of CPUs to use, default: 8
 	-o      Output directory, default: current directory $PWD
 EOF
@@ -53,7 +64,7 @@ echo -e "${COLOR_END}"
 #############################
 # ARGS reading and checking #
 #############################
-while getopts "hi:c:o:g:v" OPTION; do
+while getopts "hi:c:o:g:vN:" OPTION; do
 	case $OPTION in
 		h)	usage && exit 0 ;;
 		i)	INPUT_FASTQ=`readlink -f $OPTARG` ;;
@@ -61,6 +72,7 @@ while getopts "hi:c:o:g:v" OPTION; do
 		c)	CPU=$OPTARG ;;
 		v)	echo2 "SMALLRNA_VERSION: v$SMALLRNA_VERSION" && exit 0 ;;
 		g)	export GENOME=`echo ${OPTARG} | tr '[A-Z]' '[a-z]'` ;;
+		N)	export NORMMETHOD=`echo ${OPTARG} | tr '[A-Z]' '[a-z]'` ;;
 		*)	usage && exit 1 ;;
 	esac
 done
@@ -71,6 +83,7 @@ done
 check_genome $GENOME
 [ ! -f $INPUT_FASTQ ] && echo2 "Cannot find input file $INPUT_FASTQ" "error"
 FQ_NAME=`basename $INPUT_FASTQ` && export PREFIX=${FQ_NAME%.f[qa]*}
+[[ -z $NORMMETHOD ]] && export NORMMETHOD="unique";
 [ ! -z "${CPU##*[!0-9]*}" ] || CPU=8
 [ ! -z "$OUTDIR" ] || OUTDIR=$PWD # if -o is not specified, use current directory
 [ "$OUTDIR" != `readlink -f $PWD` ] && (mkdir -p "${OUTDIR}" || echo2 "Cannot create directory ${OUTDIR}" "warning")
@@ -89,8 +102,8 @@ CUSTOM_MAPPING_DIR=custom_mapping && mkdir -p $CUSTOM_MAPPING_DIR
 GENOMIC_MAPPING_DIR=genome_mapping && mkdir -p $GENOMIC_MAPPING_DIR
 INTERSECT_DIR=intersect_genomic_features && mkdir -p $INTERSECT_DIR
 SUMMARY_DIR=summaries && mkdir -p $SUMMARY_DIR
-BW_OUTDIR=bigWig && mkdir -p $BW_OUTDIR
-TRN_OUTDIR=transposon_piRNAcluster_mapping && mkdir -p $TRN_OUTDIR
+BW_OUTDIR=bigWig_normalized_by_$NORMMETHOD && mkdir -p $BW_OUTDIR
+TRN_OUTDIR=transposon_piRNAcluster_mapping_normalized_by_$NORMMETHOD && mkdir -p $TRN_OUTDIR
 EXPRESS_DIR=eXpress_quantification_no_normalization && mkdir -p $EXPRESS_DIR
 
 ########################
@@ -323,12 +336,12 @@ echo2 "Plotting length distribution"
 [ ! -f .${JOBUID}.status.${STEP}.plotting_length_dis ] && \
 	awk '{a[$7]=$4}END{m=0; for (b in a){c[length(b)]+=a[b]; if (length(b)>m) m=length(b)} for (d=1;d<=m;++d) {print d"\t"(c[d]?c[d]:0)}}' ${GENOME_ALLMAP_BED2}  | sort -k1,1n > ${GENOME_ALLMAP_BED2}.lendis && \
 	awk '{a[$7]=$4}END{m=0; for (b in a){c[length(b)]+=a[b]; if (length(b)>m) m=length(b)} for (d=1;d<=m;++d) {print d"\t"(c[d]?c[d]:0)}}' ${GENOME_UNIQUEMAP_BED2}  | sort -k1,1n > ${GENOME_UNIQUEMAP_BED2}.lendis && \
-	Rscript --slave ${PIPELINE_DIRECTORY}/bin/piper_draw_lendis.R ${GENOME_ALLMAP_BED2}.lendis $PDF_DIR/`basename ${GENOME_ALLMAP_BED2}`.x_hairpin 2>/dev/null && \
-	Rscript --slave ${PIPELINE_DIRECTORY}/bin/piper_draw_lendis.R ${GENOME_UNIQUEMAP_BED2}.lendis $PDF_DIR/`basename ${GENOME_UNIQUEMAP_BED2}`.x_hairpin 2>/dev/null && \
+	Rscript --slave ${PIPELINE_DIRECTORY}/bin/piper_draw_lendis.R ${GENOME_ALLMAP_BED2}.lendis $PDF_DIR/`basename ${GENOME_ALLMAP_BED2}`.x_hairpin 1>&2 && \
+	Rscript --slave ${PIPELINE_DIRECTORY}/bin/piper_draw_lendis.R ${GENOME_UNIQUEMAP_BED2}.lendis $PDF_DIR/`basename ${GENOME_UNIQUEMAP_BED2}`.x_hairpin 1>&2 && \
 	awk '{ct[$1]+=$2}END{for (l in ct) {print l"\t"ct[l]}}' ${GENOME_ALLMAP_BED2}.lendis $x_rRNA_HAIRPIN_BED2_LENDIS | sort -k1,1n > ${GENOME_ALLMAP_BED2}.+hairpin.lendis && \
 	awk '{ct[$1]+=$2}END{for (l in ct) {print l"\t"ct[l]}}' ${GENOME_UNIQUEMAP_BED2}.lendis $x_rRNA_HAIRPIN_BED2_LENDIS | sort -k1,1n > ${GENOME_UNIQUEMAP_BED2}.+hairpin.lendis && \
-	Rscript --slave ${PIPELINE_DIRECTORY}/bin/piper_draw_lendis.R ${GENOME_ALLMAP_BED2}.+hairpin.lendis $PDF_DIR/`basename ${GENOME_ALLMAP_BED2}`.+hairpin 2>/dev/null && \
-	Rscript --slave ${PIPELINE_DIRECTORY}/bin/piper_draw_lendis.R ${GENOME_UNIQUEMAP_BED2}.+hairpin.lendis $PDF_DIR/`basename ${GENOME_UNIQUEMAP_BED2}`.+hairpin 2>/dev/null && \
+	Rscript --slave ${PIPELINE_DIRECTORY}/bin/piper_draw_lendis.R ${GENOME_ALLMAP_BED2}.+hairpin.lendis $PDF_DIR/`basename ${GENOME_ALLMAP_BED2}`.+hairpin 1>&2 && \
+	Rscript --slave ${PIPELINE_DIRECTORY}/bin/piper_draw_lendis.R ${GENOME_UNIQUEMAP_BED2}.+hairpin.lendis $PDF_DIR/`basename ${GENOME_UNIQUEMAP_BED2}`.+hairpin 1>&2 && \
 	touch .${JOBUID}.status.${STEP}.plotting_length_dis
 STEP=$((STEP+1))
 
@@ -345,6 +358,37 @@ echo -e "genome unique mapping reads (-rRNA; +miRNA_hairpin)\t$((uniqueMapCount+
 echo -e "genome unique mapping reads (-rRNA; -miRNA_hairpin)\t${uniqueMapCount}" >> $TABLE && \
 echo -e "genome multiple mapping reads (-rRNA; -miRNA_hairpin)\t${multipMapCount}" >> $TABLE && \
 
+# normalization method
+# input | rRNA | unique | uniqueXmiRNA | all | allXmiRNA | miRNA
+case "$NORMMETHOD" in
+input)
+	NormScale=`head -1 $TABLE | tail -1 | cut -f2 | awk '{print 1000000/$0}'`
+;;
+rrna)
+	NormScale=`head -2 $TABLE | tail -1 | cut -f2 | awk '{print 1000000/$0}'`
+;;
+mirna)
+	NormScale=`head -3 $TABLE | tail -1 | cut -f2 | awk '{print 1000000/$0}'`
+;;
+all)
+	NormScale=`head -4 $TABLE | tail -1 | cut -f2 | awk '{print 1000000/$0}'`
+;;
+allxmirna)
+	NormScale=`head -5 $TABLE | tail -1 | cut -f2 | awk '{print 1000000/$0}'`
+;;
+unique)
+	NormScale=`head -6 $TABLE | tail -1 | cut -f2 | awk '{print 1000000/$0}'`
+;;
+uniquexmirna)
+	NormScale=`head -7 $TABLE | tail -1 | cut -f2 | awk '{print 1000000/$0}'`
+;;
+*)
+	echo2 "unrecognized normalization option: $NORMMETHOD; using the default method" "warning"
+	NormScale=`head -6 $TABLE | tail -1 | cut -f2 | awk '{print 1000000/$0}'`
+;;
+esac
+echo $NormScale > .depth
+
 ####################################
 # Intersecting with GENOME Feature #
 ####################################
@@ -354,26 +398,24 @@ bash $DEBUG piper_intersect_smallRNA_with_genomic_features.sh \
 	${GENOME_ALLMAP_BED2} \
 	$SUMMARY_DIR/`basename ${GENOME_ALLMAP_BED2%.bed2}` \
 	$CPU \
-	$INTERSECT_DIR && \
+	$INTERSECT_DIR \
+	1>&2 && \
 	touch .${JOBUID}.status.${STEP}.intersect_with_genomic_features
 STEP=$((STEP+1))
 
 #######################
 # Making BigWig Files #
 #######################
-# normalization factor, currently using unique genome mappers
-NormScale=`echo ${totalMapCount} | awk '{printf "%f",1000000.0/$1}'`
-echo $NormScale > .depth
 # make BW files
 echo2 "Making bigWig files for genome browser"
-[ ! -f .${JOBUID}.status.${STEP}.make_bigWig ] && \
+[ ! -f .${JOBUID}.status.${STEP}.make_bigWig_normalized_by_$NORMMETHOD ] && \
 	bash $DEBUG piper_smallRNA_bed2_to_bw.sh \
 		${GENOME_UNIQUEMAP_HAIRPIN_BED2} \
 		${CHROM} \
 		${NormScale} \
 		$CPU \
 		$BW_OUTDIR && \
-	touch .${JOBUID}.status.${STEP}.make_bigWig
+	touch .${JOBUID}.status.${STEP}.make_bigWig_normalized_by_$NORMMETHOD
 STEP=$((STEP+1))
 
 ##############################################
@@ -382,7 +424,7 @@ STEP=$((STEP+1))
 echo2 "Direct mapping to transposon and piRNA cluster"
 . $COMMON_FOLDER/genomic_features
 INSERT=`basename $INPUT`
-[ ! -f .${JOBUID}.status.${STEP}.direct_mapping ] && \
+[ ! -f .${JOBUID}.status.${STEP}.direct_mapping_normalized_by_$NORMMETHOD ] && \
 for t in "${DIRECT_MAPPING[@]}"; do \
 	bowtie -r -v ${transposon_MM} -a --best --strata -p $CPU \
 		-S \
@@ -394,13 +436,13 @@ for t in "${DIRECT_MAPPING[@]}"; do \
 	bedtools_piper bamtobed -i - > $TRN_OUTDIR/${INSERT%.insert}.${t}.a${transposon_MM}.insert.bed && \
 	piper_insertBed_to_bed2 $INPUT $TRN_OUTDIR/${INSERT%.insert}.${t}.a${transposon_MM}.insert.bed > $TRN_OUTDIR/${INSERT%.insert}.${t}.a${transposon_MM}.insert.bed2 && \
 	piper_bed2Summary -5 -i $TRN_OUTDIR/${INSERT%.insert}.${t}.a${transposon_MM}.insert.bed2 -c $COMMON_FOLDER/BowtieIndex/${t}.sizes -o $TRN_OUTDIR/${INSERT%.insert}.${t}.a${transposon_MM}.summary && \
-	Rscript --slave ${PIPELINE_DIRECTORY}/bin/piper_draw_summary.R $TRN_OUTDIR/${INSERT%.insert}.${t}.a${transposon_MM}.summary $TRN_OUTDIR/${INSERT%.insert}.${t}.a${transposon_MM} $CPU $NormScale 1>&2 && \
-	PDFs=$TRN_OUTDIR/${INSERT%.insert}.${t}.a${transposon_MM}*pdf && \
+	Rscript --slave ${PIPELINE_DIRECTORY}/bin/piper_draw_summary.R $TRN_OUTDIR/${INSERT%.insert}.${t}.a${transposon_MM}.summary $TRN_OUTDIR/${INSERT%.insert}.${t}.a${transposon_MM}.normalized_by_$NORMMETHOD $CPU $NormScale 1>&2 && \
+	PDFs=$TRN_OUTDIR/${INSERT%.insert}.${t}.a${transposon_MM}.normalized_by_${NORMMETHOD}*pdf && \
 	gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=$PDF_DIR/${INSERT%.insert}.${t}.pdf ${PDFs} && \
 	rm -rf $PDFs && \
 	rm -rf $TRN_OUTDIR/${INSERT%.insert}.${t}.a${transposon_MM}.insert.bed
 done && \
-touch .${JOBUID}.status.${STEP}.direct_mapping
+touch .${JOBUID}.status.${STEP}.direct_mapping_normalized_by_$NORMMETHOD
 STEP=$((STEP+1))
 
 #####################################################

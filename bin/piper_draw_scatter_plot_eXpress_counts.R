@@ -30,8 +30,8 @@ lim = roundUp (10*log2(max (sample$eff_counts.x, sample$eff_counts.y)))/10
 g = plot ( log2(sample$eff_counts.x), log2(sample$eff_counts.y), 
 		xlim=c(-lim, lim), 
 		ylim=c(-lim, lim), 
-		xlab=paste(name1,"count,log2"), 
-		ylab=paste(name2,"count,log2"), 
+		xlab=paste(name1,"normalized count,log2"), 
+		ylab=paste(name2,"normalized count,log2"), 
 		main = main, 
 		pch=21, col="white", bg=color, cex=size, xaxt='n', yaxt='n', frame=F ) + 
 abline (0,1, lty=2) + 

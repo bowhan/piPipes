@@ -42,6 +42,7 @@ draw_smRNA_lendis = function (file, main) {
 	lendis[,3]=lendis[,3]*-1
 	ru=roundUp( (max(lendis$V2)-min(lendis$V3) )/20 ) 
 	gg = ggplot (lendis, aes (V1,V2)) + 
+			theme_minimal() + 
 			geom_bar (stat="identity", colour="blue", fill="blue") +
 			geom_bar (aes(V1,V3), stat="identity", colour="red", fill="red") +
 			scale_x_discrete (breaks=c(minRow:maxRow)) + 
@@ -61,6 +62,7 @@ draw_ping_pong = function (ppbedfile, main) {
 	maxRow = max(ppbed$V1)
 	zScore=(ppbed[10,2]-mean(ppbed[-10,2]))/sd(ppbed[-10,2])
 	gg = ggplot (ppbed, aes (V1,V2)) + 
+			theme_minimal() + 
 			geom_bar (stat="identity") + 
 			scale_x_discrete (breaks=c(minRow:maxRow)) + 
 			coord_cartesian(xlim = c(minRow, maxRow)) + 
@@ -85,6 +87,7 @@ draw_smRNA_percentage = function (file, ext, main) {
 	tm2 = tm[with (tm, order (tm$variable)),]
 	tm2$pos = factor (tm2$pos, levels=seq (-1*ext,ext,1))
 	gg = ggplot(tm2,aes(x = pos, y = value, fill=variable)) + 
+			theme_minimal() + 
 			geom_bar(position = "fill", stat="identity") + 
 			scale_y_continuous(labels = percent_format()) + 
 			labs(title=paste("Nucleotide Percentage", main, sep="\t")) + 
@@ -92,7 +95,7 @@ draw_smRNA_percentage = function (file, ext, main) {
 			ylab("Percentage of Nucleotides") +
 			scale_fill_manual(values=c("red","darkgreen", "yellow","blue")) +
 			theme(title=element_text(size=6, colour='black',family="Helvetica"), plot.margin=unit(c(1,1,0,0),"lines"), legend.margin=unit(0,"lines"), panel.margin=unit(0, "lines"), axis.ticks.margin=unit(0,"lines"), legend.key.size=unit(0.5,"lines")) +
-			theme(legend.title=element_blank(), legend.position = "bottom", axis.text=element_text (size=5,family="Helvetica"), axis.text.x=element_text (angle=25, size=5,family="Helvetica"), legend.text=element_text(size=5,family="Helvetica"), axis.title=element_text(size=6), axis.ticks = element_line(size = 0.5))
+			theme(legend.title=element_blank(), legend.position = "bottom", axis.text=element_text (size=4,family="Helvetica"), axis.text.x=element_text (angle=25, size=5,family="Helvetica"), legend.text=element_text(size=5,family="Helvetica"), axis.title=element_text(size=6), axis.ticks = element_line(size = 0.5))
 	return (gg)
 }
 
@@ -106,7 +109,7 @@ draw_summary = function (p, pdfPrefix, normScale) {
 	points (p$V2, p$V3, col="blue", type="s")
 	points (p$V2, p$V4, col="red", type="s")
 	abline (h=0, lty=2)
-	invisible(dev.off())
+	gc = dev.off()
 }
 
 # function to draw balloon plot
@@ -151,14 +154,14 @@ draw_microRNA_balloon = function (t1, hetName, mutName, outDir) {
 
 # function to write aggregate plot
 draw_agg = function (t1, name) {
-	colors = c("dodgerblue3","darkorchid4","darkgoldenrod4","cyan4","darkolivegreen4","deeppink4","thistle4","yellow4")
+	colors = c("dodgerblue3","darkorchid4","tomato1","cyan4","darkolivegreen4","deeppink4","thistle4","yellow4")
 	plots = read.table(t1, F, sep="\t")
 	colnames(plots) = c('Feature','ChIP','Position','Signal')
 	ggplot(plots, aes(x=Position,y=Signal,color=ChIP)) + 
-		geom_line(size=1.5) + 
+		geom_line( size=1 ) + 
 		theme_minimal() + 
-		scale_color_manual( values= colors[1:length(levels (plots$ChIP))]) + 
-		ylab(paste(name, "ChIP Signal"))
+		scale_color_manual(values= colors[1:length(levels (plots$ChIP))]) + 
+		ylab(paste(name, "ChIP-seq Signal"))
 }
 
 

@@ -93,6 +93,7 @@ export PDF_DIR=$OUTDIR/pdfs && mkdir -p $PDF_DIR
 BOWTIE2_GENOMIC_MAPPING_DIR=bowtie2_output && mkdir -p $BOWTIE2_GENOMIC_MAPPING_DIR
 BWA_GENOMIC_MAPPING_DIR=bwa_bcftools_output && mkdir -p $BWA_GENOMIC_MAPPING_DIR
 MRFAST_GENOMIC_MAPPING_DIR=mrFast_VariationHunter_output && mkdir -p $MRFAST_GENOMIC_MAPPING_DIR
+BREAKDANCER_DIR=break_dancer_out && mkdir -p $BREAKDANCER_DIR
 RETROSEQ=retroSeq_discovering && mkdir -p $RETROSEQ
 SUMMARY_DIR=summaries && mkdir -p $SUMMARY_DIR
 BW_OUTDIR=bigWig && mkdir -p $BW_OUTDIR
@@ -153,7 +154,7 @@ echo2 "Beginning running [${PACKAGE_NAME}] Genome-Seq pipeline version $GENOMESE
 ###########################
 echo2 "Determining the version of fastQ using SolexaQA"
 # determine version of fastq used, using a modified SolexaQA.pl
-PHRED_SCORE=`perl $PIPELINE_DIRECTORY/bin/SolexaQA.pl ${LEFT_FASTQ}`
+PHRED_SCORE=`perl $PIPELINE_DIRECTORY/bin/SolexaQA_piper.pl ${LEFT_FASTQ}`
 case ${PHRED_SCORE} in
 solexa)		bowtie2PhredOption="--solexa-quals" ;; # Solexa+64, raw reads typically (-5, 40)
 illumina)	bowtie2PhredOption="--phred64" ;; # Illumina 1.5+ Phred+64,  raw reads typically (3, 40)
@@ -164,25 +165,25 @@ esac
 #####################################
 # Align reads to genome: 1. Bowtie2 #
 #####################################
-# TODO: is this necessary?
-echo2 "Mapping to genome ${GENOME} with Bowtie2"
-[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_bowtie2 ] && \
-bowtie2 -x genome \
-	-1 ${LEFT_FASTQ} \
-	-2 ${RIGHT_FASTQ} \
-	-q \
-	$bowtie2PhredOption \
-	--very-sensitive-local \
-	-X 800 \
-	--no-mixed \
-	-p $CPU \
-	2> ${BOWTIE2_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.b2.log | \
-	samtools view -uS -f0x2 - > ${BOWTIE2_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.b2.bam && \
-	samtools sort -@ $CPU ${BOWTIE2_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.b2.bam ${BOWTIE2_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.b2.sorted && \
-	samtools index ${BOWTIE2_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.b2.sorted.bam && \
-	rm -rf ${BOWTIE2_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.b2.bam && \
-	touch .${JOBUID}.status.${STEP}.genome_mapping_bowtie2
-STEP=$((STEP+1))
+# so far, no tool uses bowtie2 output
+# echo2 "Mapping to genome ${GENOME} with Bowtie2"
+# [ ! -f .${JOBUID}.status.${STEP}.genome_mapping_bowtie2 ] && \
+# bowtie2 -x genome \
+# 	-1 ${LEFT_FASTQ} \
+# 	-2 ${RIGHT_FASTQ} \
+# 	-q \
+# 	$bowtie2PhredOption \
+# 	--very-sensitive-local \
+# 	-X 800 \
+# 	--no-mixed \
+# 	-p $CPU \
+# 	2> ${BOWTIE2_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.b2.log | \
+# 	samtools view -uS -f0x2 - > ${BOWTIE2_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.b2.bam && \
+# 	samtools sort -@ $CPU ${BOWTIE2_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.b2.bam ${BOWTIE2_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.b2.sorted && \
+# 	samtools index ${BOWTIE2_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.b2.sorted.bam && \
+# 	rm -rf ${BOWTIE2_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.b2.bam && \
+# 	touch .${JOBUID}.status.${STEP}.genome_mapping_bowtie2
+# STEP=$((STEP+1))
 
 #################################
 # Align reads to genome: 2. BWA #
@@ -202,9 +203,25 @@ echo2 "Mapping to genome ${GENOME} with BWA and calling varation by bcftools"
 	samtools mpileup -uf $GENOME_FA ${BWA_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.bwa.sorted.bam | \
 	bcftools view -bvcg - | tee ${BWA_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.bwa.var.raw.bcf | \
 	bcftools view - | \
-	vcfutils.pl varFilter -D $VCFFILTER_DEPTH > ${BWA_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.bwa.var.flt.vcf && \
+	perl $PIPELINE_DIRECTORY/bin/vcfutils.pl varFilter -D $VCFFILTER_DEPTH > ${BWA_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.bwa.var.flt.vcf && \
 	rm -rf ${BWA_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.bwa.bam && \
 	touch .${JOBUID}.status.${STEP}.genome_mapping_bwa
+STEP=$((STEP+1))
+
+#################################
+# Discovering SV by BreakDancer #
+#################################
+echo2 "Discovering Variation by BreakDancer using BWA output" 
+[ ! -f .${JOBUID}.status.${STEP}.BreakDancer ] && \
+	perl $PIPELINE_DIRECTORY/bin/bam2cfg_piper.pl \
+		${BWA_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.bwa.sorted.bam \
+		> $BREAKDANCER_DIR/config && \
+	breakdancer-max \
+		-d $BREAKDANCER_DIR/${PREFIX}.breakdancer \
+		-g $BREAKDANCER_DIR/${PREFIX}.breakdancer.SV.bed \
+		$BREAKDANCER_DIR/config \
+		2> $BREAKDANCER_DIR/${PREFIX}.breakdancer.log && \
+touch .${JOBUID}.status.${STEP}.BreakDancer
 STEP=$((STEP+1))
 
 ####################################
@@ -213,14 +230,14 @@ STEP=$((STEP+1))
 echo2 "Discovering deletions by retroSeq using BWA output"
 [ ! -f .${JOBUID}.status.${STEP}.retroSeq ] && \
 	echo $COMMON_FOLDER/UCSC.RepeatMask.bed > $RETROSEQ/exd.file && \
-	retroseq.pl -discover \
+	perl $PIPELINE_DIRECTORY/bin/retroseq.pl -discover \
 		-bam  ${BWA_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.bwa.sorted.bam \
 		-eref $COMMON_FOLDER/${GENOME}.repBase.eref \
 		-exd  $RETROSEQ/exd.file \
 		-output $RETROSEQ/${PREFIX}.${GENOME}.bwa.sorted.retroSeq \
 		-align \
 		1>&2 2> $RETROSEQ/${PREFIX}.retroSeq.discover.log && \
-	retroseq.pl -call \
+	perl $PIPELINE_DIRECTORY/bin/retroseq.pl -call \
 		-ref  $GENOME_FA \
 		-bam  ${BWA_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.bwa.sorted.bam \
 		-input $RETROSEQ/${PREFIX}.${GENOME}.bwa.sorted.retroSeq* \
@@ -251,12 +268,12 @@ STEP=$((STEP+1))
 # Variation calling by VariationHunter #
 ########################################
 echo2 "Calling variation by VariationHunter"
-[ ! -f .${JOBUID}.status.${STEP}.VariationHunber -a -f .${JOBUID}.status.${STEP}.genome_mapping_mrFast ] && \
+[ ! -f .${JOBUID}.status.${STEP}.VariationHunter -a -f .${JOBUID}.status.${STEP}.genome_mapping_mrFast ] && \
 	echo 1 > $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.sample.lib && \
 	echo -e "${PREFIX}\t${PREFIX}\t${mrFast_min}\t${mrFast_max}\t${READ_LEN}" > $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.sample.lib && \
 	VH -c $CHROM -i $PIPELINE_DIRECTORY/bin/VH_initInfo -l $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.sample.lib -r $COMMON_FOLDER/UCSC.RepeatMask.Satellite.bed -g $COMMON_FOLDER/${GENOME}.gap.bed -o $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.VHcluster.out -t $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.VHcluster.sample.name -x 500 -p 0.001 1>&2 2> $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.VHcluster.log       && \
 	setCover -l $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.sample.lib -r $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.VHcluster.sample.name -c $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.VHcluster.out -t 1000000 -o $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.VHcluster.sample.Out.SV 1>&2 2> $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.setCover.log && \
-	touch .${JOBUID}.status.${STEP}.VariationHunber
+	touch .${JOBUID}.status.${STEP}.VariationHunter
 STEP=$((STEP+1))
 
 #############

@@ -167,7 +167,7 @@ echo2 "Beginning running [${PACKAGE_NAME}] ChIP-Seq pipeline version $CHIPSEQ_VE
 ###########################
 echo2 "Determining the version of fastQ using SolexaQA"
 # determine version of fastq used, using a modified SolexaQA.pl
-PHRED_SCORE=`perl $PIPELINE_DIRECTORY/bin/SolexaQA.pl ${LEFT_IP_FASTQ}`
+PHRED_SCORE=`perl $PIPELINE_DIRECTORY/bin/SolexaQA_piper.pl ${LEFT_IP_FASTQ}`
 case ${PHRED_SCORE} in
 solexa)		bowtie2PhredOption="--solexa-quals" ;; # Solexa+64, raw reads typically (-5, 40)
 illumina)	bowtie2PhredOption="--phred64" ;; # Illumina 1.5+ Phred+64,  raw reads typically (3, 40)

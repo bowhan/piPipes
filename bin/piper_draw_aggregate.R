@@ -14,5 +14,5 @@ pkgTest ("RColorBrewer")
 argv  = commandArgs (TRUE)
 pdf (paste(argv[2], ".pdf", sep=''))
 draw_agg (argv[1], argv[3])
-invisible (dev.off () )
+g = dev.off () 
 

@@ -49,13 +49,12 @@ ${REQUIRED}[ required ]
 		 Use "install" to install new genome
 ${OPTIONAL}[ optional ]
 	-N      Normalization method, choose from " unique | uniqueXmiRNA | all | allXmiRNA | miRNA | siRNA"
-		 totalUnique:	use genomic unique mappers, including microRNAs. <default>.
-		 totalUniqueXmiRNA:	use all unique genomic mappers, excluding microRNAs.
-		 totalAll:	use genomic all mappers, including microRNAs.
-		 totalAllXmiRNA:	use genomic all mappers, excluding microRNAs. 
+		 unique:	use non-rRNA genomic unique mappers <default>.
+		 siRNA:	use cis-NATs and structural loci siRNA (transposon siRNAs are EXCLUDED because it might contain piRNA degradation fragments). normalized to: reads per millions of siRNA <for oxidized library for piRNA>.
+		 uniqueXmiRNA:	use non-rRNA genomic unique mappers excluding microRNAs.
+		 all:	use non-rRNA genomic all mappers including microRNAs.
+		 allXmiRNA:	use non-rRNA genomic all mappers excluding microRNAs.
 		 miRNA:	use microRNAs. normalized to: reads per millions of miRNA.
-		 siRNA:	use cis-NATs and structural loci siRNA (transposon siRNAs are EXCLUDED because it might contain piRNA degradation fragments). normalized to: reads per millions of siRNA.
-
 	-c      Number of CPUs to use, default: 8
 	-o      Output directory, default: current directory $PWD
 	-A      Name to use for Sample A, default: using the basename of -a
@@ -144,6 +143,7 @@ export BOWTIE_INDEXES=$COMMON_FOLDER/BowtieIndex
 # reading the information to intersect with, as well as some other annotation files
 . $COMMON_FOLDER/genomic_features 
 # normalization method
+# unique | uniqueXmiRNA | all | allXmiRNA | miRNA | siRNA
 case "$NORMMETHOD" in
 unique)
 	SAMPLE_A_NORMFACTOR=`head -6 $SAMPLE_A_DIR/*basic_stats | tail -1 | cut -f2 | awk '{print 1000000/$0}'`
@@ -168,6 +168,11 @@ mirna)
 sirna)
 	SAMPLE_A_NORMFACTOR=`grep -P "structural_loci|cisNATs" $SAMPLE_A_DIR/summaries/*siRNA.sum | awk '{a+=$9}END{print 1000000/a}'`
 	SAMPLE_B_NORMFACTOR=`grep -P "structural_loci|cisNATs" $SAMPLE_B_DIR/summaries/*siRNA.sum | awk '{a+=$9}END{print 1000000/a}'`
+;;
+*)
+	echo2 "unrecognized normalization option: $NORMMETHOD; using the default method" "warning"
+	SAMPLE_A_NORMFACTOR=`head -6 $SAMPLE_A_DIR/*basic_stats | tail -1 | cut -f2 | awk '{print 1000000/$0}'`
+	SAMPLE_B_NORMFACTOR=`head -6 $SAMPLE_B_DIR/*basic_stats | tail -1 | cut -f2 | awk '{print 1000000/$0}'`
 ;;
 esac
 
