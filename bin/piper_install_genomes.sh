@@ -88,11 +88,31 @@ checkBin "genePredToBed"
 checkBin "bedtools_piper"
 checkBin "mrfast"
 
+######################################
+# reading the genome record of piper #
+######################################
+echo2 "Reading iGenome URL"
+. $PIPELINE_DIRECTORY/common/iGenome_URL.txt
+[ -z "${!GENOME}" -a -z "$LINK" ] && echo2 "It appeared that $GENOME is not in piper's record. Please provide the link to download the iGenome file with -l options" "error"
+echo2 "$GENOME is in the record!"
+
+##############################################
+# instructions on getting repBase annotation #
+##############################################
+[ ! -f "$PIPELINE_DIRECTORY/common/$GENOME/${GENOME}.repBase.fa" ] && \
+	echo2 "It appears that piper does not have the transposon consensus sequence ready for this genome.\nPlease provide this information in fasta format and name it \n\n\t$PIPELINE_DIRECTORY/common/$GENOME/${GENOME}.repBase.fa\n\n*For your convinience, the fasta of all repBase record can be found under the \"common\" folder.\nDo you still wish to proceed? [y/n]" "warning" && \
+	read PROCEED && \
+	case $PROCEED in 
+		N|n|no) exit ;;
+		Y|y|yes) ;;
+		*) echo2 "unreognized answer" "error" ;;
+	esac
 #################################################
 # to define the length range of siRNA and piRNA #
 #################################################
+echo2 "Reading length definition from the user"
 # reading variables from the user
-echo2 "Please input parameters for small RNA seq \n( If you have installed this genome before and don't want to change the parameters, please press ENTER to skip )" "warning"
+echo2 "Please input parameters for small RNA seq \n( If you have installed this genome before and don't want to change the parameters, please press ENTER to skip )"
 echo2 "How many mismatches should be allowed for rRNA mapping by bowtie?"
 read rRNA_MM
 [ ! -z $rRNA_MM ] && echo "export rRNA_MM=$rRNA_MM" > $PIPELINE_DIRECTORY/common/$GENOME/variables
@@ -124,21 +144,17 @@ echo2 "------------------------------------------"
 # beginning running pipeline #
 ##############################
 echo2 "Begining installing the genome $GENOME"
+eval LINK='$'`echo $GENOME`
 
-case $GENOME in
-hg19)	
-	#[ ! -z $LINK ] && LINK='ftp://igenome:G3nom3s4u@ussd-ftp.illumina.com/Homo_sapiens/UCSC/hg19/Homo_sapiens_UCSC_hg19.tar.gz'  ;;
-	[ -z $LINK ] && LINK='http://zlab.umassmed.edu/~hanb/Homo_sapiens_UCSC_hg19.tar.gz';;
-mm9)	
-	#[ ! -z $LINK ] && LINK='ftp://igenome:G3nom3s4u@ussd-ftp.illumina.com/Mus_musculus/UCSC/mm9/Mus_musculus_UCSC_mm9.tar.gz' ;;
-	[ -z $LINK ] && LINK='http://zlab.umassmed.edu/~hanb/Mus_musculus_UCSC_mm9.tar.gz' ;;
-dm3)	
-	#[ ! -z $LINK ] && LINK='ftp://igenome:G3nom3s4u@ussd-ftp.illumina.com/Drosophila_melanogaster/UCSC/dm3/Drosophila_melanogaster_UCSC_dm3.tar.gz' ;;
-	[ -z $LINK ] && LINK='http://zlab.umassmed.edu/~hanb/Drosophila_melanogaster_UCSC_dm3.tar.gz' ;;
-*)	
-	[ -z $LINK ] && echo2 "Sorry, this genome is not currently in ${PACKAGE_NAME}.\nPlease provide the links to download iGenome with -l option." "error"
-;;
-esac
+# warning: the following piece of code is only for developping purpose
+if [ `hostname` == "hpcc01.umasshpcc.edu" -o `hostname` == "ghpcc06" ]; then
+	case $GENOME in
+		hg19)	LINK='http://zlab.umassmed.edu/~hanb/Homo_sapiens_UCSC_hg19.tar.gz';;
+		mm9)	[ -z $LINK ] && LINK='http://zlab.umassmed.edu/~hanb/Mus_musculus_UCSC_mm9.tar.gz' ;;
+		dm3)	[ -z $LINK ] && LINK='http://zlab.umassmed.edu/~hanb/Drosophila_melanogaster_UCSC_dm3.tar.gz' ;;
+		*)		[ -z $LINK ] && echo2 "Sorry, this genome is not currently in ${PACKAGE_NAME}.\nPlease provide the links to download iGenome with -l option." "error";;
+	esac
+fi
 
 #######################################
 # install R packages if not available #

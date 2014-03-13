@@ -50,11 +50,11 @@ ${REQUIRED}[ required ]
 ${OPTIONAL}[ optional ]
 	-N      Normalization method, choose from " unique | uniqueXmiRNA | all | allXmiRNA | miRNA | siRNA"
 		 unique:	use non-rRNA genomic unique mappers <default>.
-		 siRNA:	use cis-NATs and structural loci siRNA (transposon siRNAs are EXCLUDED because it might contain piRNA degradation fragments). normalized to: reads per millions of siRNA <for oxidized library for piRNA>.
-		 uniqueXmiRNA:	use non-rRNA genomic unique mappers excluding microRNAs.
+		 siRNA:	(only for dm3) use cis-NATs and structural loci siRNA (transposon siRNAs are EXCLUDED because it might contain piRNA degradation fragments). normalized to: reads per millions of siRNA <for oxidized library in fly>.
+		 uniqueXmiRNA:	use non-rRNA genomic unique mappers excluding microRNAs <for oxidized library in general>.
 		 all:	use non-rRNA genomic all mappers including microRNAs.
 		 allXmiRNA:	use non-rRNA genomic all mappers excluding microRNAs.
-		 miRNA:	use microRNAs. normalized to: reads per millions of miRNA.
+		 miRNA:	use microRNAs. normalized to: reads per millions of miRNA <for unoxidized library that can assume no change on miRNAs>.
 	-c      Number of CPUs to use, default: 8
 	-o      Output directory, default: current directory $PWD
 	-A      Name to use for Sample A, default: using the basename of -a
@@ -166,8 +166,18 @@ mirna)
 	SAMPLE_B_NORMFACTOR=`head -3 $SAMPLE_B_DIR/*basic_stats | tail -1 | cut -f2 | awk '{print 1000000/$0}'`
 ;;
 sirna)
-	SAMPLE_A_NORMFACTOR=`grep -P "structural_loci|cisNATs" $SAMPLE_A_DIR/summaries/*siRNA.sum | awk '{a+=$9}END{print 1000000/a}'`
-	SAMPLE_B_NORMFACTOR=`grep -P "structural_loci|cisNATs" $SAMPLE_B_DIR/summaries/*siRNA.sum | awk '{a+=$9}END{print 1000000/a}'`
+	case $GENOME in
+	dm3)
+		SAMPLE_A_NORMFACTOR=`grep -P "structural_loci|cisNATs" $SAMPLE_A_DIR/summaries/*siRNA.sum | awk '{a+=$9}END{print 1000000/a}'`
+		SAMPLE_B_NORMFACTOR=`grep -P "structural_loci|cisNATs" $SAMPLE_B_DIR/summaries/*siRNA.sum | awk '{a+=$9}END{print 1000000/a}'`
+	;;
+	*)
+		echo2 "The annotation for siRNA in ${GENOME} is poor. Please choose a different normalization method. \nIf unox library, choose \"miRNA\". If ox, choose \"uniquexmirna\"" "error"
+		# SAMPLE_A_NORMFACTOR=`grep -P "refSeq_GENE" $SAMPLE_A_DIR/summaries/*siRNA.sum | awk '{a+=$9}END{print 1000000/# a}'`
+		# SAMPLE_B_NORMFACTOR=`grep -P "refSeq_GENE" $SAMPLE_B_DIR/summaries/*siRNA.sum | awk '{a+=$9}END{print 1000000/a}'`	
+	;;
+	esac
+	
 ;;
 *)
 	echo2 "unrecognized normalization option: $NORMMETHOD; using the default method" "warning"

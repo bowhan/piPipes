@@ -1,4 +1,4 @@
-# small RNA pipeline from piper: https://github.com/bowhan/piper.git
+# degradome pipeline from piper: https://github.com/bowhan/piper.git
 # piper: https://github.com/bowhan/piper.git
 # An integrated pipeline for small RNA analysis 
 # from small RNA Seq, RNASeq, CAGE/Degradome, ChIP-Seq and Genomic-Seq
@@ -28,10 +28,21 @@ pdf (paste (argv[1], ".pdf", sep=''), onefile=TRUE, width=8.5, height=11, title=
 
 deg_5end_per_gg = draw_smRNA_percentage (deg_5end_per, ext_len, "degradome 5' end ext")
 
-grid.arrange(
+if (length(argv)==4) {
+	deg_smRNA_pp = total_ping_pong_gg = draw_ping_pong (argv[4], "smRNA-degradome")
+	grid.arrange(
+		deg_5end_per_gg,
+		deg_smRNA_pp,
+		ncol=1,
+		as.table=TRUE, 
+		main = textGrob(main, vjust = 1, gp = gpar(fontface = "bold", cex = 1))
+	)
+} else {
+	grid.arrange(
 		deg_5end_per_gg,
 		ncol=1,
 		as.table=TRUE, 
 		main = textGrob(main, vjust = 1, gp = gpar(fontface = "bold", cex = 1))
-)
+	)
+}
 gc = dev.off()

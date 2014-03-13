@@ -189,24 +189,24 @@ nonrRNAReads=`cat .${JOBUID}.nonrRNAReads`
 #########################
 # miRNA hairpin Mapping #
 #########################
-echo2 "Mapping to microRNA Hairpin, with $hairpin_MM mismatch(es) allowed"
+echo2 "Mapping to microRNA Hairpin, with $hairpin_MM mismatch(es) allowed; only keep unique mappers"
 x_rRNA_HAIRPIN_INSERT=$READS_DIR/${PREFIX}.x_rRNA.hairpin.insert # insert file storing reads that nonmappable to rRNA and mappable to hairpin
 x_rRNA_x_hairpin_INSERT=$READS_DIR/${PREFIX}.x_rRNA.x_hairpin.insert # reads that nonmappable to rRNA or hairpin
-x_rRNA_HAIRPIN_BED2=$MIRNA_DIR/${PREFIX}.x_rRNA.hairpin.v${hairpin_MM}a.bed2 # bed2 format with hairpin mapper, with the hairpin as reference
-x_rRNA_HAIRPIN_BED2_LENDIS=$MIRNA_DIR/${PREFIX}.x_rRNA.hairpin.v${hairpin_MM}a.lendis # length distribution for hairpin mapper
+x_rRNA_HAIRPIN_BED2=$MIRNA_DIR/${PREFIX}.x_rRNA.hairpin.v${hairpin_MM}m1.bed2 # bed2 format with hairpin mapper, with the hairpin as reference
+x_rRNA_HAIRPIN_BED2_LENDIS=$MIRNA_DIR/${PREFIX}.x_rRNA.hairpin.v${hairpin_MM}m1.lendis # length distribution for hairpin mapper
 x_rRNA_HAIRPIN_GENOME_BED2=$GENOMIC_MAPPING_DIR/${PREFIX}.x_rRNA.hairpin.${GENOME}v${genome_MM}a.bed2 # bed2 format with hairpin mapper, with genome as reference
 x_rRNA_HAIRPIN_GENOME_LOG=$GENOMIC_MAPPING_DIR/${PREFIX}.x_rRNA.hairpin.${GENOME}v${genome_MM}a.log # log file for hairpin mapping
 [ ! -f .${JOBUID}.status.${STEP}.hairpin_mapping ] && \
-	bowtie -r -v $hairpin_MM -a --best --strata -p $CPU -S \
+	bowtie -r -v $hairpin_MM -m 1 --best --strata -p $CPU -S \
 		--al $x_rRNA_HAIRPIN_INSERT \
 		--un $x_rRNA_x_hairpin_INSERT \
 		hairpin \
 		$x_rRNA_INSERT \
 		2> /dev/null  | \
 	samtools view -bSF 0x4 - 2>/dev/null | \
-	bedtools_piper bamtobed -i - | awk '$6=="+"' > ${PREFIX}.x_rRNA.hairpin.v${hairpin_MM}a.bed && \
-	piper_insertBed_to_bed2 $x_rRNA_INSERT ${PREFIX}.x_rRNA.hairpin.v${hairpin_MM}a.bed > $x_rRNA_HAIRPIN_BED2 && \
-	rm -rf ${PREFIX}.x_rRNA.hairpin.v${hairpin_MM}a.bed && \
+	bedtools_piper bamtobed -i - | awk '$6=="+"' > ${PREFIX}.x_rRNA.hairpin.v${hairpin_MM}m1.bed && \
+	piper_insertBed_to_bed2 $x_rRNA_INSERT ${PREFIX}.x_rRNA.hairpin.v${hairpin_MM}m1.bed > $x_rRNA_HAIRPIN_BED2 && \
+	rm -rf ${PREFIX}.x_rRNA.hairpin.v${hairpin_MM}m1.bed && \
 	bed2lendis $x_rRNA_HAIRPIN_BED2 > $x_rRNA_HAIRPIN_BED2_LENDIS && \
 	bowtie -r -v $genome_MM -a --best --strata -p $CPU \
 		-S \
@@ -450,11 +450,32 @@ STEP=$((STEP+1))
 #####################################################
 # for accurate quantification, we map to the index of gene+cluster+repBase. 
 echo2 "Quantification by direct mapping and eXpress"
+[ ! -f .${JOBUID}.status.${STEP}.direct_mapping ] && \
+awk '{for (j=0;j<$2;++j) print $1}' $x_rRNA_x_hairpin_INSERT | \
+bowtie \
+	-r \
+	-v ${transposon_MM} \
+	-a --best --strata \
+	-p $CPU \
+	-S \
+	gene+cluster+repBase \
+	- 2> $EXPRESS_DIR/${PREFIX}.bowtie.gene+cluster+repBase.bowtie.log | \
+	samtools view -bS - > \
+	$EXPRESS_DIR/${PREFIX}.bowtie.gene+cluster+repBase.bam && \
+touch .${JOBUID}.status.${STEP}.direct_mapping
 [ ! -f .${JOBUID}.status.${STEP}.quantification_by_eXpress ] && \
-	awk '{for (j=0;j<$2;++j) print $1}' $x_rRNA_x_hairpin_INSERT | \
-	bowtie -r -v ${transposon_MM} -a --best --strata -p $CPU -S gene+cluster+repBase /dev/stdin | \
-	express -o $EXPRESS_DIR --no-update-check $COMMON_FOLDER/${GENOME}.gene+cluster+repBase.fa 1>&2 2> $EXPRESS_DIR/${PREFIX}.eXpress.log && \
-	touch .${JOBUID}.status.${STEP}.quantification_by_eXpress
+express \
+	-B 21 \
+	-m $(( (siRNA + piRNA_top)/2 )) \
+	-s $(( (piRNA_top - 18)/2 )) \
+	--output-align-prob \
+	-o $EXPRESS_DIR \
+	--no-update-check \
+	--calc-covar \
+	$COMMON_FOLDER/${GENOME}.gene+cluster+repBase.fa \
+	$EXPRESS_DIR/${PREFIX}.bowtie.gene+cluster+repBase.bam \
+	1>&2 2> $EXPRESS_DIR/${PREFIX}.eXpress.log && \
+touch .${JOBUID}.status.${STEP}.quantification_by_eXpress
 STEP=$((STEP+1))
 
 ################

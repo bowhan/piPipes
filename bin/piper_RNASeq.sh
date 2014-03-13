@@ -349,8 +349,21 @@ bowtie2 -x gene+cluster+repBase \
 	--quiet \
 	-p $CPU \
 	2> ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.log | \
-	express -o $DIRECTMAPPING_DIR --no-update-check --library-size ${MapMass%.*} $COMMON_FOLDER/${GENOME}.gene+cluster+repBase.fa 1>&2 2> $DIRECTMAPPING_DIR/${PREFIX}.gene+cluster+repBase.eXpress.log && \
-	touch .${JOBUID}.status.${STEP}.direct_mapping
+samtools view -bS - \
+	> ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.bam && \
+touch .${JOBUID}.status.${STEP}.direct_mapping
+[ ! -f .${JOBUID}.status.${STEP}.eXpress_quantification ] && \
+express \
+	-B 21 \
+	--output-align-prob \
+	--calc-covar \
+	-o $DIRECTMAPPING_DIR \
+	--no-update-check \
+	--library-size ${MapMass%.*} \
+	$COMMON_FOLDER/${GENOME}.gene+cluster+repBase.fa \
+	${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.bam \
+	1>&2 2> $DIRECTMAPPING_DIR/${PREFIX}.gene+cluster+repBase.eXpress.log && \
+touch .${JOBUID}.status.${STEP}.eXpress_quantification
 STEP=$((STEP+1))
 
 #############

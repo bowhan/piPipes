@@ -1,4 +1,4 @@
-#!/bin/bash
+
 # Degradome pipeline from piper: https://github.com/bowhan/piper.git
 # piper: https://github.com/bowhan/piper.git
 # An integrated pipeline for piRNA analysis 
@@ -34,7 +34,7 @@ print_header $SUMMARY
 para_file=$INTERSECT_OUTDIR/${SEED}.intersect.para
 for t in ${TARGETS[@]}
 do \
-	echo "bash $DEBUG piper_degradome_intersect.sh $INTERSECT_OUTDIR/${ALL_BED}  ${t} ${!t} $INTERSECT_OUTDIR/.stats" >> $para_file
+	echo "bash $DEBUG piper_degradome_intersect.sh $INTERSECT_OUTDIR/${ALL_BED} ${t} ${!t} $INTERSECT_OUTDIR/.stats $SRA_UNIQ_BED2" >> $para_file
 done
 ParaFly -c $para_file -CPU $CPU -failed_cmds ${para_file}.failedCommands 1>&2 && \
 rm -rf ${para_file}*

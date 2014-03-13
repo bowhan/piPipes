@@ -37,15 +37,16 @@ function bed2lendis {
 export -f bed2lendis
 
 # merge bed2
+# the reason of +=$4 is because the same ($1,$2,$3) combination could appear more than once if mismatch is allowed
 function mergeMirBed2 {
 	awk -v d1=$3 -v d2=$4 'BEGIN{OFS="\t";} \
 		{ \
 			if (ARGIND==1) { \
 				mir[$1]=1; \
-				ct1[$1"_"$2"_"$3"_"$5]=$4; \
+				ct1[$1"_"$2"_"$3"_"$5]+=$4; \
 			} else { \
 				mir[$1]=1;\
-				ct2[$1"_"$2"_"$3"_"$5]=$4;\
+				ct2[$1"_"$2"_"$3"_"$5]+=$4;\
 			}\
 		}\
 		END {\

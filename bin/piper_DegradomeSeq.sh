@@ -28,7 +28,13 @@ Please email $CONTACT_EMAILS for any questions or bugs.
 Thank you for using it. 
 
 ${UNDERLINE}usage${RESET}:
-	piper deg -l left.fq -r right.fq -g dm3 -o output_directory [current directory] -c cpu [8] 
+	piper deg \ 
+		-l left.fq \ 
+		-r right.fq \ 
+		-g dm3 \ 
+		-s small_RNA_pipeline_output \ 
+		-o output_directory [current directory] \ 
+		-c cpu [8] 
 	
 Currently, only Paired-End input is accepted. And \1 should be in the same direction as the transcripts, 
 opposite to dUTR based RNASeq. 
@@ -43,6 +49,7 @@ ${REQUIRED}[ required ]
 		 Check $PIPELINE_DIRECTORY/common/genome_supported.txt for genome assemblies currently installed; 
 		 Use "install" to install new genome
 ${OPTIONAL}[ optional ]
+	-s      small RNA pipeline output; if this option is provided, the pipeline check the Ping-Pong signiture between the two libraries.
 	-o      Output directory, default: current directory $PWD
 	-c      Number of CPUs to use, default: 8
 	
@@ -54,7 +61,7 @@ echo -e "${COLOR_END}"
 #############################
 # ARGS reading and checking #
 #############################
-while getopts "hl:r:c:o:g:v" OPTION; do
+while getopts "hl:r:c:o:g:s:v" OPTION; do
 	case $OPTION in
 		h)	usage && exit 1 ;;
 		l)	LEFT_FASTQ=`readlink -f $OPTARG` ;;
@@ -63,6 +70,7 @@ while getopts "hl:r:c:o:g:v" OPTION; do
 		c)	CPU=$OPTARG ;;
 		g)	export GENOME=`echo ${OPTARG} | tr '[A-Z]' '[a-z]'` ;;
 		v)	echo2 "DEG_VERSION: v$DEG_VERSION" && exit 0 ;;
+		s)	export SRA_LIB_DIR=`readlink -f $OPTARG` ;;
 		*)	usage && exit 1 ;;
 	esac
 done
@@ -80,6 +88,16 @@ check_genome $GENOME
 cd ${OUTDIR} || (echo2 "Cannot access directory ${OUTDIR}... Exiting..." "error")
 touch .writting_permission && rm -rf .writting_permission || (echo2 "Cannot write in directory ${OUTDIR}... Exiting..." "error")
 
+if [ ! -z "$SRA_LIB_DIR" ]; then
+	[ ! -d "$SRA_LIB_DIR" ] && echo2 "directory $SRA_LIB_DIR not exist" "error"
+	ls -a $SRA_LIB_DIR | grep SMALLRNA_VERSION 1>/dev/null 2>/dev/null || echo2 "seems that the small RNA pipeline was not finished normally. Either re-run it or run this degradome pipeline without -s option" "error"
+	SRA_UNIQ_BED2=`find $SRA_LIB_DIR/genome_mapping -name "*unique.bed2"`
+	[ -z "$SRA_UNIQ_BED2" ] && echo2 "failed to locate the \"unique.bed2\" file in the $SRA_LIB_DIR/genome_mapping directory." "error"
+	[[ $SRA_UNIQ_BED2 = *$'\n'* ]] && echo2 "more than one files been found to match *unique.bed2. Seems that you have modified the folder $SRA_LIB_DIR/genome_mapping. Please remove additinal file and only keep one *unique.bed2" "error"
+	export SRA_UNIQ_BED2
+fi
+
+# degradome options
 SENSE_HTSEQ_OPT="yes"; 
 ANTISENSE_HTSEQ_OPT="reverse"; 
 	
@@ -321,8 +339,22 @@ bowtie2 -x gene+cluster+repBase \
 	--quiet \
 	-p $CPU \
 	2> ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.log | \
-	express -o $DIRECTMAPPING_DIR --no-update-check --library-size ${AllMapReads} $COMMON_FOLDER/${GENOME}.gene+cluster+repBase.fa 1>&2 2> $DIRECTMAPPING_DIR/${PREFIX}.gene+cluster+repBase.eXpress.log && \
-	touch .${JOBUID}.status.${STEP}.direct_mapping
+samtools view -bS - \
+	> ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.bam && \
+touch .${JOBUID}.status.${STEP}.direct_mapping
+
+[ ! -f .${JOBUID}.status.${STEP}.eXpress_quantification ] && \
+express \
+	-B 21 \
+	--output-align-prob \
+	--calc-covar \
+	-o $DIRECTMAPPING_DIR \
+	--no-update-check \
+	--library-size ${AllMapReads} \
+	$COMMON_FOLDER/${GENOME}.gene+cluster+repBase.fa \
+	${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.bam \
+	1>&2 2> $DIRECTMAPPING_DIR/${PREFIX}.gene+cluster+repBase.eXpress.log && \
+touch .${JOBUID}.status.${STEP}.eXpress_quantification
 STEP=$((STEP+1))
 
 #############
