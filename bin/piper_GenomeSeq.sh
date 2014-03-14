@@ -97,6 +97,7 @@ BREAKDANCER_DIR=break_dancer_out && mkdir -p $BREAKDANCER_DIR
 RETROSEQ=retroSeq_discovering && mkdir -p $RETROSEQ
 SUMMARY_DIR=summaries && mkdir -p $SUMMARY_DIR
 BW_OUTDIR=bigWig && mkdir -p $BW_OUTDIR
+TEMP_OUTDIR=TEMP_output && mkdir -p $TEMP_OUTDIR
 
 ########################
 # running binary check #
@@ -132,6 +133,8 @@ READ_LEN=`head -2 $LEFT_FASTQ | awk '{getline; printf "%d", length($1)}'`
 export COMMON_FOLDER=$PIPELINE_DIRECTORY/common/$GENOME
 # assign different values to the generalized variables (same name for different GENOMEs) according to which GENOME fed
 . $COMMON_FOLDER/variables
+# repBase fasta
+export REPBASE_FA=$COMMON_FOLDER/${GENOME}.repBase.fa
 # fasta file for the genome
 export GENOME_FA=$COMMON_FOLDER/${GENOME}.fa
 # chrom information of this GENOME
@@ -197,7 +200,7 @@ echo2 "Mapping to genome ${GENOME} with BWA and calling varation by bcftools"
 		$LEFT_FASTQ \
 		$RIGHT_FASTQ \
 		2> $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.${GENOME}.bwa.log | \
-	samtools view -uS -f0x2 - > ${BWA_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.bwa.bam && \
+	samtools view -uS - > ${BWA_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.bwa.bam && \
 	samtools sort -@ $CPU ${BWA_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.bwa.bam ${BWA_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.bwa.sorted && \
 	samtools index ${BWA_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.bwa.sorted.bam && \
 	samtools mpileup -uf $GENOME_FA ${BWA_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.bwa.sorted.bam | \
@@ -208,20 +211,24 @@ echo2 "Mapping to genome ${GENOME} with BWA and calling varation by bcftools"
 	touch .${JOBUID}.status.${STEP}.genome_mapping_bwa
 STEP=$((STEP+1))
 
-#################################
-# Discovering SV by BreakDancer #
-#################################
-echo2 "Discovering Variation by BreakDancer using BWA output" 
-[ ! -f .${JOBUID}.status.${STEP}.BreakDancer ] && \
-	perl $PIPELINE_DIRECTORY/bin/bam2cfg_piper.pl \
-		${BWA_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.bwa.sorted.bam \
-		> $BREAKDANCER_DIR/config && \
-	breakdancer-max \
-		-d $BREAKDANCER_DIR/${PREFIX}.breakdancer \
-		-g $BREAKDANCER_DIR/${PREFIX}.breakdancer.SV.bed \
-		$BREAKDANCER_DIR/config \
-		2> $BREAKDANCER_DIR/${PREFIX}.breakdancer.log && \
-touch .${JOBUID}.status.${STEP}.BreakDancer
+######################################
+# Discover transposon insert by TEMP #
+######################################
+echo2 "Discovering transposon insert by TEMP"
+[ ! -f .${JOBUID}.status.${STEP}.TEMP ] && \
+	if [ -s $REPBASE_FA ] ; then
+		bash $DEBUG $PIPELINE_DIRECTORY/bin/TEMP_Insertion.sh \
+			-i `readlink -f ${BWA_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.bwa.sorted.bam` \
+			-s $PIPELINE_DIRECTORY/bin \
+			-o `readlink -f $TEMP_OUTDIR` \
+			-r `readlink -f $REPBASE_FA` \
+			-t `readlink -f $COMMON_FOLDER/UCSC.RepeatMask.bed` \
+			-m 5 \
+			-c $CPU  && \
+		touch .${JOBUID}.status.${STEP}.TEMP
+	else
+		echo2 "cannot file repBase fasta file $REPBASE_FA. TEMP will not run" "warning"
+	fi
 STEP=$((STEP+1))
 
 ####################################
@@ -236,16 +243,15 @@ echo2 "Discovering deletions by retroSeq using BWA output"
 		-exd  $RETROSEQ/exd.file \
 		-output $RETROSEQ/${PREFIX}.${GENOME}.bwa.sorted.retroSeq \
 		-align \
-		1>&2 2> $RETROSEQ/${PREFIX}.retroSeq.discover.log && \
+		1>&2 && \
 	perl $PIPELINE_DIRECTORY/bin/retroseq.pl -call \
 		-ref  $GENOME_FA \
 		-bam  ${BWA_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.bwa.sorted.bam \
 		-input $RETROSEQ/${PREFIX}.${GENOME}.bwa.sorted.retroSeq* \
 		-output $RETROSEQ/${PREFIX}.${GENOME}.bwa.sorted.bam.vcf \
-		-filter $COMMON_FOLDER/UCSC.RepeatMask.bed \
 		-reads 10 \
 		-depth $VCFFILTER_DEPTH \
-		1>&2 2> $RETROSEQ/${PREFIX}.retroSeq.call.log && \
+		1>&2 && \
 	touch .${JOBUID}.status.${STEP}.retroSeq
 STEP=$((STEP+1))
 
@@ -268,12 +274,29 @@ STEP=$((STEP+1))
 # Variation calling by VariationHunter #
 ########################################
 echo2 "Calling variation by VariationHunter"
-[ ! -f .${JOBUID}.status.${STEP}.VariationHunter -a -f .${JOBUID}.status.${STEP}.genome_mapping_mrFast ] && \
+[ ! -f .${JOBUID}.status.${STEP}.VariationHunter ] && \
 	echo 1 > $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.sample.lib && \
 	echo -e "${PREFIX}\t${PREFIX}\t${mrFast_min}\t${mrFast_max}\t${READ_LEN}" > $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.sample.lib && \
-	VH -c $CHROM -i $PIPELINE_DIRECTORY/bin/VH_initInfo -l $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.sample.lib -r $COMMON_FOLDER/UCSC.RepeatMask.Satellite.bed -g $COMMON_FOLDER/${GENOME}.gap.bed -o $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.VHcluster.out -t $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.VHcluster.sample.name -x 500 -p 0.001 1>&2 2> $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.VHcluster.log       && \
-	setCover -l $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.sample.lib -r $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.VHcluster.sample.name -c $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.VHcluster.out -t 1000000 -o $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.VHcluster.sample.Out.SV 1>&2 2> $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.setCover.log && \
+	VH -c $CHROM -i $PIPELINE_DIRECTORY/bin/VH_initInfo -l $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.sample.lib -r $COMMON_FOLDER/UCSC.RepeatMask.Satellite.bed -g $COMMON_FOLDER/${GENOME}.gap.bed -o $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.VHcluster.out -t $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.VHcluster.sample.name -x 500 -p 0.001 1>&2 && \
+	multiInd_SetCover -l $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.sample.lib -r $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.VHcluster.sample.name -c $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.VHcluster.out -t 1000000 -o $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.VHcluster.sample.Out.SV 1>&2 && \
 	touch .${JOBUID}.status.${STEP}.VariationHunter
+STEP=$((STEP+1))
+
+#################################
+# Discovering SV by BreakDancer #
+#################################
+echo2 "Discovering Variation by BreakDancer using BWA output" 
+[ ! -f .${JOBUID}.status.${STEP}.BreakDancer ] && \
+	perl $PIPELINE_DIRECTORY/bin/bam2cfg_piper.pl \
+		${BWA_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.bwa.sorted.bam \
+		> $BREAKDANCER_DIR/config && \
+	breakdancer-max \
+		-d $BREAKDANCER_DIR/${PREFIX}.breakdancer \
+		-g $BREAKDANCER_DIR/${PREFIX}.breakdancer.SV.bed \
+		$BREAKDANCER_DIR/config \
+		1> $BREAKDANCER_DIR/${PREFIX}.breakdancer.out && \
+		2> $BREAKDANCER_DIR/${PREFIX}.breakdancer.log && \
+touch .${JOBUID}.status.${STEP}.BreakDancer
 STEP=$((STEP+1))
 
 #############

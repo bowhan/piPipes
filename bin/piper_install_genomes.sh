@@ -291,7 +291,12 @@ echo2 "Building Bowtie/BWA index for repBase + piRNA cluster + genes"
 	zcat *gz | \
 	awk 'BEGIN{FS=OFS="\t"}{print $6, $7-1, $8, $11, $1, $10}' > ../UCSC.RepeatMask.bed && \
 	cd ..
-	
+
+#  for retroSeq... 
+# mkdir -p RepeatMask
+# [ ! -s RepeatMask/refTEs ] && \
+# 	awk -v pwd=$PWD 'BEGIN{FS=OFS="\t"}{ name=$4; gsub ("\\(","",name); gsub ("\\)","",name);  print $0 > "RepeatMask/"name;  if (!done[$4]) printf "%s\t%s\n", $4, pwd"/RepeatMask/"name; done[$4]=1; }' UCSC.RepeatMask.bed 1>RepeatMask/refTEs
+
 # making gtf files for htseq-count
 echo2 "Making GTF file for HTSeq-count"
 case $GENOME in	

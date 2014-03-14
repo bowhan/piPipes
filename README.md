@@ -4,7 +4,7 @@ Piper
 
 Integrated pipeline collections developed in the [Zamore Lab](http://www.umassmed.edu/zamore) and [ZLab](http://zlab.umassmed.edu/zlab) to analyze piRNA/transposon for different Next Generation Sequencing (*small RNA-Seq, RNA-Seq, Genomic-Seq, ChIP-Seq, CAGE-Seq and Degradome-Seq*). **piper** provides generic interface for different organisms/genomes with a particular optimization for fruit-fly and mouse, which were the main focus in our labs as well as the piRNA field.
 
-For *small RNA-Seq*, *RNA-Seq* and *ChIP-Seq* pipelines, **piper** provides two modes in `single library mode` and `dual library mode`, to analyze single library and pair-wise comparision between two samples respectively.     
+For *small RNA-Seq*, *RNA-Seq* and *ChIP-Seq* pipelines, **piper** provides two modes in `single library mode` and `dual library mode`, to analyze single library and pair-wise comparison between two samples respectively.     
 
 ##INSTALL   
 **piper** is written in Bash, C++, Perl, Python and R. It currently only works under Linux environment.
@@ -15,7 +15,7 @@ For *small RNA-Seq*, *RNA-Seq* and *ChIP-Seq* pipelines, **piper** provides two 
 
 2. For transcripts/transposons quantification, **piper** uses [Cufflinks](http://cufflinks.cbcb.umd.edu/), [HTSeq](http://www-huber.embl.de/users/anders/HTSeq/) and [eXpress](http://bio.math.berkeley.edu/eXpress) under different circumstances. 	
 
-3. For transposon mobilization discovery, **piper** uses [RetroSeq](https://github.com/tk2/RetroSeq) and [VariationHunter](http://compbio.cs.sfu.ca/software-variation-hunter).    
+3. For transposon mobilization discovery, **piper** uses [TEMP](http://zlab.umassmed.edu/~zhuangj/TEMP/), [BreakDancer](http://gmt.genome.wustl.edu/breakdancer/current/), [RetroSeq](https://github.com/tk2/RetroSeq) and [VariationHunter](http://compbio.cs.sfu.ca/software-variation-hunter).    
 
 4. For peaks calling for ChIP-Seq, **piper** uses [MACS2](https://github.com/taoliu/MACS).    
  
@@ -25,11 +25,11 @@ For *small RNA-Seq*, *RNA-Seq* and *ChIP-Seq* pipelines, **piper** provides two 
 
 7. To determine the version of FastQ, **piper** uses a modified version of `SolexaQA.pl` from [SolexaQA](http://solexaqa.sourceforge.net/).		
 
-8. **piper** uses [BEDtools](https://github.com/bowhan/bedtools.git) with slight modification on `intersectBed.cpp` to accomodate a special BED format used in the pipeline. It ships with the modified source code, as well as statically compiled binary renamed as `bedtools_piper` to avoid confusion with the real one.		
+8. **piper** uses [BEDtools](https://github.com/bowhan/bedtools.git) with slight modification on `intersectBed.cpp` to accommodate a special BED format used in the pipeline. It ships with the modified source code, as well as statically compiled binary renamed as `bedtools_piper` to avoid confusion with the real one.		
 
 ***
 ### C/C++
-**piper ships with statically compiled linux x86_64 binaries for its own C++ codes and all the other tools written in C/C++. Ideally, the users don't need to do any compiling. But if the static versions do not work in your system, please install them and move the binaries to the `bin` of **piper**. For **bedtools**, please install the one in the `third_party` directory and rename it as `bedtools_piper` in the `bin` directory of `piper`** For your convinience, the source codes of all C/C++ tools have been included as tarball. Some of piper C++ codes utilizes *C++11* features and *Boost* libraries. It is recommended to install relatively new [GCC](http://gcc.gnu.org/) and [Boost](http://www.boost.org/users/download/) if compiling needs to be done.		 
+**piper ships with statically compiled linux x86_64 binaries for its own C++ codes and all the other tools written in C/C++. Ideally, the users don't need to do any compiling. But if the static versions do not work in your system, please install them and move the binaries to the `bin`. For BEDtools, please install the one in the `third_party` directory and rename it as `bedtools_piper` in the `bin` directory of `piper`** For your convenience, the source codes of all C/C++ tools have been included as tar ball. Some of piper C++ codes utilizes *C++11* features and *Boost* libraries. It is recommended to install relatively new [GCC](http://gcc.gnu.org/) and [Boost](http://www.boost.org/users/download/) if compiling needs to be done.		 
 ***
 ### Python/Cython
 **For MACS[8] and HTSeq-count[13], the users will need to install them and make them available in the `$PATH`.**        
@@ -40,7 +40,7 @@ For R packages that are unavailable in the user's system, the installation is pe
 ***
 
 ### Genome Annotation
-Due to the limitation on the size of the files on github, the genome sequence, annotation files are to be downloaded from somewhere else and reformatted to accomodate the pipeline. **piper** uses [iGenome](http://support.illumina.com/sequencing/sequencing_software/igenome.ilmn) and provides `piper install` to download iGenome genomes and organize the files to be used by the pipeline (see below).		
+Due to the limitation on the size of the files on github, the genome sequence, annotation files are to be downloaded from somewhere else and reformatted to accommodate the pipeline. **piper** uses [iGenome](http://support.illumina.com/sequencing/sequencing_software/igenome.ilmn) and provides `piper install` to download iGenome genomes and organize the files to be used by the pipeline (see below).		
 ***
 
 ##USAGE
@@ -116,7 +116,7 @@ piRNA. This pipeline maps those reads to rRNA, microRNA hairpin, genome, repbase
 annotated  transposons, piRNA clusters with bowtie and uses bedtools to assign 
 them to different annotations. For each feature, length distrition, nucleotide percentage, 
 ping-pong score, et al,.  are calculated and graphed. Some microRNA analysis is also included. 
-In the dual library mode, pair-wise comparision of miRNA and piRNAs will be done. We invented this balloon-plot to efficienty compare the heterogeneity of miRNA between two samples. piRNA for different transposon family is also compared. 
+In the dual library mode, pair-wise comparison of miRNA and piRNAs will be done. We invented this balloon-plot to efficienty compare the heterogeneity of miRNA between two samples. piRNA for different transposon family is also compared. 
 
 A more detailed explanation can be found [here](https://github.com/bowhan/piper/wiki/smallRNA).
 
