@@ -114,9 +114,9 @@ A more detailed explanation can be found [here](https://github.com/bowhan/piper/
 small RNA library typically clones 18–40nt small RNAs, including miRNA, siRNA and 
 piRNA. This pipeline maps those reads to rRNA, microRNA hairpin, genome, repbase 
 annotated  transposons, piRNA clusters with bowtie and uses bedtools to assign 
-them to different annotations. For each feature, length distrition, nucleotide percentage, 
+them to different annotations. For each feature, length distribution, nucleotide percentage, 
 ping-pong score, et al,.  are calculated and graphed. Some microRNA analysis is also included. 
-In the dual library mode, pair-wise comparison of miRNA and piRNAs will be done. We invented this balloon-plot to efficienty compare the heterogeneity of miRNA between two samples. piRNA for different transposon family is also compared. 
+In the dual library mode, pair-wise comparison of miRNA and piRNAs will be done. We invented this balloon-plot to efficiently compare the heterogeneity of miRNA between two samples. piRNA for different transposon family is also compared. 
 
 A more detailed explanation can be found [here](https://github.com/bowhan/piper/wiki/smallRNA).
 
@@ -146,7 +146,7 @@ using MASC2. Signal is normalized in three different methods (ppois, FE and logL
 A more detailed explanation can be found [here](https://github.com/bowhan/piper/wiki/ChIPSeq). 
 
 ###*dna*: Genomic Seq pipeline
-Genomic Seq pipelines aligns the paired-end reads to genome with Bowtie2, BWA-MEM and mrFast. Variatoins
+Genomic Seq pipelines aligns the paired-end reads to genome with Bowtie2, BWA-MEM and mrFast. Variations
 were called using different algorithms. 
 
 A more detailed explanation can be found [here](https://github.com/bowhan/piper/wiki/GenomeSeq).
