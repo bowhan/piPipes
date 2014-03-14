@@ -105,6 +105,9 @@ Both types of libraries are designed to gather the information of the five prime
 CAGE clones RNAs with Cap and Degradome clones RNAs with five prime monophosphate. 
 The pipeline will aligns paired end reads to rRNA with Bowtie2, genome using STAR. 
 Different from RNASeq, this pipeline emphasizes on the accuracy of the five prime ends.
+If you have small RNA library from the same genotype, you could perform ping-pong analysis
+between small RNA and degradome library on different genomic structures. Turning on this option
+by -s.
 '
 
 export CHIP_INTRO=$CHIP_COLOR'
@@ -173,6 +176,8 @@ $RNASEQ_COLOR$0	rnaseq2	-a rnaseq_pipeline_output_dir1 -b rnaseq_pipeline_output
 
 $COMMENT# run Degradome/CAGE-seq for fly (dm3), under current working directory$RESET
 $DEG_COLOR$0	deg -l left.fq -r right.fq -g dm3
+$COMMENT# run Degradome/CAGE-seq for fly (dm3), and perform the ping-pong analysis between small RNA and degradome$RESET
+$DEG_COLOR$0	deg -l left.fq -r right.fq -g dm3 -s /path/to/smallRNA_pipeline_output
 
 $COMMENT# run ChIP-seq pipeline for mouse sample, Narrow peak (transcriptional factor), under current working directory$RESET
 $CHIP_COLOR$0	chip -l left.IP.fq -r right.IP.fq -L left.INPUT.fq -R right.INPUT.fq -g mm9 -c 8 

@@ -23,7 +23,7 @@ use Getopt::Long;
 use Cwd;
 use File::Basename;
 
-use lib dirname(__FILE__).'/..';
+use lib dirname(__FILE__).'/';
 use RetroSeq::Vcf;
 use RetroSeq::Utilities;
 
@@ -463,8 +463,9 @@ sub _findCandidates
         {
             my $file = $$refTEsF{ $type };
             print qq[Screening for hits to: $type\n];
-            system( qq[bedtools intersect -a $discordantMatesBed -b $file -u | awk -F"\t" '{print \$4,\$5}' > $$.$type.mates.bed] ) == 0 or die qq[Failed to run bedtools intersect];
-            
+#    piper      system( qq[bedtools intersect -a $discordantMatesBed -b $file -u | awk -F"\t" '{print \$4,\$5}' > $$.$type.mates.bed] ) == 0 or die qq[Failed to run bedtools intersect];
+system( qq[bedtools intersect -a $discordantMatesBed -b $file -u | awk -F\"\\t\\" '{print \$4,\$5}' > $$.$type.mates.bed] ) == 0 or die qq[Failed to run bedtools intersect];        # piper 
+
             #print the mates (i.e. the anchors) of these reads into the discovery output file
             #first load up the readnames
             my %reads;

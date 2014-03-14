@@ -20,4 +20,4 @@ pkgTest ("gdata")
 
 
 bioConductorTest ("cummeRbund")
-bioConductorTest ("edgeR")
+#bioConductorTest ("edgeR")

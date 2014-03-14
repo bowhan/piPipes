@@ -29,7 +29,7 @@ For *small RNA-Seq*, *RNA-Seq* and *ChIP-Seq* pipelines, **piper** provides two 
 
 ***
 ### C/C++
-**piper ships with statically compiled linux x86_64 binaries for its own C++ codes and all the other tools written in C/C++. Ideally, the users don't need to do any compiling. But if the static versions do not work in your system, please install them and move the binaries to the `bin` of **piper**. For **bedtools**, please install the one in the `third_party` directory and rename it as `bedtools_piper` in the `bin` directory of `piper`** For your convinience, the source codes of all C/C++ tools have been included as tarball. Some of piper C++ codes utilizes *C++11* features and *Boost* libraries. It is recommended to install relatively new [GCC](http://gcc.gnu.org/) and [Boost](http://www.boost.org/users/download/) if compiling needs to be done.		 
+**piper ships with statically compiled linux x86_64 binaries for its own C++ codes and all the other tools written in C/C++. Ideally, the users don't need to do any compiling. But if the static versions do not work in your system, please install them and move the binaries to the `bin`. For BEDtools, please install the one in the `third_party` directory and rename it as `bedtools_piper` in the `bin` directory of `piper`** For your convinience, the source codes of all C/C++ tools have been included as tarball. Some of piper C++ codes utilizes *C++11* features and *Boost* libraries. It is recommended to install relatively new [GCC](http://gcc.gnu.org/) and [Boost](http://www.boost.org/users/download/) if compiling needs to be done.		 
 ***
 ### Python/Cython
 **For MACS[8] and HTSeq-count[13], the users will need to install them and make them available in the `$PATH`.**        
