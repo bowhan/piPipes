@@ -1,15 +1,21 @@
 
-# Genome Seq pipeline
-# piper 
-# https://github.com/bowhan/piper.git
-# An integrated pipeline for piRNA and transposon analysis 
-# from small RNA Seq, RNASeq, CAGE/Degradome/RACE, ChIP-Seq and Genomic-Seq
-# Wei Wang (wei.wang2@umassmed.edu)
-# Bo W Han (bo.han@umassmed.edu, bowhan@me.com)
-# the Zamore lab and the Weng lab
-# Howard Hughes Medical Institute
-# RNA Therapeutics Institute
-# University of Massachusetts Medical School
+# piper, a pipeline collection for PIWI-interacting RNA (piRNA) and transposon analysis
+# Copyright (C) <2014>  <Bo Han, Wei Wang, Phillip Zamore, Zhiping Weng>
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
 
 ##########
 # Config #
@@ -191,23 +197,35 @@ esac
 #################################
 # Align reads to genome: 2. BWA #
 #################################
-echo2 "Mapping to genome ${GENOME} with BWA and calling varation by bcftools"
-[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_bwa ] && \
+echo2 "Mapping to genome ${GENOME} with BWA-MEM and calling varation by bcftools"
+[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_bwa_MEM ] && \
 	bwa mem \
 		-t $CPU \
 		-c 1000000 \
 		$BWA_INDEXES/genome \
 		$LEFT_FASTQ \
 		$RIGHT_FASTQ \
-		2> $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.${GENOME}.bwa.log | \
-	samtools view -uS - > ${BWA_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.bwa.bam && \
-	samtools sort -@ $CPU ${BWA_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.bwa.bam ${BWA_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.bwa.sorted && \
-	samtools index ${BWA_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.bwa.sorted.bam && \
-	samtools mpileup -uf $GENOME_FA ${BWA_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.bwa.sorted.bam | \
-	bcftools view -bvcg - | tee ${BWA_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.bwa.var.raw.bcf | \
+		2> $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.${GENOME}.bwa-mem.log | \
+	samtools view -bS - > ${BWA_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.bwa-mem.bam && \
+	samtools sort -@ $CPU ${BWA_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.bwa-mem.bam ${BWA_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.bwa-mem.sorted && \
+	samtools index ${BWA_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.bwa-mem.sorted.bam && \
+	samtools mpileup -uf $GENOME_FA ${BWA_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.bwa-mem.sorted.bam | \
+	bcftools view -bvcg - | tee ${BWA_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.bwa-mem.var.raw.bcf | \
 	bcftools view - | \
-	perl $PIPELINE_DIRECTORY/bin/vcfutils.pl varFilter -D $VCFFILTER_DEPTH > ${BWA_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.bwa.var.flt.vcf && \
-	rm -rf ${BWA_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.bwa.bam && \
+	perl $PIPELINE_DIRECTORY/bin/vcfutils.pl varFilter -D $VCFFILTER_DEPTH > ${BWA_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.bwa-mem.var.flt.vcf && \
+	rm -rf ${BWA_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.bwa-mem.bam && \
+	touch .${JOBUID}.status.${STEP}.genome_mapping_bwa_MEM
+STEP=$((STEP+1))
+
+echo2 "Mapping to genome ${GENOME} with BWA"
+[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_bwa ] && \
+	bwa aln -t $CPU -n $((READ_LEN/20)) -l 255 -R 10000 $BWA_INDEXES/genome $LEFT_FASTQ  -f $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.1_sequence.sai && \
+	bwa aln -t $CPU -n $((READ_LEN/20)) -l 255 -R 10000 $BWA_INDEXES/genome $RIGHT_FASTQ -f $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.2_sequence.sai && \
+	bwa sampe -P $BWA_INDEXES/genome $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.1_sequence.sai $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.2_sequence.sai $LEFT_FASTQ $RIGHT_FASTQ -f /dev/stdout | \
+	samtools view -bS - > $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.bam && \
+	samtools sort -@ $CPU $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.bam  $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.bwa-aln.sorted && \
+	samtools index $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.bwa-aln.sorted.bam && \
+	rm -rf $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.bam && \
 	touch .${JOBUID}.status.${STEP}.genome_mapping_bwa
 STEP=$((STEP+1))
 
@@ -218,12 +236,12 @@ echo2 "Discovering transposon insert by TEMP"
 [ ! -f .${JOBUID}.status.${STEP}.TEMP ] && \
 	if [ -s $REPBASE_FA ] ; then
 		bash $DEBUG $PIPELINE_DIRECTORY/bin/TEMP_Insertion.sh \
-			-i `readlink -f ${BWA_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.bwa.sorted.bam` \
+			-i `readlink -f $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.bwa-aln.sorted.bam` \
 			-s $PIPELINE_DIRECTORY/bin \
 			-o `readlink -f $TEMP_OUTDIR` \
 			-r `readlink -f $REPBASE_FA` \
 			-t `readlink -f $COMMON_FOLDER/UCSC.RepeatMask.bed` \
-			-m 5 \
+			-m $((READ_LEN/20)) \
 			-c $CPU  && \
 		touch .${JOBUID}.status.${STEP}.TEMP
 	else
@@ -238,7 +256,7 @@ echo2 "Discovering deletions by retroSeq using BWA output"
 [ ! -f .${JOBUID}.status.${STEP}.retroSeq ] && \
 	echo $COMMON_FOLDER/UCSC.RepeatMask.bed > $RETROSEQ/exd.file && \
 	perl $PIPELINE_DIRECTORY/bin/retroseq.pl -discover \
-		-bam  ${BWA_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.bwa.sorted.bam \
+		-bam  ${BWA_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.bwa-mem.sorted.bam \
 		-eref $COMMON_FOLDER/${GENOME}.repBase.eref \
 		-exd  $RETROSEQ/exd.file \
 		-output $RETROSEQ/${PREFIX}.${GENOME}.bwa.sorted.retroSeq \
@@ -246,9 +264,9 @@ echo2 "Discovering deletions by retroSeq using BWA output"
 		1>&2 && \
 	perl $PIPELINE_DIRECTORY/bin/retroseq.pl -call \
 		-ref  $GENOME_FA \
-		-bam  ${BWA_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.bwa.sorted.bam \
+		-bam  ${BWA_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.bwa-mem.sorted.bam \
 		-input $RETROSEQ/${PREFIX}.${GENOME}.bwa.sorted.retroSeq* \
-		-output $RETROSEQ/${PREFIX}.${GENOME}.bwa.sorted.bam.vcf \
+		-output $RETROSEQ/${PREFIX}.${GENOME}.bwa-mem.sorted.bam.vcf \
 		-reads 10 \
 		-depth $VCFFILTER_DEPTH \
 		1>&2 && \
@@ -262,7 +280,7 @@ echo2 "Mapping to genome ${GENOME} with mrFast. The memory used by mrFast is pro
 mrFast_min=0
 mrFast_max=800
 [ ! -f .${JOBUID}.status.${STEP}.genome_mapping_mrFast ] && \
-	mrfast --search $MRFAST_INDEX/${GENOME}.fa --pe --discordant-vh --seq1 $LEFT_FASTQ --seq2 $RIGHT_FASTQ --min $mrFast_min --max $mrFast_max -o ${MRFAST_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.mrFast.sam 1>&2 2> ${MRFAST_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.mrFast.log && \
+	mrfast --search $MRFAST_INDEX/${GENOME}.fa --pe --discordant-vh --seq1 $LEFT_FASTQ --seq2 $RIGHT_FASTQ --min $mrFast_min --max $mrFast_max -o ${MRFAST_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.mrFast.sam 1>&2 && \
 	samtools view -uS -f0x2 ${MRFAST_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.mrFast.sam > ${MRFAST_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.mrFast.bam && \
 	samtools sort -@ $CPU ${MRFAST_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.mrFast.bam ${MRFAST_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.mrFast.sorted && \
 	samtools index ${MRFAST_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.mrFast.sorted.bam && \
@@ -288,7 +306,7 @@ STEP=$((STEP+1))
 echo2 "Discovering Variation by BreakDancer using BWA output" 
 [ ! -f .${JOBUID}.status.${STEP}.BreakDancer ] && \
 	perl $PIPELINE_DIRECTORY/bin/bam2cfg_piper.pl \
-		${BWA_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.bwa.sorted.bam \
+		${BWA_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.bwa-mem.sorted.bam \
 		> $BREAKDANCER_DIR/config && \
 	breakdancer-max \
 		-d $BREAKDANCER_DIR/${PREFIX}.breakdancer \

@@ -16,8 +16,6 @@
 
 # Released under GNU General Public License version 3
 
-# this code has been slightly modified in piper in order to just determine the version of the fastq file without performing other fancy funcion
-
 use strict;
 use warnings;
 use Getopt::Long;

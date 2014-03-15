@@ -2,9 +2,9 @@
 Piper
 =====
 
-Integrated pipeline collections developed in the [Zamore Lab](http://www.umassmed.edu/zamore) and [ZLab](http://zlab.umassmed.edu/zlab) to analyze piRNA/transposon for different Next Generation Sequencing (*small RNA-Seq, RNA-Seq, Genomic-Seq, ChIP-Seq, CAGE-Seq and Degradome-Seq*). **piper** provides generic interface for different organisms/genomes with a particular optimization for fruit-fly and mouse, which were the main focus in our labs as well as the piRNA field.
+Integrated pipeline collections developed in the [Zamore Lab](http://www.umassmed.edu/zamore) and [ZLab](http://zlab.umassmed.edu/zlab) to analyze piRNA/transposon for different Next Generation Sequencing (*small RNA-Seq, RNA-Seq, Genomic-Seq, ChIP-Seq, CAGE-Seq and Degradome-Seq*). **piper** provides a generic interface for different organisms/genomes with a particular optimization for fruit-fly and mouse, which are the main focus in our labs as well as the piRNA field.
 
-For *small RNA-Seq*, *RNA-Seq* and *ChIP-Seq* pipelines, **piper** provides two modes in `single library mode` and `dual library mode`, to analyze single library and pair-wise comparison between two samples respectively.     
+For *small RNA-Seq*, *RNA-Seq* and *ChIP-Seq* pipelines, **piper** provides two modes: `a single library mode` and `dual library mode`, to analyze single library and pair-wise comparison between two samples respectively.     
 
 ##INSTALL   
 **piper** is written in Bash, C++, Perl, Python and R. It currently only works under Linux environment.
@@ -23,17 +23,18 @@ For *small RNA-Seq*, *RNA-Seq* and *ChIP-Seq* pipelines, **piper** provides two 
 
 6. To wrap bash scripts for multi-threading, **piper** utilizes `ParaFly` from [Trinity](http://trinityrnaseq.sourceforge.net/). **piper** also learns the `touch` trick for job resuming from [Trinity](http://trinityrnaseq.sourceforge.net/).	    
 
-7. To determine the version of FastQ, **piper** uses a modified version of `SolexaQA.pl` from [SolexaQA](http://solexaqa.sourceforge.net/).		
+7. To determine the version of FastQ, **piper** uses `SolexaQA.pl` from [SolexaQA](http://solexaqa.sourceforge.net/). We have modified it in a way that the program exits as soon as the version of FastQ has been determined. The modified code can be found in the `bin` folder.		
 
-8. **piper** uses [BEDtools](https://github.com/bowhan/bedtools.git) with slight modification on `intersectBed.cpp` to accommodate a special BED format used in the pipeline. It ships with the modified source code, as well as statically compiled binary renamed as `bedtools_piper` to avoid confusion with the real one.		
+8. **piper** uses [BEDtools](https://github.com/bowhan/bedtools.git) to assign alignments to different genomic annotations. In small RNA pipeline, we made a slightly modification on `intersectBed.cpp` to accommodate a special BED format used in the pipeline. The modified code can be found in the `src/third_party` folder. A statically compiled binary, which has been renamed as `bedtools_piper` to avoid confusion with the original one, can be found in the `bin`. 				 		
+
 
 ***
 ### C/C++
-**piper ships with statically compiled linux x86_64 binaries for its own C++ codes and all the other tools written in C/C++. Ideally, the users don't need to do any compiling. But if the static versions do not work in your system, please install them and move the binaries to the `bin`. For BEDtools, please install the one in the `third_party` directory and rename it as `bedtools_piper` in the `bin` directory of `piper`** For your convenience, the source codes of all C/C++ tools have been included as tar ball. Some of piper C++ codes utilizes *C++11* features and *Boost* libraries. It is recommended to install relatively new [GCC](http://gcc.gnu.org/) and [Boost](http://www.boost.org/users/download/) if compiling needs to be done.		 
+**piper** ships with statically compiled linux x86_64 binaries for its own C++ codes and all the other tools written in C/C++. Ideally, the users don't need to do any compiling. But if the static versions do not work in your system, please install them and move the binaries to the `bin`. For BEDtools, please install the one in the `third_party` directory and rename it as `bedtools_piper` in the `bin` directory of `piper` For your convenience, the source codes of all C/C++ tools have been included as tar ball. Some of piper C++ codes utilizes *C++11* features and *Boost* libraries. It is recommended to install relatively new [GCC](http://gcc.gnu.org/) and [Boost](http://www.boost.org/users/download/) if compiling needs to be done.		 
 ***
 ### Python/Cython
 **For MACS[8] and HTSeq-count[13], the users will need to install them and make them available in the `$PATH`.**        
-*We cannot find a good way to ship the ready-to-use Cython code. Without `htseq-count`, `piper rna/deg/cage` won't be able to make transcripts/transposon counting using genomic coordinates. But it will still perform other functions of the pipeline as well as quantification using Cufflinks and eXpress. Without `macs2`, `piper chip/chip2` won't work at all*
+*We cannot find a good way to ship the ready-to-use Cython code. Without `htseq-count`, `piper rna/deg/cage` won't be able to make transcripts/transposon counting using genomic coordinates. But it will still perform other functions of the pipeline as well as quantification using Cufflinks and eXpress. Without `macs2`, `piper chip/chip2` won't work at all*.
 ***
 ### R
 For R packages that are unavailable in the user's system, the installation is performed in the `piper install` process. They will be installed in the same directory as the pipeline in case the user doesn't have write permission in the R installation directory.
@@ -44,8 +45,8 @@ Due to the limitation on the size of the files on github, the genome sequence, a
 ***
 
 ##USAGE
-The pipeline find almost everything under its own directory so please do not move the `zpipe` script. Use `ln  -s  $PATH_TO_piper/piper  $HOME/bin/piper` to create symbol link in your `$HOME/bin`; Or add `$PATH_TO_piper` to your `$PATH`. 
-**But please do not add the `$PATH_TO_piper/bin` to your `$PATH`**
+The pipeline finds almost everything under its own directory so please do not move the `zpipe` script. Use `ln  -s  $PATH_TO_piper/piper  $HOME/bin/piper` to create symbol link in your `$HOME/bin`; Or add `/path/to/piper` to your `$PATH`. 
+**But please do NOT add the `$PATH_TO_piper/bin` to your `$PATH`**
 
 Call different pipelines using:		
 
@@ -102,9 +103,9 @@ Find more detailed information on [Wiki](https://github.com/bowhan/piper/wiki)
 
 ###*install*: to install genome assembly
 Due to the limitation on the size of file by github, piper doesn't ship with the 
-genome sequences and annotation. Alternatively, we provide this scrips 
+genome sequences and annotation. Alternatively, we provide scrips 
 to download genome assemly files from iGenome project of illumina. Please make 
-sure internet is available during this process.  **piper** provide an option to separate downloading from other process, in case the machine/node with internet access is not appropriate for building index and other works.     
+sure internet is available during this process.  **piper** provides an option to separate downloading from other processes, in case the machine/node with internet access is not appropriate for building index and other works.     
 Except for the genome, this pipeline will also install unavailable R packages 
 under the pipeline directory. The downloading and installation can be separated using -D option, in case the head node is not supposed to be used for heavy computational work, like building indexes.      
 
@@ -115,16 +116,16 @@ small RNA library typically clones 18–40nt small RNAs, including miRNA, siRNA 
 piRNA. This pipeline maps those reads to rRNA, microRNA hairpin, genome, repbase 
 annotated  transposons, piRNA clusters with bowtie and uses bedtools to assign 
 them to different annotations. For each feature, length distribution, nucleotide percentage, 
-ping-pong score, et al,.  are calculated and graphed. Some microRNA analysis is also included. 
+ping-pong score, et al.,  are calculated and graphed. Some microRNA analysis is also included. 
 In the dual library mode, pair-wise comparison of miRNA and piRNAs will be done. We invented this balloon-plot to efficiently compare the heterogeneity of miRNA between two samples. piRNA for different transposon family is also compared. 
 
 A more detailed explanation can be found [here](https://github.com/bowhan/piper/wiki/smallRNA).
 
 ###*rnaseq*: RNASeq pipeline
 RNASeq pipeline can be used for both dUTR or ligation based RNASeq. 
-It uses bowtie2 to align paired-end reads to rRNA and STAR[4] to align the unmapped reads 
+It uses bowtie2 to aligns paired-end reads to rRNA and STAR[4] to align the unmapped reads 
 to genome; Then it uses Cufflinks for quantification of transcripts from the genomic coordinates. It
-also use HTSeq-count to quantify genomic features using coordinates. It also directly align reads to 
+also use HTSeq-count to quantify genomic features using coordinates. It also directly aligns reads to 
 transcriptome, repbase annotated transposon, piRNA clusters using Bowtie2. Quantification 
 was done using eXpress. Library is normalized by gene transcriptome compatible reads, given by Cufflinks. Basic statistics and graphs will be given. 
 
@@ -133,8 +134,8 @@ A more detailed explanation can be found [here](https://github.com/bowhan/piper/
 ###*cage/deg*: CAGE & Degradome pipeline
 Both types of libraries are designed to gather the information of the 5' end of RNAs 
 CAGE clones RNAs with Cap and Degradome clones RNAs with 5' monophosphate. 
-The pipeline will aligns reads to rRNA with bowtie2, genome using STAR. 
-Different from RNASeq, this pipeline emphasizes on the accuracy of the 5' ends. Nucleotide
+The pipeline will align reads to rRNA with bowtie2, genome using STAR. 
+Different from RNASeq, this pipeline emphasizes the accuracy of the 5' ends. Nucleotide
 composition surrounding the 5' end of the reads are given, like in small RNA library.
 
 A more detailed explanation can be found [here](https://github.com/bowhan/piper/wiki/DegradomeSeq).
@@ -159,6 +160,9 @@ A more detailed explanation can be found [here](https://github.com/bowhan/piper/
     Wei Wang (wei.wang2 `at` umassmed.edu)
     Bo W Han (bo.han `at` umassmed.edu, bowhan `at` me.com)
     
+##LICENSE
+piper is released under the [GNU General Public License version 3](https://www.gnu.org/licenses/gpl.html).		
+
 ##References
 ```
 [1] Li H and Durbin R. 2009. Fast and accurate short read alignment with Burrows-Wheeler transform. Bioinformatics 25: 1754-1760.  
