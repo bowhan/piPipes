@@ -54,8 +54,8 @@
 <li><p>For peaks calling for ChIP-Seq, <strong>piper</strong> uses <a href="https://github.com/taoliu/MACS">MACS2</a>.    </p></li>
 <li><p>Additionally, <strong>piper</strong> uses many tools from the <a href="http://hgdownload.cse.ucsc.edu/admin/exe/linux.x86_64.v287/">Kent Tools</a>, like <code>faSize</code>, <code>bedGraphToBigWig</code>.   </p></li>
 <li><p>To wrap bash scripts for multi-threading, <strong>piper</strong> utilizes <code>ParaFly</code> from <a href="http://trinityrnaseq.sourceforge.net/">Trinity</a>. <strong>piper</strong> also learns the <code>touch</code> trick for job resuming from <a href="http://trinityrnaseq.sourceforge.net/">Trinity</a>.        </p></li>
-<li><p>To determine the version of FastQ, <strong>piper</strong> uses a modified version of <code>SolexaQA.pl</code> from <a href="http://solexaqa.sourceforge.net/">SolexaQA</a>.     </p></li>
-<li><p><strong>piper</strong> uses <a href="https://github.com/bowhan/bedtools.git">BEDtools</a> with slight modification on <code>intersectBed.cpp</code> to accommodate a special BED format used in the pipeline. It ships with the modified source code, as well as statically compiled binary renamed as <code>bedtools_piper</code> to avoid confusion with the real one.       </p></li>
+<li><p>To determine the version of FastQ, <strong>piper</strong> uses <code>SolexaQA.pl</code> from <a href="http://solexaqa.sourceforge.net/">SolexaQA</a>. We have modified it in a way that the program exits as soon as the version of FastQ has been determined. The modified code can be found in the <code>bin</code> folder.      </p></li>
+<li><p><strong>piper</strong> uses <a href="https://github.com/bowhan/bedtools.git">BEDtools</a> to assign alignments to different genomic annotations. In small RNA pipeline, we made a slightly modification on <code>intersectBed.cpp</code> to accommodate a special BED format used in the pipeline. The modified code can be found in the <code>src/third_party</code> folder. A statically compiled binary, which has been renamed as <code>bedtools_piper</code> to avoid confusion with the original one, can be found in the <code>bin</code>.                        </p></li>
 </ol><hr><h3>
 <a name="cc" class="anchor" href="#cc"><span class="octicon octicon-link"></span></a>C/C++</h3>
 
@@ -79,8 +79,8 @@
 <hr><h2>
 <a name="usage" class="anchor" href="#usage"><span class="octicon octicon-link"></span></a>USAGE</h2>
 
-<p>The pipeline finds almost everything under its own directory so please do not move the <code>zpipe</code> script. Use <code>ln  -s  $PATH_TO_piper/piper  $HOME/bin/piper</code> to create symbol link in your <code>$HOME/bin</code>; Or add <code>$PATH_TO_piper</code> to your <code>$PATH</code>. 
-<strong>But please do not add the <code>$PATH_TO_piper/bin</code> to your <code>$PATH</code></strong></p>
+<p>The pipeline finds almost everything under its own directory so please do not move the <code>zpipe</code> script. Use <code>ln  -s  $PATH_TO_piper/piper  $HOME/bin/piper</code> to create symbol link in your <code>$HOME/bin</code>; Or add <code>/path/to/piper</code> to your <code>$PATH</code>. 
+<strong>But please do NOT add the <code>/path/to/piper/bin</code> to your <code>$PATH</code></strong></p>
 
 <p>Call different pipelines using:     </p>
 
@@ -209,6 +209,11 @@ were called using different algorithms. </p>
 <pre><code>Wei Wang (wei.wang2 `at` umassmed.edu)
 Bo W Han (bo.han `at` umassmed.edu, bowhan `at` me.com)
 </code></pre>
+
+<h2>
+<a name="license" class="anchor" href="#license"><span class="octicon octicon-link"></span></a>LICENSE</h2>
+
+<p>piper is released under the <a href="https://www.gnu.org/licenses/gpl.html">GNU General Public License version 3</a>.      </p>
 
 <h2>
 <a name="references" class="anchor" href="#references"><span class="octicon octicon-link"></span></a>References</h2>
