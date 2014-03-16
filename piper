@@ -1,3 +1,5 @@
+#! /bin/bash
+
 # piper, a pipeline collection for PIWI-interacting RNA (piRNA) and transposon analysis
 # Copyright (C) 2014  Bo Han, Wei Wang, Phillip Zamore, Zhiping Weng
 #
@@ -15,10 +17,8 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-#! /bin/bash
-
 # https://github.com/bowhan/piper.git
-# An integrated pipeline collection for piRNA and transposon analysis 
+# A pipeline collection for piRNA and transposon analysis 
 # from small RNA seq, RNA-seq, CAGE/Degradome/RACE-seq, ChIP-seq and Genomic-seq
 # Wei Wang (wei.wang2@umassmed.edu)
 # Bo W Han (bo.han@umassmed.edu, bowhan@me.com)
