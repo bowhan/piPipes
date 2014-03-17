@@ -1,42 +1,37 @@
-<!doctype html>
-<!-- The Time Machine GitHub pages theme was designed and developed by Jon Rohan, on Feb 7, 2012. -->
-<!-- Follow him for fun. http://twitter.com/jonrohan. Tail his code on http://github.com/jonrohan -->
+<!DOCTYPE html>
 <html>
-<head>
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
 
-  <link rel="stylesheet" href="stylesheets/stylesheet.css" media="screen"/>
-  <link rel="stylesheet" href="stylesheets/pygment_trac.css"/>
-  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
-  <script type="text/javascript" src="javascripts/script.js"></script>
+  <head>
+    <meta charset='utf-8' />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta name="description" content="Piper : piRNA pipeline collection developed in the Zamore Lab and ZLab in UMass Medical School" />
 
-  <title>Piper</title>
-  <meta name="description" content="piRNA pipeline collection developed in the Zamore Lab and ZLab in UMass Medical School">
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
 
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Piper</title>
+  </head>
 
-</head>
+  <body>
 
-<body>
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/bowhan/Piper">View on GitHub</a>
 
-  <div class="wrapper">
-    <header>
-      <h1 class="title">Piper</h1>
-    </header>
-    <div id="container">
-      <p class="tagline">piRNA pipeline collection developed in the Zamore Lab and ZLab in UMass Medical School</p>
-      <div id="main" role="main">
-        <div class="download-bar">
-        <div class="inner">
-          <a href="https://github.com/bowhan/Piper/tarball/master" class="download-button tar"><span>Download</span></a>
-          <a href="https://github.com/bowhan/Piper/zipball/master" class="download-button zip"><span>Download</span></a>
-          <a href="https://github.com/bowhan/Piper" class="code">View Piper on GitHub</a>
-        </div>
-        <span class="blc"></span><span class="trc"></span>
-        </div>
-        <article class="markdown-body">
-          <p><img src="https://dl.dropboxusercontent.com/u/5238651/pipipe%20logo.jpg" align="middle"></p>
+          <h1 id="project_title">Piper</h1>
+          <h2 id="project_tagline">piRNA pipeline collection developed in the Zamore Lab and ZLab in UMass Medical School</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/bowhan/Piper/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/bowhan/Piper/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <p><img src="https://dl.dropboxusercontent.com/u/5238651/pipipe%20logo.jpg" align="middle"></p>
 
 <h1>
 <a name="piper" class="anchor" href="#piper"><span class="octicon octicon-link"></span></a>Piper</h1>
@@ -52,20 +47,13 @@
 <h2>
 <a name="install" class="anchor" href="#install"><span class="octicon octicon-link"></span></a>INSTALL</h2>
 
+<div class="highlight highlight-bash"><pre><span class="c"># get piper code from github</span>
+git clone https://github.com/bowhan/Piper.git
+</pre></div>
+
 <p><strong>piper</strong> is written in Bash, C++, Perl, Python and R. It currently only works under Linux environment.</p>
 
-<p><strong>piper</strong> uses the following public tools:</p>
-
-<ol>
-<li><p>For alignment, <strong>piper</strong> uses <a href="http://bowtie-bio.sourceforge.net/index.shtml">Bowtie</a>, <a href="http://bowtie-bio.sourceforge.net/bowtie2/index.shtml">Bowtie2</a>, <a href="http://bio-bwa.sourceforge.net/">BWA</a>,  <a href="https://code.google.com/p/rna-star/">STAR</a> and <a href="http://mrfast.sourceforge.net/">mrFast</a> for different purposes.       </p></li>
-<li><p>For transcripts/transposons quantification, <strong>piper</strong> uses <a href="http://cufflinks.cbcb.umd.edu/">Cufflinks</a>, <a href="http://www-huber.embl.de/users/anders/HTSeq/">HTSeq</a> and <a href="http://bio.math.berkeley.edu/eXpress">eXpress</a> under different circumstances.     </p></li>
-<li><p>For transposon mobilization discovery, <strong>piper</strong> uses <a href="http://zlab.umassmed.edu/%7Ezhuangj/TEMP/">TEMP</a>, <a href="http://gmt.genome.wustl.edu/breakdancer/current/">BreakDancer</a>, <a href="https://github.com/tk2/RetroSeq">RetroSeq</a> and <a href="http://compbio.cs.sfu.ca/software-variation-hunter">VariationHunter</a>.    </p></li>
-<li><p>For peaks calling for ChIP-Seq, <strong>piper</strong> uses <a href="https://github.com/taoliu/MACS">MACS2</a>.    </p></li>
-<li><p>Additionally, <strong>piper</strong> uses many tools from the <a href="http://hgdownload.cse.ucsc.edu/admin/exe/linux.x86_64.v287/">Kent Tools</a>, like <code>faSize</code>, <code>bedGraphToBigWig</code>.   </p></li>
-<li><p>To wrap bash scripts for multi-threading, <strong>piper</strong> utilizes <code>ParaFly</code> from <a href="http://trinityrnaseq.sourceforge.net/">Trinity</a>. <strong>piper</strong> also learns the <code>touch</code> trick for job resuming from <a href="http://trinityrnaseq.sourceforge.net/">Trinity</a>.        </p></li>
-<li><p>To determine the version of FastQ, <strong>piper</strong> uses <code>SolexaQA.pl</code> from <a href="http://solexaqa.sourceforge.net/">SolexaQA</a>. <strong>Piper</strong> have modified it in a way that the program exits as soon as the version of FastQ has been determined. The modified code can be found in the <code>bin</code> directory.        </p></li>
-<li><p><strong>piper</strong> uses <a href="https://github.com/bowhan/bedtools.git">BEDtools</a> to assign alignments to different genomic annotations (gene, transposon, piRNA cluster, et al.). In small RNA pipeline, we made a slightly modification on <code>intersectBed.cpp</code> to accommodate a special BED format used in the pipeline. The modified code can be found in the <code>src/third_party</code> folder. A statically compiled binary, which has been renamed as <code>bedtools_piper</code> to avoid confusion with the original one, can be found in the <code>bin</code> directory.                        </p></li>
-</ol><hr><h3>
+<hr><h3>
 <a name="cc" class="anchor" href="#cc"><span class="octicon octicon-link"></span></a>C/C++</h3>
 
 <p><strong>Piper</strong> comes with statically compiled linux x86_64 binaries for its own C++ scripts and the other tools written in C/C++. Ideally, the users don't need to do any compiling. But if the static versions do not work in your system, exemplified by the error message "kernel too old", please compile them from src and move the binaries to the <code>bin</code>. Please install <strong>BEDtools</strong>, using the source code in the <code>third_party</code> directory and rename it as <code>bedtools_piper</code> in the <code>bin</code> directory of <code>piper</code>.<br>
@@ -86,7 +74,18 @@ Most of <strong>piper's</strong> C++ code utilizes <em>C++11</em> features and <
 
 <p>Due to the limitation on the size of the files on github, the genome sequence, most annotation files are to be downloaded from somewhere else and reformatted to accommodate the pipeline. <strong>piper</strong> uses <a href="http://support.illumina.com/sequencing/sequencing_software/igenome.ilmn">iGenome</a> and provides <code>piper install</code> to download iGenome genomes and organize the files to be used by the pipeline (see below).        </p>
 
-<hr><h2>
+<hr><p><strong>piper</strong> uses the following public tools:</p>
+
+<ol>
+<li><p>For alignment, <strong>piper</strong> uses <a href="http://bowtie-bio.sourceforge.net/index.shtml">Bowtie</a>, <a href="http://bowtie-bio.sourceforge.net/bowtie2/index.shtml">Bowtie2</a>, <a href="http://bio-bwa.sourceforge.net/">BWA</a>,  <a href="https://code.google.com/p/rna-star/">STAR</a> and <a href="http://mrfast.sourceforge.net/">mrFast</a> for different purposes.       </p></li>
+<li><p>For transcripts/transposons quantification, <strong>piper</strong> uses <a href="http://cufflinks.cbcb.umd.edu/">Cufflinks</a>, <a href="http://www-huber.embl.de/users/anders/HTSeq/">HTSeq</a> and <a href="http://bio.math.berkeley.edu/eXpress">eXpress</a> under different circumstances.     </p></li>
+<li><p>For transposon mobilization discovery, <strong>piper</strong> uses <a href="http://zlab.umassmed.edu/%7Ezhuangj/TEMP/">TEMP</a>, <a href="http://gmt.genome.wustl.edu/breakdancer/current/">BreakDancer</a>, <a href="https://github.com/tk2/RetroSeq">RetroSeq</a> and <a href="http://compbio.cs.sfu.ca/software-variation-hunter">VariationHunter</a>.    </p></li>
+<li><p>For peaks calling for ChIP-Seq, <strong>piper</strong> uses <a href="https://github.com/taoliu/MACS">MACS2</a>.    </p></li>
+<li><p>Additionally, <strong>piper</strong> uses many tools from the <a href="http://hgdownload.cse.ucsc.edu/admin/exe/linux.x86_64.v287/">Kent Tools</a>, like <code>faSize</code>, <code>bedGraphToBigWig</code>.   </p></li>
+<li><p>To wrap bash scripts for multi-threading, <strong>piper</strong> utilizes <code>ParaFly</code> from <a href="http://trinityrnaseq.sourceforge.net/">Trinity</a>. <strong>piper</strong> also learns the <code>touch</code> trick for job resuming from <a href="http://trinityrnaseq.sourceforge.net/">Trinity</a>.        </p></li>
+<li><p>To determine the version of FastQ, <strong>piper</strong> uses <code>SolexaQA.pl</code> from <a href="http://solexaqa.sourceforge.net/">SolexaQA</a>. <strong>Piper</strong> have modified it in a way that the program exits as soon as the version of FastQ has been determined. The modified code can be found in the <code>bin</code> directory.        </p></li>
+<li><p><strong>piper</strong> uses <a href="https://github.com/bowhan/bedtools.git">BEDtools</a> to assign alignments to different genomic annotations (gene, transposon, piRNA cluster, et al.). In small RNA pipeline, we made a slightly modification on <code>intersectBed.cpp</code> to accommodate a special BED format used in the pipeline. The modified code can be found in the <code>src/third_party</code> folder. A statically compiled binary, which has been renamed as <code>bedtools_piper</code> to avoid confusion with the original one, can be found in the <code>bin</code> directory.                        </p></li>
+</ol><h2>
 <a name="usage" class="anchor" href="#usage"><span class="octicon octicon-link"></span></a>USAGE</h2>
 
 <p>The pipeline finds almost everything under its own directory so please do not move the <code>zpipe</code> script. Use <code>ln  -s  $PATH_TO_piper/piper  $HOME/bin/piper</code> to create symbol link in your <code>$HOME/bin</code>; Or add <code>/path/to/piper</code> to your <code>$PATH</code>. 
@@ -232,42 +231,34 @@ Bo W Han (bo.han `at` umassmed.edu, bowhan `at` me.com)
 <h2>
 <a name="references" class="anchor" href="#references"><span class="octicon octicon-link"></span></a>References</h2>
 
-<pre><code>[1] Li H and Durbin R. 2009. Fast and accurate short read alignment with Burrows-Wheeler transform. Bioinformatics 25: 1754-1760.  
-[2] Langmead B, Trapnell C, Pop M and Salzberg SL. 2009. Ultrafast and memory-efficient alignment of short DNA sequences to the human genome. Genome Biol 10: R25.  
-[3] Langmead B and Salzberg SL. 2012. Fast gapped-read alignment with Bowtie 2. Nat Methods 9: 357-359.    
-[4] Dobin A, Davis CA, Schlesinger F, Drenkow J, Zaleski C, Jha S, Batut P, Chaisson M and Gingeras TR. 2013. STAR: ultrafast universal RNA-seq aligner. Bioinformatics 29: 15-21.    
-[5] Trapnell C, Williams BA, Pertea G, Mortazavi A, Kwan G, van Baren MJ, Salzberg SL, Wold BJ and Pachter L. 2010.     
-[6] Transcript assembly and quantification by RNA-Seq reveals unannotated transcripts and isoform switching during cell differentiation. Nat Biotechnol 28: 511-515. 
-[7] Kent WJ, Zweig AS, Barber G, Hinrichs AS and Karolchik D. 2010. BigWig and BigBed: enabling browsing of large distributed datasets. Bioinformatics 26: 2204-2207.     
-[8] Zhang Y et al. 2008. Model-based analysis of ChIP-Seq (MACS). Genome Biol 9: R137.  
-[9] Roberts A and Pachter L. 2013. Streaming fragment assignment for real-time analysis of sequencing experiments. Nat Methods 10: 71-73.  
-[10] Grabherr MG et al. 2011. Full-length transcriptome assembly from RNA-Seq data without a reference genome. Nat Biotechnol 29: 644-652.     
-[11] Karolchik D, Hinrichs AS, Furey TS, Roskin KM, Sugnet CW, Haussler D and Kent WJ. 2004. The UCSC Table Browser data retrieval tool. Nucleic Acids Res 32: D493-D496.       
-[12] Cox MP, Peterson DA and Biggs PJ. 2010. SolexaQA: At-a-glance quality assessment of Illumina second-generation sequencing data. BMC Bioinformatics 11: 485.    
-[13] HTSeq: Analysing high-throughput sequencing data with Python. [http://www-huber.embl.de/users/anders/HTSeq/]  
-[14] Keane TM, Wong K and Adams DJ. 2013. RetroSeq: transposable element discovery from next-generation sequencing data. Bioinformatics 29: 389-390.    
-[15] Hormozdiari F, Hajirasouliha I, Dao P, Hach F, Yorukoglu D, Alkan C, Eichler EE and Sahinalp SC. 2010. Next-generation VariationHunter: combinatorial algorithms for transposon insertion discovery. Bioinformatics 26: i350-i357.    
+<pre><code>[1] Li H and Durbin R. 2009. Fast and accurate short read alignment with Burrows-Wheeler transform. Bioinformatics 25: 1754-1760.
+[2] Langmead B, Trapnell C, Pop M and Salzberg SL. 2009. Ultrafast and memory-efficient alignment of short DNA sequences to the human genome. Genome Biol 10: R25.
+[3] Langmead B and Salzberg SL. 2012. Fast gapped-read alignment with Bowtie 2. Nat Methods 9: 357-359.
+[4] Dobin A, Davis CA, Schlesinger F, Drenkow J, Zaleski C, Jha S, Batut P, Chaisson M and Gingeras TR. 2013. STAR: ultrafast universal RNA-seq aligner. Bioinformatics 29: 15-21.
+[5] Trapnell C, Williams BA, Pertea G, Mortazavi A, Kwan G, van Baren MJ, Salzberg SL, Wold BJ and Pachter L. 2010.
+[6] Transcript assembly and quantification by RNA-Seq reveals unannotated transcripts and isoform switching during cell differentiation. Nat Biotechnol 28: 511-515.
+[7] Kent WJ, Zweig AS, Barber G, Hinrichs AS and Karolchik D. 2010. BigWig and BigBed: enabling browsing of large distributed datasets. Bioinformatics 26: 2204-2207.
+[8] Zhang Y et al. 2008. Model-based analysis of ChIP-Seq (MACS). Genome Biol 9: R137.
+[9] Roberts A and Pachter L. 2013. Streaming fragment assignment for real-time analysis of sequencing experiments. Nat Methods 10: 71-73.
+[10] Grabherr MG et al. 2011. Full-length transcriptome assembly from RNA-Seq data without a reference genome. Nat Biotechnol 29: 644-652.
+[11] Karolchik D, Hinrichs AS, Furey TS, Roskin KM, Sugnet CW, Haussler D and Kent WJ. 2004. The UCSC Table Browser data retrieval tool. Nucleic Acids Res 32: D493-D496.
+[12] Cox MP, Peterson DA and Biggs PJ. 2010. SolexaQA: At-a-glance quality assessment of Illumina second-generation sequencing data. BMC Bioinformatics 11: 485.
+[13] HTSeq: Analysing high-throughput sequencing data with Python. [http://www-huber.embl.de/users/anders/HTSeq/]
+[14] Keane TM, Wong K and Adams DJ. 2013. RetroSeq: transposable element discovery from next-generation sequencing data. Bioinformatics 29: 389-390.
+[15] Hormozdiari F, Hajirasouliha I, Dao P, Hach F, Yorukoglu D, Alkan C, Eichler EE and Sahinalp SC. 2010. Next-generation VariationHunter: combinatorial algorithms for transposon insertion discovery. Bioinformatics 26: i350-i357.
 </code></pre>
-        </article>
-      </div>
+      </section>
     </div>
-    <footer>
-      <div class="owner">
-      <p><a href="https://github.com/bowhan" class="avatar"><img src="https://0.gravatar.com/avatar/13683837f69f6a2089b9af7a1062b948?d=https%3A%2F%2Fidenticons.github.com%2F5325eea3e5959abd4328e2cb65d28ec5.png&amp;r=x&amp;s=60" width="48" height="48"/></a> <a href="https://github.com/bowhan">bowhan</a> maintains <a href="https://github.com/bowhan/Piper">Piper</a></p>
 
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Piper maintained by <a href="https://github.com/bowhan">bowhan</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
 
-      </div>
-      <div class="creds">
-        <small>This page generated using <a href="http://pages.github.com/">GitHub Pages</a><br/>theme by <a href="https://twitter.com/jonrohan/">Jon Rohan</a></small>
-      </div>
-    </footer>
-  </div>
-  <div class="current-section">
-    <a href="#top">Scroll to top</a>
-    <a href="https://github.com/bowhan/Piper/tarball/master" class="tar">tar</a><a href="https://github.com/bowhan/Piper/zipball/master" class="zip">zip</a><a href="" class="code">source code</a>
-    <p class="name"></p>
-  </div>
+    
 
-  
-</body>
+  </body>
 </html>
