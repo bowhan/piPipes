@@ -145,19 +145,19 @@ draw_microRNA_balloon = function (t1, hetName, mutName, outDir) {
 	
 	main = paste (t1$V1[1], hetName," 5' arm:", sum4th, sep=' ')
 	main = paste (strwrap(main, width = 35), collapse = "\n") 
-	balloonplot (fivePrimeArm_het,  main=main,xlab="5'",ylab="3'",sorted=T,label.size=.6,text.size=.5,rowmar=1,show.zeros=T)
+	balloonplot (fivePrimeArm_het,  main=main,xlab="5'",ylab="3'",sorted=T,label.size=.6,text.size=.5,rowmar=1,show.zeros=F)
 	
 	main = paste (t1$V1[1], mutName," 5' arm:", sum5th, sep=' ')
 	main = paste (strwrap(main, width = 35), collapse = "\n") 
-	balloonplot (fivePrimeArm_mut,  main=main,xlab="5'",ylab="3'",sorted=T,label.size=.6,text.size=.5,rowmar=1,show.zeros=T, dotcolor="lightgreen")
+	balloonplot (fivePrimeArm_mut,  main=main,xlab="5'",ylab="3'",sorted=T,label.size=.6,text.size=.5,rowmar=1,show.zeros=F, dotcolor="lightgreen")
 	
 	main = paste (t1$V1[1], hetName," 3' arm:", sum6th, sep=' ')
 	main = paste (strwrap(main, width = 35), collapse = "\n") 
-	balloonplot (threePrimeArm_het, main=main,xlab="5'",ylab="3'",sorted=T,label.size=.6,text.size=.5,rowmar=1,show.zeros=T)
+	balloonplot (threePrimeArm_het, main=main,xlab="5'",ylab="3'",sorted=T,label.size=.6,text.size=.5,rowmar=1,show.zeros=F)
 	
 	main = paste (t1$V1[1], mutName," 3' arm:", sum7th, sep=' ')
 	main = paste (strwrap(main, width = 35), collapse = "\n") 
-	balloonplot (threePrimeArm_mut, main=main,xlab="5'",ylab="3'",sorted=T,label.size=.6,text.size=.5,rowmar=1,show.zeros=T, dotcolor="lightgreen")
+	balloonplot (threePrimeArm_mut, main=main,xlab="5'",ylab="3'",sorted=T,label.size=.6,text.size=.5,rowmar=1,show.zeros=F, dotcolor="lightgreen")
 	
 	invisible(dev.off())
 }

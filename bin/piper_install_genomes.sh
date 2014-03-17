@@ -93,6 +93,7 @@ checkBin "gtfToGenePred"
 checkBin "genePredToBed"
 checkBin "bedtools_piper"
 checkBin "mrfast"
+checkBin "Rscript"
 
 ######################################
 # reading the genome record of piper #
@@ -152,13 +153,12 @@ echo2 "------------------------------------------"
 echo2 "Begining installing the genome $GENOME"
 eval LINK='$'`echo $GENOME`
 
-# warning: the following piece of code is only for developping purpose
+#TODO: the following piece of code is only for developping purpose
 if [ `hostname` == "hpcc01.umasshpcc.edu" -o `hostname` == "ghpcc06" ]; then
 	case $GENOME in
 		hg19)	LINK='http://zlab.umassmed.edu/~hanb/Homo_sapiens_UCSC_hg19.tar.gz';;
-		mm9)	[ -z $LINK ] && LINK='http://zlab.umassmed.edu/~hanb/Mus_musculus_UCSC_mm9.tar.gz' ;;
-		dm3)	[ -z $LINK ] && LINK='http://zlab.umassmed.edu/~hanb/Drosophila_melanogaster_UCSC_dm3.tar.gz' ;;
-		*)		[ -z $LINK ] && echo2 "Sorry, this genome is not currently in ${PACKAGE_NAME}.\nPlease provide the links to download iGenome with -l option." "error";;
+		mm9)	LINK='http://zlab.umassmed.edu/~hanb/Mus_musculus_UCSC_mm9.tar.gz' ;;
+		dm3)	LINK='http://zlab.umassmed.edu/~hanb/Drosophila_melanogaster_UCSC_dm3.tar.gz' ;;
 	esac
 fi
 
@@ -173,7 +173,7 @@ echo2 "Testing/Installing missing R packages"
 #################
 if [ "$DOWNLOAD_ONLY" == "1" ] ; then \
 	echo2 "Downloading iGenome in Download ONLY mode."
-	wget "$LINK" || echo2 "Failed to download the genome file, please check the internet." "error"
+	rm -rf $IGENOME_TAR_NAME; $wget "$LINK" || echo2 "Failed to download the genome file, please check the internet." "error"
 	[ "$GENOME" == "dm3" ] && [ ! -s chrU.fa ] && echo2 "Downloading chrU for dm3" && wget "ftp://hgdownload.cse.ucsc.edu/goldenPath/dm3/chromosomes/chrU.fa.gz"
 	[ ! -s UCSC.RepeatMask.bed -a ! -s UCSC.RepeatMask.bed.gz ] && \
 		echo2 "Downloading repeatMasker files from UCSC." && \
@@ -192,7 +192,7 @@ fi
 echo2 "Downloading iGenome $GENOME"
 IGENOME_TAR_NAME=`basename $LINK`
 IGENOME_DIR_NAME=${IGENOME_TAR_NAME%_UCSC*} # this only works for UCSC version of the iGenome; if you modify the code to use other assembly, please change here as well
-[ ! -s $IGENOME_TAR_NAME ] && ( wget "$LINK" || echo2 "Failed to download the genome file, please check the internet." "error" )
+[ ! -s $IGENOME_TAR_NAME ] && ( rm -rf $IGENOME_TAR_NAME && wget "$LINK" || echo2 "Failed to download the genome file, please check the internet." "error" )
 echo2 "Uncompressing genome $GENOME"
 [ ! -d $IGENOME_DIR_NAME -a -s $IGENOME_TAR_NAME ] && ( tar -zxvf $IGENOME_TAR_NAME || echo2 "Failed to unarchiving iGenome" "error" )
 
@@ -232,6 +232,7 @@ dm3)
 	ln -s $IGENOME_DIR_NAME/UCSC/$GENOME/Sequence/BowtieIndex
 	ln -s $IGENOME_DIR_NAME/UCSC/$GENOME/Sequence/Bowtie2Index
 	ln -s $IGENOME_DIR_NAME/UCSC/$GENOME/Sequence/BWAIndex
+	ln -s $IGENOME_DIR_NAME/UCSC/$GENOME/Annotation/Genes/cytoBand.txt
 ;;
 esac
 

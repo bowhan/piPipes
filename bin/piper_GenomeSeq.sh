@@ -95,15 +95,14 @@ touch .writting_permission && rm -rf .writting_permission || (echo2 "Cannot writ
 # creating output files/folders #
 #################################
 export PDF_DIR=$OUTDIR/pdfs && mkdir -p $PDF_DIR
-
-BOWTIE2_GENOMIC_MAPPING_DIR=bowtie2_output && mkdir -p $BOWTIE2_GENOMIC_MAPPING_DIR
+#BOWTIE2_GENOMIC_MAPPING_DIR=bowtie2_output && mkdir -p $BOWTIE2_GENOMIC_MAPPING_DIR
 BWA_GENOMIC_MAPPING_DIR=bwa_bcftools_output && mkdir -p $BWA_GENOMIC_MAPPING_DIR
+TEMP_OUTDIR=TEMP_output && mkdir -p $TEMP_OUTDIR
+RETROSEQ=retroSeq_discovering && mkdir -p $RETROSEQ
 MRFAST_GENOMIC_MAPPING_DIR=mrFast_VariationHunter_output && mkdir -p $MRFAST_GENOMIC_MAPPING_DIR
 BREAKDANCER_DIR=break_dancer_out && mkdir -p $BREAKDANCER_DIR
-RETROSEQ=retroSeq_discovering && mkdir -p $RETROSEQ
-SUMMARY_DIR=summaries && mkdir -p $SUMMARY_DIR
-BW_OUTDIR=bigWig && mkdir -p $BW_OUTDIR
-TEMP_OUTDIR=TEMP_output && mkdir -p $TEMP_OUTDIR
+#SUMMARY_DIR=summaries && mkdir -p $SUMMARY_DIR
+#BW_OUTDIR=bigWig && mkdir -p $BW_OUTDIR
 
 ########################
 # running binary check #
@@ -217,16 +216,16 @@ echo2 "Mapping to genome ${GENOME} with BWA-MEM and calling varation by bcftools
 	touch .${JOBUID}.status.${STEP}.genome_mapping_bwa_MEM
 STEP=$((STEP+1))
 
-echo2 "Mapping to genome ${GENOME} with BWA"
-[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_bwa ] && \
+echo2 "Mapping to genome ${GENOME} with BWA ALN"
+[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_bwa_aln ] && \
 	bwa aln -t $CPU -n $((READ_LEN/20)) -l 255 -R 10000 $BWA_INDEXES/genome $LEFT_FASTQ  -f $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.1_sequence.sai && \
 	bwa aln -t $CPU -n $((READ_LEN/20)) -l 255 -R 10000 $BWA_INDEXES/genome $RIGHT_FASTQ -f $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.2_sequence.sai && \
-	bwa sampe -P $BWA_INDEXES/genome $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.1_sequence.sai $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.2_sequence.sai $LEFT_FASTQ $RIGHT_FASTQ -f /dev/stdout | \
-	samtools view -bS - > $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.bam && \
-	samtools sort -@ $CPU $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.bam  $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.bwa-aln.sorted && \
+	bwa sampe -P $BWA_INDEXES/genome $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.1_sequence.sai $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.2_sequence.sai $LEFT_FASTQ $RIGHT_FASTQ | \
+	samtools view -bS - > $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.bwa-aln.bam && \
+	samtools sort -@ $CPU $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.bwa-aln.bam  $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.bwa-aln.sorted && \
 	samtools index $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.bwa-aln.sorted.bam && \
-	rm -rf $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.bam && \
-	touch .${JOBUID}.status.${STEP}.genome_mapping_bwa
+	rm -rf $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.bwa-aln.bam && \
+	touch .${JOBUID}.status.${STEP}.genome_mapping_bwa_aln
 STEP=$((STEP+1))
 
 ######################################
@@ -256,7 +255,7 @@ echo2 "Discovering deletions by retroSeq using BWA output"
 [ ! -f .${JOBUID}.status.${STEP}.retroSeq ] && \
 	echo $COMMON_FOLDER/UCSC.RepeatMask.bed > $RETROSEQ/exd.file && \
 	perl $PIPELINE_DIRECTORY/bin/retroseq.pl -discover \
-		-bam  ${BWA_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.bwa-mem.sorted.bam \
+		-bam  $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.bwa-aln.sorted.bam \
 		-eref $COMMON_FOLDER/${GENOME}.repBase.eref \
 		-exd  $RETROSEQ/exd.file \
 		-output $RETROSEQ/${PREFIX}.${GENOME}.bwa.sorted.retroSeq \
@@ -264,7 +263,7 @@ echo2 "Discovering deletions by retroSeq using BWA output"
 		1>&2 && \
 	perl $PIPELINE_DIRECTORY/bin/retroseq.pl -call \
 		-ref  $GENOME_FA \
-		-bam  ${BWA_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.bwa-mem.sorted.bam \
+		-bam  $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.bwa-aln.sorted.bam \
 		-input $RETROSEQ/${PREFIX}.${GENOME}.bwa.sorted.retroSeq* \
 		-output $RETROSEQ/${PREFIX}.${GENOME}.bwa-mem.sorted.bam.vcf \
 		-reads 10 \
@@ -293,11 +292,16 @@ STEP=$((STEP+1))
 ########################################
 echo2 "Calling variation by VariationHunter"
 [ ! -f .${JOBUID}.status.${STEP}.VariationHunter ] && \
-	echo 1 > $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.sample.lib && \
-	echo -e "${PREFIX}\t${PREFIX}\t${mrFast_min}\t${mrFast_max}\t${READ_LEN}" > $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.sample.lib && \
-	VH -c $CHROM -i $PIPELINE_DIRECTORY/bin/VH_initInfo -l $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.sample.lib -r $COMMON_FOLDER/UCSC.RepeatMask.Satellite.bed -g $COMMON_FOLDER/${GENOME}.gap.bed -o $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.VHcluster.out -t $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.VHcluster.sample.name -x 500 -p 0.001 1>&2 && \
-	multiInd_SetCover -l $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.sample.lib -r $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.VHcluster.sample.name -c $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.VHcluster.out -t 1000000 -o $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.VHcluster.sample.Out.SV 1>&2 && \
-	touch .${JOBUID}.status.${STEP}.VariationHunter
+	if [ -f .${JOBUID}.status.${STEP}.genome_mapping_mrFast ]; 
+	then
+		echo 1 > $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.sample.lib && \
+		echo -e "${PREFIX}\t${PREFIX}\t${mrFast_min}\t${mrFast_max}\t${READ_LEN}" > $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.sample.lib && \
+		VH -c $CHROM -i $PIPELINE_DIRECTORY/bin/VH_initInfo -l $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.sample.lib -r $COMMON_FOLDER/UCSC.RepeatMask.Satellite.bed -g $COMMON_FOLDER/${GENOME}.gap.bed -o $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.VHcluster.out -t $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.VHcluster.sample.name -x 500 -p 0.001 1>&2 && \
+		multiInd_SetCover -l $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.sample.lib -r $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.VHcluster.sample.name -c $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.VHcluster.out -t 1000000 -o $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.VHcluster.sample.Out.SV 1>&2 && \
+		touch .${JOBUID}.status.${STEP}.VariationHunter
+	else
+		echo2 "Mapping by mrFast failed. VariationHunter cannot run" "warning"
+	fi
 STEP=$((STEP+1))
 
 #################################
@@ -311,11 +315,29 @@ echo2 "Discovering Variation by BreakDancer using BWA output"
 	breakdancer-max \
 		-d $BREAKDANCER_DIR/${PREFIX}.breakdancer \
 		-g $BREAKDANCER_DIR/${PREFIX}.breakdancer.SV.bed \
+        -r 5 \
 		$BREAKDANCER_DIR/config \
 		1> $BREAKDANCER_DIR/${PREFIX}.breakdancer.out && \
-		2> $BREAKDANCER_DIR/${PREFIX}.breakdancer.log && \
+	grep -v '#' $BREAKDANCER_DIR/${PREFIX}.breakdancer.out | \
+	awk 'BEGIN{OFS="\t"}{print $1,$2,$2+1,$4,$5,$5+1}' > $BREAKDANCER_DIR/${PREFIX}.breakdancer.out.for_Circos
 touch .${JOBUID}.status.${STEP}.BreakDancer
 STEP=$((STEP+1))
+
+################################
+# Draw Cisco plot to summarize #
+################################
+echo2 "Draw Cisco plot to summarize the finding"
+[ ! -f .${JOBUID}.status.${STEP}.Cisco ] && \
+    Rscript --slave ${PIPELINE_DIRECTORY}/bin/piper_draw_Cisco_Genome_seq.R \
+		$COMMON_FOLDER/cytoBand.txt \
+		$COMMON_FOLDER/${GENOME}.piRNAcluster.bed.gz \
+		`readlink -f $TEMP_OUTDIR/*insertion.refined.bp.summary` \
+		`readlink -f $RETROSEQ/*bed` \
+		$BREAKDANCER_DIR/${PREFIX}.breakdancer.out.for_Circos \
+		$PDF_DIR/${PREFIX}.summary.circos.pdf && \
+touch .${JOBUID}.status.${STEP}.Cisco
+STEP=$((STEP+1))
+
 
 #############
 # finishing #

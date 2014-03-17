@@ -110,10 +110,10 @@ echo $name
 echo $i
 if [[ ! -s $name ]]
 then
-    cp $BAM ./
+    ln -s $BAM ./	# piper
 fi
 if [[ ! -s $name.bai ]]
-then cp $BAM.bai ./
+then ln -s $BAM.bai ./	# piper
 fi
 
 # Get the mate seq of the uniq-unpaired reads
