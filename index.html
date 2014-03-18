@@ -1,42 +1,37 @@
-<!doctype html>
-<!-- The Time Machine GitHub pages theme was designed and developed by Jon Rohan, on Feb 7, 2012. -->
-<!-- Follow him for fun. http://twitter.com/jonrohan. Tail his code on http://github.com/jonrohan -->
+<!DOCTYPE html>
 <html>
-<head>
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
 
-  <link rel="stylesheet" href="stylesheets/stylesheet.css" media="screen"/>
-  <link rel="stylesheet" href="stylesheets/pygment_trac.css"/>
-  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
-  <script type="text/javascript" src="javascripts/script.js"></script>
+  <head>
+    <meta charset='utf-8' />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta name="description" content="Piper : piRNA pipeline collection developed in the Zamore Lab and ZLab in UMass Medical School" />
 
-  <title>Piper</title>
-  <meta name="description" content="piRNA pipeline collection developed in the Zamore Lab and ZLab in UMass Medical School">
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
 
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Piper</title>
+  </head>
 
-</head>
+  <body>
 
-<body>
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/bowhan/Piper">View on GitHub</a>
 
-  <div class="wrapper">
-    <header>
-      <h1 class="title">Piper</h1>
-    </header>
-    <div id="container">
-      <p class="tagline">piRNA pipeline collection developed in the Zamore Lab and ZLab in UMass Medical School</p>
-      <div id="main" role="main">
-        <div class="download-bar">
-        <div class="inner">
-          <a href="https://github.com/bowhan/Piper/tarball/master" class="download-button tar"><span>Download</span></a>
-          <a href="https://github.com/bowhan/Piper/zipball/master" class="download-button zip"><span>Download</span></a>
-          <a href="https://github.com/bowhan/Piper" class="code">View Piper on GitHub</a>
-        </div>
-        <span class="blc"></span><span class="trc"></span>
-        </div>
-        <article class="markdown-body">
-          <p><img src="https://dl.dropboxusercontent.com/u/5238651/pipipe%20logo.jpg" align="middle"></p>
+          <h1 id="project_title">Piper</h1>
+          <h2 id="project_tagline">piRNA pipeline collection developed in the Zamore Lab and ZLab in UMass Medical School</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/bowhan/Piper/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/bowhan/Piper/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <p><img src="https://dl.dropboxusercontent.com/u/5238651/pipipe%20logo.jpg" align="middle"></p>
 
 <h1>
 <a name="piper" class="anchor" href="#piper"><span class="octicon octicon-link"></span></a>Piper</h1>
@@ -84,8 +79,8 @@ Most of <strong>piper's</strong> C++ code utilizes <em>C++11</em> features and <
 <ol>
 <li><p>For alignment, <strong>piper</strong> uses <a href="http://bowtie-bio.sourceforge.net/index.shtml">Bowtie</a>, <a href="http://bowtie-bio.sourceforge.net/bowtie2/index.shtml">Bowtie2</a>, <a href="http://bio-bwa.sourceforge.net/">BWA</a>,  <a href="https://code.google.com/p/rna-star/">STAR</a> and <a href="http://mrfast.sourceforge.net/">mrFast</a> for different purposes.       </p></li>
 <li><p>For transcripts/transposons quantification, <strong>piper</strong> uses <a href="http://cufflinks.cbcb.umd.edu/">Cufflinks</a>, <a href="http://www-huber.embl.de/users/anders/HTSeq/">HTSeq</a> and <a href="http://bio.math.berkeley.edu/eXpress">eXpress</a> under different circumstances.     </p></li>
-<li><p>For transposon mobilization discovery, <strong>piper</strong> uses <a href="http://zlab.umassmed.edu/%7Ezhuangj/TEMP/">TEMP</a>, <a href="http://gmt.genome.wustl.edu/breakdancer/current/">BreakDancer</a>, <a href="https://github.com/tk2/RetroSeq">RetroSeq</a> and <a href="http://compbio.cs.sfu.ca/software-variation-hunter">VariationHunter</a>.    </p></li>
-<li><p>For peaks calling for ChIP-Seq, <strong>piper</strong> uses <a href="https://github.com/taoliu/MACS">MACS2</a>.    </p></li>
+<li><p>For transposon mobilization as well as other structural variants discovery, <strong>piper</strong> uses <a href="http://zlab.umassmed.edu/%7Ezhuangj/TEMP/">TEMP</a>, <a href="http://gmt.genome.wustl.edu/breakdancer/current/">BreakDancer</a>, <a href="https://github.com/tk2/RetroSeq">RetroSeq</a> and <a href="http://compbio.cs.sfu.ca/software-variation-hunter">VariationHunter</a>.    </p></li>
+<li><p>For ChIP-Seq peaks calling, <strong>piper</strong> uses <a href="https://github.com/taoliu/MACS">MACS2</a>. For TSS/TES/metagene analysis, <strong>piper</strong> uses <a href="https://github.com/CRG-Barcelona/bwtool">bwtool</a>.    </p></li>
 <li><p>Additionally, <strong>piper</strong> uses many tools from the <a href="http://hgdownload.cse.ucsc.edu/admin/exe/linux.x86_64.v287/">Kent Tools</a>, like <code>faSize</code>, <code>bedGraphToBigWig</code>.   </p></li>
 <li><p>To wrap bash scripts for multi-threading, <strong>piper</strong> utilizes <code>ParaFly</code> from <a href="http://trinityrnaseq.sourceforge.net/">Trinity</a>. <strong>piper</strong> also learns the <code>touch</code> trick for job resuming from <a href="http://trinityrnaseq.sourceforge.net/">Trinity</a>.        </p></li>
 <li><p>To determine the version of FastQ, <strong>piper</strong> uses <code>SolexaQA.pl</code> from <a href="http://solexaqa.sourceforge.net/">SolexaQA</a>. <strong>Piper</strong> have modified it in a way that the program exits as soon as the version of FastQ has been determined. The modified code can be found in the <code>bin</code> directory.        </p></li>
@@ -173,7 +168,8 @@ piRNA. This pipeline maps those reads to rRNA, microRNA hairpin, genome, repbase
 annotated  transposons, piRNA clusters with bowtie and uses bedtools to assign 
 them to different annotations. For each feature, length distribution, nucleotide percentage, 
 ping-pong score, et al.,  are calculated and graphed. Some microRNA analysis is also included. 
-In the dual library mode, pair-wise comparison of miRNA and piRNAs will be done. We invented this balloon-plot to efficiently compare the heterogeneity of miRNA between two samples. piRNA for different transposon family is also compared. </p>
+In the dual library mode, pair-wise comparison of miRNA and piRNAs will be done. We invented this balloon-plot to efficiently compare the heterogeneity of miRNA between two samples. piRNA for different transposon family is also compared. 
+For small RNA tailing analysis, please use <a href="http://jhhung.github.io/Tailor/">Tailor</a> and its associated pipeline. It is current not included in <strong>piper</strong>.          </p>
 
 <p>A more detailed explanation can be found <a href="https://github.com/bowhan/piper/wiki/smallRNA">here</a>.</p>
 
@@ -251,27 +247,21 @@ Bo W Han (bo.han `at` umassmed.edu, bowhan `at` me.com)
 [13] HTSeq: Analysing high-throughput sequencing data with Python. [http://www-huber.embl.de/users/anders/HTSeq/]
 [14] Keane TM, Wong K and Adams DJ. 2013. RetroSeq: transposable element discovery from next-generation sequencing data. Bioinformatics 29: 389-390.
 [15] Hormozdiari F, Hajirasouliha I, Dao P, Hach F, Yorukoglu D, Alkan C, Eichler EE and Sahinalp SC. 2010. Next-generation VariationHunter: combinatorial algorithms for transposon insertion discovery. Bioinformatics 26: i350-i357.
+[16] Pohl, A. &amp; Beato, M. bwtool: a tool for bigWig files. Bioinformatics (2014).
+[17] Zhang, H., Meltzer, P. &amp; Davis, S. RCircos: an R package for Circos 2D track plots. BMC Bioinformatics 14, 244 (2013).
 </code></pre>
-        </article>
-      </div>
+      </section>
     </div>
-    <footer>
-      <div class="owner">
-      <p><a href="https://github.com/bowhan" class="avatar"><img src="https://0.gravatar.com/avatar/13683837f69f6a2089b9af7a1062b948?d=https%3A%2F%2Fidenticons.github.com%2F5325eea3e5959abd4328e2cb65d28ec5.png&amp;r=x&amp;s=60" width="48" height="48"/></a> <a href="https://github.com/bowhan">bowhan</a> maintains <a href="https://github.com/bowhan/Piper">Piper</a></p>
 
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Piper maintained by <a href="https://github.com/bowhan">bowhan</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
 
-      </div>
-      <div class="creds">
-        <small>This page generated using <a href="http://pages.github.com/">GitHub Pages</a><br/>theme by <a href="https://twitter.com/jonrohan/">Jon Rohan</a></small>
-      </div>
-    </footer>
-  </div>
-  <div class="current-section">
-    <a href="#top">Scroll to top</a>
-    <a href="https://github.com/bowhan/Piper/tarball/master" class="tar">tar</a><a href="https://github.com/bowhan/Piper/zipball/master" class="zip">zip</a><a href="" class="code">source code</a>
-    <p class="name"></p>
-  </div>
+    
 
-  
-</body>
+  </body>
 </html>
