@@ -114,12 +114,9 @@ $PATH_TO_piper/piper	dna -l left.fq -r right.fq -g dm3 -c 24 -D 100
 Find more detailed information on [Wiki](https://github.com/bowhan/piper/wiki)
 
 ###*install* : to install genome assembly
-Due to the limitation on the size of file by github, piper doesn't ship with the 
-genome sequences and annotation. Alternatively, we provide scrips 
-to download genome assemly files from iGenome project of illumina. Please make 
-sure internet is available during this process.  **piper** provides an option to separate downloading from other processes, in case the machine/node with internet access is not appropriate for building index and other works.     
-Except for the genome, this pipeline will also install unavailable R packages 
-under the pipeline directory. The downloading and installation can be separated using -D option, in case the head node is not supposed to be used for heavy computational work, like building indexes.      
+Due to the limitation on the size of file by github, piper doesn't ship with the genome sequences and annotation. Alternatively, we provide scrips to download genome assemly files from iGenome project of illumina. Please make sure internet is available during this process.  **piper** provides an option to separate downloading from other processes, in case the machine/node with internet access is not appropriate for building index and other works.     
+Except for the genome, this pipeline will also install unavailable R packages under the pipeline directory. The downloading and installation can be separated using -D option, in case the head node is not supposed to be used for heavy computational work, like building indexes.      
+Currently, **piper** comes with annotation files for *Drosophila melanogaster (dm3)*, *Mus musculus (mm9)*, *Homo sapiens (hg19)*, *Danio rerio (danRer7)*, *Rattus norvegicus (rn5)*, and *Bos taurus (bosTau7)*. *Arabidopsis thaliana (TARI10)* is also included (but not rigorously tested), though no piRNA has been described in plants. 
 
 A more detailed explanation can be found [here](https://github.com/bowhan/piper/wiki/installation).  
 

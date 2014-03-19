@@ -1,5 +1,5 @@
 # variables for small RNA pipeline intersecting
-	rtRNA=$COMMON_FOLDER/UCSC.RepeatMask.bed.rtRNA.gz
+	MASK=$COMMON_FOLDER/UCSC.RepeatMask.bed.rtRNA.gz
 	# piRNA clusters annoated in Li, et al, Mol Cell, 2013
 	piRNA_Cluster=$COMMON_FOLDER/mm9.piRNAcluster.bed.gz
 	piRNA_Cluster_EXON=$COMMON_FOLDER/piRNA.cluster.bed6.gz

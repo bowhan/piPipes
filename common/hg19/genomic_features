@@ -1,5 +1,5 @@
 # variables for small RNA pipeline intersecting
-	rtRNA=$COMMON_FOLDER/UCSC.tRNA.bed.gz
+	MASK=$COMMON_FOLDER/UCSC.tRNA.bed.gz
 	# piRNA clusters annoated in Rosenkranz and Zischler, 2012, BMC Bioinformatics
 	piRNA_Cluster=$COMMON_FOLDER/hg19.piRNAcluster.bed.gz
 	refSeq_GENE=$COMMON_FOLDER/UCSC.refSeq.Genes.bed6.gz

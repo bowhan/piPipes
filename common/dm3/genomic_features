@@ -1,5 +1,5 @@
 # variables for small RNA pipeline intersecting
-	rtRNA=$COMMON_FOLDER/UCSC.rRNA+tRNA+nonCoding.bed6.gz # tRNA, rRNA, nonCoding RNA (flyBase) from UCSC table browser
+	MASK=$COMMON_FOLDER/UCSC.rRNA+tRNA+nonCoding.bed6.gz # tRNA, rRNA, nonCoding RNA (flyBase) from UCSC table browser
 	piRNA_Cluster=$COMMON_FOLDER/Brennecke.piRNAcluster.bed6.gz # piRNA cluster defined in Brennecke, et al,. Cell, 2007; no strand information
 	piRNA_Cluster_42AB=$COMMON_FOLDER/Brennecke.piRNAcluster.42AB.bed6.gz # 42AB
 	piRNA_Cluster_20A=$COMMON_FOLDER/Brennecke.piRNAcluster.20A.bed6.gz # 20A

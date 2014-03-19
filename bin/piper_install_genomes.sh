@@ -28,7 +28,7 @@ export GENOME_INSTALL_VERSION=1.0.0
 usage () {
 cat << EOF
 
-Genome assembly install pipeline v$GENOME_INSTALL_VERSION from $BOLD$PACKAGE_NAME$RESET
+Genome install pipeline v$GENOME_INSTALL_VERSION from $BOLD$PACKAGE_NAME$RESET
 $INSTALL_USAGE${RESET}
 Please email $CONTACT_EMAILS for any questions or bugs. 
 Thank you for using it. 
@@ -89,6 +89,7 @@ checkBin "faSize"
 checkBin "bowtie-build"
 checkBin "bowtie2-build"
 checkBin "bwa"
+checkBin "bowtie"
 checkBin "gtfToGenePred"
 checkBin "genePredToBed"
 checkBin "bedtools_piper"
@@ -114,6 +115,7 @@ echo2 "$GENOME is in the record!"
 		Y|y|yes) ;;
 		*) echo2 "unreognized answer" "error" ;;
 	esac
+
 #################################################
 # to define the length range of siRNA and piRNA #
 #################################################
@@ -250,8 +252,8 @@ STAR --runMode genomeGenerate --runThreadN $CPU --genomeDir STARIndex --genomeFa
 # mrFast index for the genome
 echo2 "Building mrFast index for genome"
 [ ! -s mrFastIndex/${GENOME}.fa.index ] && \
-	ln -st mrFastIndex/ $PWD/${GENOME}.fa && \
-	ln -st mrFastIndex/ $PWD/${GENOME}.fa.fai && \
+	ln -st mrFastIndex/ ../${GENOME}.fa && \
+	ln -st mrFastIndex/ ../${GENOME}.fa.fai && \
 	mrfast --index mrFastIndex/${GENOME}.fa
 
 # rRNA index
@@ -299,11 +301,6 @@ echo2 "Building Bowtie/BWA index for repBase + piRNA cluster + genes"
 	awk 'BEGIN{FS=OFS="\t"}{print $6, $7-1, $8, $11, $1, $10}' > ../UCSC.RepeatMask.bed && \
 	cd ..
 
-#  for retroSeq... 
-# mkdir -p RepeatMask
-# [ ! -s RepeatMask/refTEs ] && \
-# 	awk -v pwd=$PWD 'BEGIN{FS=OFS="\t"}{ name=$4; gsub ("\\(","",name); gsub ("\\)","",name);  print $0 > "RepeatMask/"name;  if (!done[$4]) printf "%s\t%s\n", $4, pwd"/RepeatMask/"name; done[$4]=1; }' UCSC.RepeatMask.bed 1>RepeatMask/refTEs
-
 # making gtf files for htseq-count
 echo2 "Making GTF file for HTSeq-count"
 case $GENOME in	
@@ -318,7 +315,6 @@ mm9)
 	[ ! -s ${GENOME}.genes+repBase+cluster.gtf ] && cat Zamore.NM.gtf Zamore.NR.gtf UCSC.RepeatMask.gtf > ${GENOME}.genes+repBase+cluster.gtf && rm -rf Zamore.NM.gtf Zamore.NR.gtf UCSC.RepeatMask.gtf
 ;;
 *)	
-	# echo2 "This is a genome that has not been optimized in piper. Please contact the authors." "warning"
 	[ ! -s UCSC.RepeatMask.gtf ] && awk 'BEGIN{FS=OFS="\t"}{ if (!c[$4]) c[$4]=0; ++c[$4]; $4=$4"."c[$4]; print $0}' UCSC.RepeatMask.bed | bedToGenePred stdin /dev/stdout | genePredToGtf file stdin /dev/stdout | awk '$3=="exon"' > UCSC.RepeatMask.gtf
 	[ ! -s ${GENOME}.piRNAcluster.gtf ] && zcat ${GENOME}.piRNAcluster.bed.gz | bedToGenePred stdin /dev/stdout | genePredToGtf file stdin /dev/stdout | awk '$3=="exon"' > ${GENOME}.piRNAcluster.gtf
 	[ ! -s ${GENOME}.genes+repBase+cluster.htseq.gtf ] && cat ${GENOME}.genes.gtf  UCSC.RepeatMask.gtf  ${GENOME}.piRNAcluster.gtf  >  ${GENOME}.genes+repBase+cluster.htseq.gtf && rm -rf UCSC.RepeatMask.gtf  ${GENOME}.piRNAcluster.gtf
