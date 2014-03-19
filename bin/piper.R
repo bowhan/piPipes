@@ -168,10 +168,12 @@ draw_agg = function (t1, name) {
 	plots = read.table(t1, F, sep="\t")
 	colnames(plots) = c('Feature','ChIP','Position','Signal')
 	ggplot(plots, aes(x=Position,y=Signal,color=ChIP)) + 
+		ggtitle(name) + 
+		theme( plot.title=element_text(lineheight=.8, face="bold" ) ) + 
 		geom_line( size=1 ) + 
 		theme_minimal() + 
 		scale_color_manual(values= colors[1:length(levels (plots$ChIP))]) + 
-		ylab(paste(name, "ChIP-seq Signal"))
+		ylab("ChIP-seq Signal Enriched Over Input")
 }
 
 

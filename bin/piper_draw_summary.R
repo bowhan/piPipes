@@ -25,7 +25,7 @@ argv  = commandArgs (TRUE)
 summaryTableFile = argv[1]
 outPdfPrefix = argv[2]
 numOfCore = argv[3]
-normScale = as.real (argv[4])
+normScale = as.double (argv[4])
 summaryTable = read.table (summaryTableFile, F)
 summaryTableSplited = split (summaryTable, summaryTable$V1)
 mclapply (summaryTableSplited, draw_summary, mc.cores=numOfCore, pdfPrefix=outPdfPrefix, normScale=normScale)

@@ -8,6 +8,9 @@
 	refSeq_5UTR=$COMMON_FOLDER/UCSC.refSeq.5UTR.bed.gz
 	refSeq_3UTR=$COMMON_FOLDER/UCSC.refSeq.3UTR.bed.gz
 	repeatMasker=$COMMON_FOLDER/UCSC.RepeatMask.bed
+	lincRNA=$COMMON_FOLDER/UCSC.lincRNA.bed.gz
+	snoRNA=$COMMON_FOLDER/UCSC.snoRNA.bed.gz
+	
 	declare -a TARGETS=( \
 	"piRNA_Cluster" \
 	"refSeq_GENE" \
@@ -16,6 +19,8 @@
 	"refSeq_5UTR" \
 	"refSeq_3UTR" \
 	"repeatMasker" \
+	"lincRNA" \
+	"snoRNA" \
 	)
 
 # variables for small RNA direct mapping

@@ -20,8 +20,8 @@
 source (paste (Sys.getenv ("PIPELINE_DIRECTORY"),"/bin/piper.R",sep=""))
 
 pkgTest ("ggplot2")
-#pkgTest ("extrafont")
 pkgTest ("RColorBrewer")
+
 argv  = commandArgs (TRUE)
 pdf (paste(argv[2], ".pdf", sep=''))
 draw_agg (argv[1], argv[3])
