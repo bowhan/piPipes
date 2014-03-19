@@ -1,0 +1,45 @@
+	CDS=${COMMON_FOLDER}/TAIR10.CDS.bed.gz
+	chromosome=${COMMON_FOLDER}/TAIR10.chromosome.bed.gz
+	exon=${COMMON_FOLDER}/TAIR10.exon.bed.gz
+	five_prime_UTR=${COMMON_FOLDER}/TAIR10.five_prime_UTR.bed.gz
+	gene=${COMMON_FOLDER}/TAIR10.gene.bed.gz
+	TAIR10_GFF3_genes_transposons=${COMMON_FOLDER}/TAIR10_GFF3_genes_transposons.bed.gz
+	miRNA=${COMMON_FOLDER}/TAIR10.miRNA.bed.gz
+	mRNA=${COMMON_FOLDER}/TAIR10.mRNA.bed.gz
+	ncRNA=${COMMON_FOLDER}/TAIR10.ncRNA.bed.gz
+	protein=${COMMON_FOLDER}/TAIR10.protein.bed.gz
+	pseudogene=${COMMON_FOLDER}/TAIR10.pseudogene.bed.gz
+	pseudogenic_exon=${COMMON_FOLDER}/TAIR10.pseudogenic_exon.bed.gz
+	pseudogenic_transcript=${COMMON_FOLDER}/TAIR10.pseudogenic_transcript.bed.gz
+	rRNA=${COMMON_FOLDER}/TAIR10.rRNA.bed.gz
+	snoRNA=${COMMON_FOLDER}/TAIR10.snoRNA.bed.gz
+	snRNA=${COMMON_FOLDER}/TAIR10.snRNA.bed.gz
+	three_prime_UTR=${COMMON_FOLDER}/TAIR10.three_prime_UTR.bed.gz
+	transposable_element=${COMMON_FOLDER}/TAIR10.transposable_element.bed.gz
+	transposable_element_gene=${COMMON_FOLDER}/TAIR10.transposable_element_gene.bed.gz
+	transposon_fragment=${COMMON_FOLDER}/TAIR10.transposon_fragment.bed.gz
+	tRNA=${COMMON_FOLDER}/TAIR10.tRNA.bed.gz
+
+	declare -a TARGETS=( \
+		"CDS" \
+		"chromosome" \
+		"exon" \
+		"five_prime_UTR" \
+		"gene" \
+		"TAIR10_GFF3_genes_transposons" \
+		"miRNA" \
+		"mRNA" \
+		"ncRNA" \
+		"protein" \
+		"pseudogene" \
+		"pseudogenic_exon" \
+		"pseudogenic_transcript" \
+		"rRNA" \
+		"snoRNA" \
+		"snRNA" \
+		"three_prime_UTR" \
+		"transposable_element" \
+		"transposable_element_gene" \
+		"transposon_fragment" \
+		"tRNA" \
+	)

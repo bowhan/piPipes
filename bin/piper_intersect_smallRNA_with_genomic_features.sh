@@ -39,10 +39,16 @@ SEED=${RANDOM}${RANDOM}${RANDOM}${RANDOM} # random name
 . $COMMON_FOLDER/genomic_features # reading the information to intersect with, as well as some other annotation files
 ALL_BED=`basename ${GENOME_ALLMAP_BED2%bed2}x_rpmk_rtRNA.bed2` # names for the file genernated here
 # get rid of tRNA, rRNA, snoRNA...
-[ -z $rtRNA ] && echo2 "undefined \$rtRNA, please add the annotation of rRNA+tRNA+snoRNA and edit the $COMMON_FOLDER/genomic_features file. Exiting current function" "error"
-[ ! -s $rtRNA ] && echo2 "file $rtRNA not found. Exiting current function" "error"
-bedtools_piper intersect -v -wa -a $GENOME_ALLMAP_BED2 -b $rtRNA | tee $INTERSECT_OUTDIR/${ALL_BED} | awk '{total[$7]=$4; if ($5==1) {unique_reads+=$4; ++unique_species}}END{for (seq in total) {all_reads+=total[seq]; ++all_species}; printf "%d\t%d\t%d\t%d\t", unique_reads, all_reads, unique_species, all_species}' > $INTERSECT_OUTDIR/.stats
-[ "$?" != "0" ] && echo2 "Failed to remove rRNA, tRNA, snoRNA..." "error" 
+if [ -z $MASK ]; then
+    echo2 "undefined \$MASK. No masking will be done. If you would like to mask rRNA, tRNA, et al., please edit the $COMMON_FOLDER/genomic_features file." "warning"
+    ln -s $GENOME_ALLMAP_BED2 $INTERSECT_OUTDIR/${ALL_BED}
+    awk '{total[$7]=$4; if ($5==1) {unique_reads+=$4; ++unique_species}}END{for (seq in total) {all_reads+=total[seq]; ++all_species}; printf "%d\t%d\t%d\t%d\t", unique_reads, all_reads, unique_species, all_species}' $INTERSECT_OUTDIR/${ALL_BED} > $INTERSECT_OUTDIR/.stats
+else
+    bedtools_piper intersect -v -wa -a $GENOME_ALLMAP_BED2 -b $rtRNA | \
+    tee $INTERSECT_OUTDIR/${ALL_BED} | \
+    awk '{total[$7]=$4; if ($5==1) {unique_reads+=$4; ++unique_species}}END{for (seq in total) {all_reads+=total[seq]; ++all_species}; printf "%d\t%d\t%d\t%d\t", unique_reads, all_reads, unique_species, all_species}' > $INTERSECT_OUTDIR/.stats
+fi
+
 print_header $smRNA_SUM
 print_header $siRNA_SUM
 print_header $piRNA_SUM

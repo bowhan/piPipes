@@ -57,15 +57,16 @@ Due to the limitation on the size of the files on github, the genome sequence, m
 The pipeline finds almost everything under its own directory so please do not move the `zpipe` script. Use `ln  -s  $PATH_TO_piper/piper  $HOME/bin/piper` to create symbol link in your `$HOME/bin`; Or add `/path/to/piper` to your `$PATH`. 
 **But please do NOT add the `/path/to/piper/bin` to your `$PATH`**
 
-Call different pipelines using:		
+Call different pipelines using:
+
 ```Bash
 # genome installation pipeline
- # 1. to install genome and R packages in one step
- # the assembly that piper supports can be found in the common/iGenome_UTL.txt file
+# 1. to install genome and R packages in one step
+# the assembly that piper supports can be found in the common/iGenome_UTL.txt file
 $PATH_TO_piper/piper	install -g dm3|mm9|hg19... 
- # 2. to only download the genome and R packages (if the machine/node is not appropriate to be used for heavy computing tasks, like building indexes); then run (1) on a powerful mechine/node.
+# 2. to only download the genome and R packages (if the machine/node is not appropriate to be used for heavy computing tasks, like building indexes); then run (1) on a powerful mechine/node.
 $PATH_TO_piper/piper	install -g dm3|mm9|hg19 -D
- # 3. to download the iGenome from other explicitly specified location
+# 3. to download the iGenome from other explicitly specified location
 $PATH_TO_piper/piper	install -g hg18 -l ftp://igenome:G3nom3s4u@ussd-ftp.illumina.com/Homo_sapiens/UCSC/hg18/Homo_sapiens_UCSC_hg18.tar.gz
 
 # to run small RNA pipeline in single library mode; input fastq can be gzipped
@@ -111,45 +112,32 @@ $PATH_TO_piper/piper	chip2 -a directory_A -b directory_B -g mm9 -c 8 -o output_d
 # to run Genome Seq library
 $PATH_TO_piper/piper	dna -l left.fq -r right.fq -g dm3 -c 24 -D 100
 ```
+
 Find more detailed information on [Wiki](https://github.com/bowhan/piper/wiki)
 
 ###*install* : to install genome assembly
-Due to the limitation on the size of file by github, piper doesn't ship with the 
-genome sequences and annotation. Alternatively, we provide scrips 
-to download genome assemly files from iGenome project of illumina. Please make 
-sure internet is available during this process.  **piper** provides an option to separate downloading from other processes, in case the machine/node with internet access is not appropriate for building index and other works.     
-Except for the genome, this pipeline will also install unavailable R packages 
-under the pipeline directory. The downloading and installation can be separated using -D option, in case the head node is not supposed to be used for heavy computational work, like building indexes.      
+Due to the limitation on the size of file by github, piper doesn't ship with the genome sequences and annotation. Alternatively, we provide scrips to download genome assemly files from iGenome project of illumina. Please make sure internet is available during this process.  **piper** provides an option to separate downloading from other processes, in case the machine/node with internet access is not appropriate for building index and other works.     
+Except for the genome, this pipeline will also install unavailable R packages under the pipeline directory. The downloading and installation can be separated using -D option, in case the head node is not supposed to be used for heavy computational work, like building indexes.      
+Currently, **piper** comes with annotation files for *Drosophila melanogaster (dm3)*, *Mus musculus (mm9)*, *Homo sapiens (hg19)*, *Danio rerio (danRer7)*, *Rattus norvegicus (rn5)*, and *Bos taurus (bosTau7)*. *Arabidopsis thaliana (TARI10)* is also included (but not rigorously tested), though no piRNA has been described in plants. 
 
 A more detailed explanation can be found [here](https://github.com/bowhan/piper/wiki/installation).  
 
 ###*small* : small RNA pipeline
-small RNA library typically clones 18–40nt small RNAs, including miRNA, siRNA and 
-piRNA. This pipeline maps those reads to rRNA, microRNA hairpin, genome, repbase 
-annotated  transposons, piRNA clusters with bowtie and uses bedtools to assign 
-them to different annotations. For each feature, length distribution, nucleotide percentage, 
-ping-pong score, et al.,  are calculated and graphed. Some microRNA analysis is also included. 
+small RNA library typically clones 18–40nt small RNAs, including miRNA, siRNA and piRNA. This pipeline maps those reads to rRNA, microRNA hairpin, genome, repbase annotated  transposons, piRNA clusters with bowtie and uses bedtools to assign them to different annotations. For each feature, length distribution, nucleotide percentage, ping-pong score, et al.,  are calculated and graphed. Some microRNA analysis is also included.    
 In the dual library mode, pair-wise comparison of miRNA and piRNAs will be done. We invented this balloon-plot to efficiently compare the heterogeneity of miRNA between two samples. piRNA for different transposon family is also compared. 
-For small RNA tailing analysis, please use [Tailor](http://jhhung.github.io/Tailor/) and its associated pipeline. It is current not included in **piper**.			
+* For small RNA tailing analysis, please use [Tailor](http://jhhung.github.io/Tailor/) and its associated pipeline. It is current not included in **piper**.			
 
 A more detailed explanation can be found [here](https://github.com/bowhan/piper/wiki/smallRNA).
 
 ###*rnaseq* : RNASeq pipeline
-RNASeq pipeline can be used for both dUTR or ligation based RNASeq. 
-It uses bowtie2 to aligns paired-end reads to rRNA and STAR[4] to align the unmapped reads 
-to genome; Then it uses Cufflinks for quantification of transcripts from the genomic coordinates. It
-also use HTSeq-count to quantify genomic features using coordinates. It also directly aligns reads to 
-transcriptome, repbase annotated transposon, piRNA clusters using Bowtie2. Quantification 
-was done using eXpress. Library is normalized by gene transcriptome compatible reads, given by Cufflinks. Basic statistics and graphs will be given. 
+RNASeq pipeline can be used for both dUTR or ligation based RNASeq. It uses bowtie2 to aligns paired-end reads to rRNA and STAR[4] to align the unmapped reads to genome; Then it uses Cufflinks for quantification of transcripts from the genomic coordinates. It also uses HTSeq-count to quantify genomic features using coordinates. 
+Besides genome, the pipeline also directly aligns reads to transcriptome, repbase annotated transposon, piRNA clusters using Bowtie2. Quantification was done using eXpress. Library is normalized by gene transcriptome compatible reads, given by Cufflinks. Basic statistics and graphs will be given. 
 
 A more detailed explanation can be found [here](https://github.com/bowhan/piper/wiki/RNASeq).  
 
 ###*cage/deg* : CAGE & Degradome pipeline
-Both types of libraries are designed to gather the information of the 5' end of RNAs 
-CAGE clones RNAs with Cap and Degradome clones RNAs with 5' monophosphate. 
-The pipeline will align reads to rRNA with bowtie2, genome using STAR. 
-Different from RNASeq, this pipeline emphasizes the accuracy of the 5' ends. Nucleotide
-composition surrounding the 5' end of the reads are given, like in small RNA library.
+Both types of libraries are designed to gather the information of the 5' end of RNAs CAGE clones RNAs with Cap and Degradome clones RNAs with 5' monophosphate. 
+The pipeline will align reads to rRNA with bowtie2, genome using STAR. Different from RNASeq, this pipeline emphasizes the accuracy of the 5' ends. Nucleotide composition surrounding the 5' end of the reads are given, like in small RNA library.
 
 A more detailed explanation can be found [here](https://github.com/bowhan/piper/wiki/DegradomeSeq).
 
@@ -160,8 +148,7 @@ using MASC2. Signal is normalized in three different methods (ppois, FE and logL
 A more detailed explanation can be found [here](https://github.com/bowhan/piper/wiki/ChIPSeq). 
 
 ###*dna* : Genomic Seq pipeline
-Genomic Seq pipelines aligns the paired-end reads to genome with Bowtie2, BWA-MEM and mrFast. Variations
-were called using different algorithms. 
+Genomic Seq pipelines aligns the paired-end reads to genome with Bowtie2, BWA-MEM and mrFast. Variations were called using different algorithms. SV is summarized in Circos plot. 
 
 A more detailed explanation can be found [here](https://github.com/bowhan/piper/wiki/GenomeSeq).
 
