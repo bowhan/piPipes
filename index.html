@@ -156,12 +156,9 @@ Most of <strong>piper's</strong> C++ code utilizes <em>C++11</em> features and <
 <h3>
 <a name="install--to-install-genome-assembly" class="anchor" href="#install--to-install-genome-assembly"><span class="octicon octicon-link"></span></a><em>install</em> : to install genome assembly</h3>
 
-<p>Due to the limitation on the size of file by github, piper doesn't ship with the 
-genome sequences and annotation. Alternatively, we provide scrips 
-to download genome assemly files from iGenome project of illumina. Please make 
-sure internet is available during this process.  <strong>piper</strong> provides an option to separate downloading from other processes, in case the machine/node with internet access is not appropriate for building index and other works.<br>
-Except for the genome, this pipeline will also install unavailable R packages 
-under the pipeline directory. The downloading and installation can be separated using -D option, in case the head node is not supposed to be used for heavy computational work, like building indexes.      </p>
+<p>Due to the limitation on the size of file by github, piper doesn't ship with the genome sequences and annotation. Alternatively, we provide scrips to download genome assemly files from iGenome project of illumina. Please make sure internet is available during this process.  <strong>piper</strong> provides an option to separate downloading from other processes, in case the machine/node with internet access is not appropriate for building index and other works.<br>
+Except for the genome, this pipeline will also install unavailable R packages under the pipeline directory. The downloading and installation can be separated using -D option, in case the head node is not supposed to be used for heavy computational work, like building indexes.<br>
+Currently, <strong>piper</strong> comes with annotation files for <em>Drosophila melanogaster (dm3)</em>, <em>Mus musculus (mm9)</em>, <em>Homo sapiens (hg19)</em>, <em>Danio rerio (danRer7)</em>, <em>Rattus norvegicus (rn5)</em>, and <em>Bos taurus (bosTau7)</em>. <em>Arabidopsis thaliana (TARI10)</em> is also included (but not rigorously tested), though no piRNA has been described in plants. </p>
 
 <p>A more detailed explanation can be found <a href="https://github.com/bowhan/piper/wiki/installation">here</a>.  </p>
 
