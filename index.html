@@ -99,12 +99,12 @@ Most of <strong>piper's</strong> C++ code utilizes <em>C++11</em> features and <
 <p>Call different pipelines using:</p>
 
 <div class="highlight highlight-Bash"><pre><span class="c"># genome installation pipeline</span>
- <span class="c"># 1. to install genome and R packages in one step</span>
- <span class="c"># the assembly that piper supports can be found in the common/iGenome_UTL.txt file</span>
+<span class="c"># 1. to install genome and R packages in one step</span>
+<span class="c"># the assembly that piper supports can be found in the common/iGenome_UTL.txt file</span>
 <span class="nv">$PATH_TO_piper</span>/piper    install -g dm3<span class="p">|</span>mm9<span class="p">|</span>hg19... 
- <span class="c"># 2. to only download the genome and R packages (if the machine/node is not appropriate to be used for heavy computing tasks, like building indexes); then run (1) on a powerful mechine/node.</span>
+<span class="c"># 2. to only download the genome and R packages (if the machine/node is not appropriate to be used for heavy computing tasks, like building indexes); then run (1) on a powerful mechine/node.</span>
 <span class="nv">$PATH_TO_piper</span>/piper    install -g dm3<span class="p">|</span>mm9<span class="p">|</span>hg19 -D
- <span class="c"># 3. to download the iGenome from other explicitly specified location</span>
+<span class="c"># 3. to download the iGenome from other explicitly specified location</span>
 <span class="nv">$PATH_TO_piper</span>/piper    install -g hg18 -l ftp://igenome:G3nom3s4u@ussd-ftp.illumina.com/Homo_sapiens/UCSC/hg18/Homo_sapiens_UCSC_hg18.tar.gz
 
 <span class="c"># to run small RNA pipeline in single library mode; input fastq can be gzipped</span>
@@ -165,36 +165,27 @@ Currently, <strong>piper</strong> comes with annotation files for <em>Drosophila
 <h3>
 <a name="small--small-rna-pipeline" class="anchor" href="#small--small-rna-pipeline"><span class="octicon octicon-link"></span></a><em>small</em> : small RNA pipeline</h3>
 
-<p>small RNA library typically clones 18–40nt small RNAs, including miRNA, siRNA and 
-piRNA. This pipeline maps those reads to rRNA, microRNA hairpin, genome, repbase 
-annotated  transposons, piRNA clusters with bowtie and uses bedtools to assign 
-them to different annotations. For each feature, length distribution, nucleotide percentage, 
-ping-pong score, et al.,  are calculated and graphed. Some microRNA analysis is also included. 
-In the dual library mode, pair-wise comparison of miRNA and piRNAs will be done. We invented this balloon-plot to efficiently compare the heterogeneity of miRNA between two samples. piRNA for different transposon family is also compared. 
-For small RNA tailing analysis, please use <a href="http://jhhung.github.io/Tailor/">Tailor</a> and its associated pipeline. It is current not included in <strong>piper</strong>.          </p>
+<p>small RNA library typically clones 18–40nt small RNAs, including miRNA, siRNA and piRNA. This pipeline maps those reads to rRNA, microRNA hairpin, genome, repbase annotated  transposons, piRNA clusters with bowtie and uses bedtools to assign them to different annotations. For each feature, length distribution, nucleotide percentage, ping-pong score, et al.,  are calculated and graphed. Some microRNA analysis is also included.<br>
+In the dual library mode, pair-wise comparison of miRNA and piRNAs will be done. We invented this balloon-plot to efficiently compare the heterogeneity of miRNA between two samples. piRNA for different transposon family is also compared. </p>
 
-<p>A more detailed explanation can be found <a href="https://github.com/bowhan/piper/wiki/smallRNA">here</a>.</p>
+<ul>
+<li>For small RNA tailing analysis, please use <a href="http://jhhung.github.io/Tailor/">Tailor</a> and its associated pipeline. It is current not included in <strong>piper</strong>.<br>
+</li>
+</ul><p>A more detailed explanation can be found <a href="https://github.com/bowhan/piper/wiki/smallRNA">here</a>.</p>
 
 <h3>
 <a name="rnaseq--rnaseq-pipeline" class="anchor" href="#rnaseq--rnaseq-pipeline"><span class="octicon octicon-link"></span></a><em>rnaseq</em> : RNASeq pipeline</h3>
 
-<p>RNASeq pipeline can be used for both dUTR or ligation based RNASeq. 
-It uses bowtie2 to aligns paired-end reads to rRNA and STAR[4] to align the unmapped reads 
-to genome; Then it uses Cufflinks for quantification of transcripts from the genomic coordinates. It
-also use HTSeq-count to quantify genomic features using coordinates. It also directly aligns reads to 
-transcriptome, repbase annotated transposon, piRNA clusters using Bowtie2. Quantification 
-was done using eXpress. Library is normalized by gene transcriptome compatible reads, given by Cufflinks. Basic statistics and graphs will be given. </p>
+<p>RNASeq pipeline can be used for both dUTR or ligation based RNASeq. It uses bowtie2 to aligns paired-end reads to rRNA and STAR[4] to align the unmapped reads to genome; Then it uses Cufflinks for quantification of transcripts from the genomic coordinates. It also uses HTSeq-count to quantify genomic features using coordinates. 
+Besides genome, the pipeline also directly aligns reads to transcriptome, repbase annotated transposon, piRNA clusters using Bowtie2. Quantification was done using eXpress. Library is normalized by gene transcriptome compatible reads, given by Cufflinks. Basic statistics and graphs will be given. </p>
 
 <p>A more detailed explanation can be found <a href="https://github.com/bowhan/piper/wiki/RNASeq">here</a>.  </p>
 
 <h3>
 <a name="cagedeg--cage--degradome-pipeline" class="anchor" href="#cagedeg--cage--degradome-pipeline"><span class="octicon octicon-link"></span></a><em>cage/deg</em> : CAGE &amp; Degradome pipeline</h3>
 
-<p>Both types of libraries are designed to gather the information of the 5' end of RNAs 
-CAGE clones RNAs with Cap and Degradome clones RNAs with 5' monophosphate. 
-The pipeline will align reads to rRNA with bowtie2, genome using STAR. 
-Different from RNASeq, this pipeline emphasizes the accuracy of the 5' ends. Nucleotide
-composition surrounding the 5' end of the reads are given, like in small RNA library.</p>
+<p>Both types of libraries are designed to gather the information of the 5' end of RNAs CAGE clones RNAs with Cap and Degradome clones RNAs with 5' monophosphate. 
+The pipeline will align reads to rRNA with bowtie2, genome using STAR. Different from RNASeq, this pipeline emphasizes the accuracy of the 5' ends. Nucleotide composition surrounding the 5' end of the reads are given, like in small RNA library.</p>
 
 <p>A more detailed explanation can be found <a href="https://github.com/bowhan/piper/wiki/DegradomeSeq">here</a>.</p>
 
@@ -209,8 +200,7 @@ using MASC2. Signal is normalized in three different methods (ppois, FE and logL
 <h3>
 <a name="dna--genomic-seq-pipeline" class="anchor" href="#dna--genomic-seq-pipeline"><span class="octicon octicon-link"></span></a><em>dna</em> : Genomic Seq pipeline</h3>
 
-<p>Genomic Seq pipelines aligns the paired-end reads to genome with Bowtie2, BWA-MEM and mrFast. Variations
-were called using different algorithms. </p>
+<p>Genomic Seq pipelines aligns the paired-end reads to genome with Bowtie2, BWA-MEM and mrFast. Variations were called using different algorithms. SV is summarized in Circos plot. </p>
 
 <p>A more detailed explanation can be found <a href="https://github.com/bowhan/piper/wiki/GenomeSeq">here</a>.</p>
 
