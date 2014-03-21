@@ -162,17 +162,17 @@ were called using different algorithms.
 
 A more detailed explanation can be found [here](https://github.com/bowhan/piper/wiki/GenomeSeq).
 
-##Citing
+##CITE US
 * in preparation
 
-##Contact
+##CONTACT
     Wei Wang (wei.wang2 `at` umassmed.edu)
     Bo W Han (bo.han `at` umassmed.edu, bowhan `at` me.com)
     
 ##LICENSE
 **Piper** is released under the [GNU General Public License version 3](https://www.gnu.org/licenses/gpl.html).		
 
-##References
+##REFERENCES
 ```
 [1] Li H and Durbin R. 2009. Fast and accurate short read alignment with Burrows-Wheeler transform. Bioinformatics 25: 1754-1760.
 [2] Langmead B, Trapnell C, Pop M and Salzberg SL. 2009. Ultrafast and memory-efficient alignment of short DNA sequences to the human genome. Genome Biol 10: R25.

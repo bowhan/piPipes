@@ -1,2 +1,6 @@
 Rlib
 common
+bin/htseq-count
+bin/htseq-qa
+bin/macs2
+lib

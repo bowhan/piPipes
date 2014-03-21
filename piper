@@ -44,7 +44,7 @@ export PATH=${PIPELINE_DIRECTORY}/bin:$PATH
 ################
 # DEBUG switch #
 ################
-export DEBUG='-x'
+#export DEBUG='-x'
 
 #########
 # Intro #
