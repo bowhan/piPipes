@@ -54,7 +54,7 @@ Due to the limitation on the size of the files on github, the genome sequence, m
 8. **piper** uses [BEDtools](https://github.com/bowhan/bedtools.git) to assign alignments to different genomic annotations (gene, transposon, piRNA cluster, et al.). In small RNA pipeline, we made a slightly modification on `intersectBed.cpp` to accommodate a special BED format used in the pipeline. The modified code can be found in the `src/third_party` folder. A statically compiled binary, which has been renamed as `bedtools_piper` to avoid confusion with the original one, can be found in the `bin` directory. 				 		
 
 ##USAGE
-The pipeline finds almost everything under its own directory so please do not move the `zpipe` script. Use `ln  -s  $PATH_TO_piper/piper  $HOME/bin/piper` to create symbol link in your `$HOME/bin`; Or add `/path/to/piper` to your `$PATH`. 
+The pipeline finds almost everything under its own directory so please do not move the `piper` script. Use `ln  -s  $PATH_TO_piper/piper  $HOME/bin/piper` to create symbol link in your `$HOME/bin`; Or add `/path/to/piper` to your `$PATH`. 
 **But please do NOT add the `/path/to/piper/bin` to your `$PATH`**
 
 Call different pipelines using:		
@@ -162,7 +162,7 @@ were called using different algorithms.
 
 A more detailed explanation can be found [here](https://github.com/bowhan/piper/wiki/GenomeSeq).
 
-##CITE US
+##CITATION
 * in preparation
 
 ##CONTACT

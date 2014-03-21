@@ -35,9 +35,9 @@ CPU=$3 # CPU to use
 INTERSECT_OUTDIR=$4 # output directory to store files
 SEED=${RANDOM}${RANDOM}${RANDOM}${RANDOM} # random name
 . $COMMON_FOLDER/genomic_features # reading the information to intersect with, as well as some other annotation files
-ALL_BED=`basename ${GENOME_ALLMAP_BED12%bed*}x_rpmk_rtRNA.bed12` # names for the file genernated here
+ALL_BED=`basename ${GENOME_ALLMAP_BED12%bed*}x_rpmk_MASK.bed12` # names for the file genernated here
 # get rid of tRNA, rRNA, snoRNA...
-bedtools_piper intersect -v -wa -split -a $GENOME_ALLMAP_BED12 -b $rtRNA | tee $INTERSECT_OUTDIR/${ALL_BED} | awk '{all_reads+=$5; if ($5==1) {unique_reads+=$4; ++unique_species}}END{printf "%d\t%d\t%d\n", unique_reads, all_reads, unique_species;}' > $INTERSECT_OUTDIR/.stats
+bedtools_piper intersect -v -wa -split -a $GENOME_ALLMAP_BED12 -b $MASK | tee $INTERSECT_OUTDIR/${ALL_BED} | awk '{all_reads+=$5; if ($5==1) {unique_reads+=$4; ++unique_species}}END{printf "%d\t%d\t%d\n", unique_reads, all_reads, unique_species;}' > $INTERSECT_OUTDIR/.stats
 print_header $SUMMARY
 # doing intersecting and counting
 para_file=$INTERSECT_OUTDIR/${SEED}.intersect.para
