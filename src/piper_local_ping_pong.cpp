@@ -1,4 +1,4 @@
-/* 
+/*
  # piper, a pipeline collection for PIWI-interacting RNA (piRNA) and transposon analysis
  # Copyright (C) 2014  Bo Han, Wei Wang, Phillip Zamore, Zhiping Weng
  #
@@ -15,26 +15,69 @@
  # You should have received a copy of the GNU General Public License along
  # with this program; if not, write to the Free Software Foundation, Inc.,
  # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-*/
+ */
 
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <deque>
 #include <array>
 #include <memory>
 #include <unordered_map>
-#include <boost/thread.hpp>
+#include <thread>
+#include <mutex>
 #include <boost/program_options.hpp>
-#include <boost/ref.hpp>
 
-using namespace std;
 #define UPPERLIMIT 30
+using namespace std;
+
+template <typename T>
+class ping_pong_table {
+	deque<T> positions;
+	mutex mx;
+public:
+	ping_pong_table (T N): positions {} {
+		for (T i {} ; i < N; ++i) {
+			positions.push_back (i);
+		}
+	}
+	T pop () {
+		unique_lock<mutex> locker (mx);
+		T ret = positions.back ();
+		positions.pop_back ();
+		return ret;
+	}
+	bool empty () {
+		return positions.empty ();
+	}
+};
+
 void do_ping_pong (
 		const unordered_map<string, unordered_map<char, unordered_map<uint64_t, double>>>& ,
 		const unordered_map<string, unordered_map<char, unordered_map<uint64_t, double>>>& ,
 		int ,
 		double* const
 );
+
+template <typename C, typename T>
+class ping_pong_player {
+private:
+	C*  _A;
+	C*  _B;
+	ping_pong_table<T>* _tasks;
+	double* _answers;
+public:
+	ping_pong_player<C,T> ( C& A,  C& B, ping_pong_table<T>& tasks, double* answers):
+	_A {&A}, _B {&B}, _tasks {&tasks}, _answers {answers}
+	{ }
+	void operator () () {
+		while (! _tasks->empty ()) {
+			auto n = _tasks->pop ();
+			do_ping_pong (*_A, *_B, n, _answers + n );
+		}
+	}
+};
+
 void read_file_into_unordered_map (const string& file_name, unordered_map<string, unordered_map<char, unordered_map<uint64_t, double>>>& umap)
 {
 	ifstream in (file_name);
@@ -82,12 +125,14 @@ Please contact bo.han@Umassmed.edu for any questions.
 	string file_a;
 	string file_b;
 	int num_of_threads;
+	int upper_limit;
 	try {
 			opts.add_options ()
 				("help,h", "display this help message and exit")
 				("file_a,a", boost::program_options::value<string>(&file_a)->required(), "first file used for ping-pong in BED2 format")
 				("file_b,b", boost::program_options::value<string>(&file_b)->required(), "second file used for ping-pong in BED2 format")
 				("thread,p", boost::program_options::value<int>(&num_of_threads)->default_value(1), "the number of threads to use")
+				("upper_limit,u", boost::program_options::value<int>(&upper_limit)->default_value(UPPERLIMIT), "the maximal overlap to calculate")
 			;
 			boost::program_options::variables_map vm;
 			boost::program_options::store (boost::program_options::parse_command_line(argc, argv, opts), vm);
@@ -104,9 +149,8 @@ Please contact bo.han@Umassmed.edu for any questions.
 		} /** end of cmdline parsing **/
 
 	unordered_map<string, unordered_map<char, unordered_map<uint64_t, double>>> seq2read1, seq2read2;
-
 	if (num_of_threads > 1) {
-		boost::thread parse_file_A (read_file_into_unordered_map, file_a, boost::ref (seq2read1));
+		thread parse_file_A (read_file_into_unordered_map, file_a, boost::ref (seq2read1));
 		if ( file_a !=  file_b )
 			read_file_into_unordered_map ( file_b , seq2read2);
 		if ( parse_file_A.joinable () )
@@ -116,42 +160,29 @@ Please contact bo.han@Umassmed.edu for any questions.
 		if ( file_a !=  file_b )
 			read_file_into_unordered_map ( file_b , seq2read2);
 	}
-
-	double  z_score [UPPERLIMIT];
-	for (int i = 0; i < UPPERLIMIT; ++i)
+	ping_pong_table<int> ppt {upper_limit};
+	double* z_score = new double [upper_limit];
+	for (int i = 0; i < upper_limit; ++i)
 		z_score[i]=0.0;
-	if (num_of_threads == 1) {
-		if ( file_a !=  file_b ) {
-			for (int k = 0; k < UPPERLIMIT; ++k)
-				do_ping_pong (seq2read1, seq2read2, k, z_score + k);
+	thread** threads = new thread* [num_of_threads];
+	for (int i = 0; i < num_of_threads; ++i) {
+		if ( file_a ==  file_b ) {
+			threads[i] = new thread ( ping_pong_player<decltype(seq2read1), int> {seq2read1, seq2read1, ppt, z_score} );
 		} else {
-			for (int k = 0; k < UPPERLIMIT; ++k)
-				do_ping_pong (seq2read1, seq2read1, k, z_score + k);
+			threads[i] = new thread ( ping_pong_player<decltype(seq2read1), int> {seq2read1, seq2read2, ppt, z_score} );
 		}
-	} else { /** TODO: rewrite this part with threadpool **/
-		int nthread = 0;
-		int k = 0 ;
-		boost::thread** threads = new boost::thread* [num_of_threads];
-		while (k < UPPERLIMIT) {
-			for ( nthread = 0 ;nthread < num_of_threads && k < UPPERLIMIT; ++nthread, ++k) {
-				if ( file_a ==  file_b )
-					threads[nthread] = new boost::thread ( do_ping_pong, boost::ref (seq2read1), boost::ref (seq2read1), k, z_score + k );
-				else
-					threads[nthread] = new boost::thread ( do_ping_pong, boost::ref (seq2read1), boost::ref (seq2read2), k, z_score + k );
-			}
-			for (int i = 0; i < nthread; ++ i ) {
-				if (threads[i]->joinable ()) {
-					threads[i]->join ();
-					delete threads[i];
-				}
-			}
-		}
-		delete[] threads;
 	}
-	for (int k = 0; k < UPPERLIMIT; ++k)
-	{
+	for (int i = 0; i < num_of_threads; ++ i ) {
+		if (threads[i]->joinable ()) {
+			threads[i]->join ();
+			delete threads[i];
+		}
+	}
+	delete[] threads;
+	for (int k = 0; k < upper_limit; ++k) {
 		cout <<  k+1 << '\t' << z_score[k] << '\n';
 	}
+	delete[] z_score;
 }
 
 void do_ping_pong (
@@ -209,3 +240,4 @@ void do_ping_pong (
 		}
 	}
 }
+
