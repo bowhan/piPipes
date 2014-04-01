@@ -1,10 +1,9 @@
-
 # piPipes, a set of pipelines for PIWI-interacting RNA (piRNA) and transposon analysis
-# Copyright (C) <2014>  <Bo Han, Wei Wang, Zhiping Weng, Phillip Zamore>
+# Copyright (C) 2014  Bo Han, Wei Wang, Zhiping Weng, Phillip Zamore
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
+# the Free Software Foundation; either version 3 of the License, or
 # (at your option) any later version.
 
 # This program is distributed in the hope that it will be useful,
@@ -15,7 +14,6 @@
 # You should have received a copy of the GNU General Public License along
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-
 bed=$1
 feature_name=$2
 feature_bed=$3
@@ -225,11 +223,18 @@ awk 'BEGIN{FS=OFS="\t"}\
 # for (i=1;i<=1;++i): species
 # for (i=1;i<=$4;++i): reads
 awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$7])) {printed[$7]=1; if ($2>=ext_len) { for (i=1;i<=1;++i) { if ($6=="+") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}' ${bed}.intersect_with_${feature_name} | bedtools_piPipes getfasta -fi $GENOME_FA -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${bed}.intersect_with_${feature_name}.species.5end_60.percentage && \
-awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$7])) {printed[$7]=1; if ($2>=ext_len) { for (i=1;i<=1;++i) { if ($6=="-") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}' ${bed}.intersect_with_${feature_name} | bedtools_piPipes getfasta -fi $GENOME_FA -bed stdin -fo stdout -s -name -tab |  piPipes_nuc_percentage.py $ext_len > ${bed}.intersect_with_${feature_name}.species.3end_60.percentage && \
 awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$7])) {printed[$7]=1; if ($2>=ext_len) { for (i=1;i<=1;++i) { if ($6=="+") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}' ${bed}.intersect_with_${feature_name}.siRNA | bedtools_piPipes getfasta -fi $GENOME_FA -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${bed}.intersect_with_${feature_name}.siRNA.species.5end_60.percentage && \
-awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$7])) {printed[$7]=1; if ($2>=ext_len) { for (i=1;i<=1;++i) { if ($6=="-") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}' ${bed}.intersect_with_${feature_name}.siRNA | bedtools_piPipes getfasta -fi $GENOME_FA -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${bed}.intersect_with_${feature_name}.siRNA.species.3end_60.percentage && \
 awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$7])) {printed[$7]=1; if ($2>=ext_len) { for (i=1;i<=1;++i) { if ($6=="+") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}' ${bed}.intersect_with_${feature_name}.piRNA | bedtools_piPipes getfasta -fi $GENOME_FA -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${bed}.intersect_with_${feature_name}.piRNA.species.5end_60.percentage && \
-awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$7])) {printed[$7]=1; if ($2>=ext_len) { for (i=1;i<=1;++i) { if ($6=="-") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}' ${bed}.intersect_with_${feature_name}.piRNA | bedtools_piPipes getfasta -fi $GENOME_FA -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${bed}.intersect_with_${feature_name}.piRNA.species.3end_60.percentage
+
+# running ping-pong
+bedtools_piPipes intersect -u -wa -f 0.5 -a $bed -b $feature_bed > ${bed}.intersect_with_${feature_name}
+piPipes_local_ping_pong -a ${bed}.intersect_with_${feature_name} -b ${bed}.intersect_with_${feature_name} -p 1 > ${bed}.intersect_with_${feature_name}.pp
+
+awk -v l=$siRNA_bot -v h=$siRNA_top '$3-$2>=l&&$3-$2<=h' ${bed}.intersect_with_${feature_name} > ${bed}.intersect_with_${feature_name}.siRNA
+piPipes_local_ping_pong -a ${bed}.intersect_with_${feature_name}.siRNA -b ${bed}.intersect_with_${feature_name}.siRNA -p 1 > ${bed}.intersect_with_${feature_name}.siRNA.pp
+
+awk -v l=$piRNA_bot -v h=$piRNA_top '$3-$2>=l&&$3-$2<=h' ${bed}.intersect_with_${feature_name} > ${bed}.intersect_with_${feature_name}.piRNA
+piPipes_local_ping_pong -a ${bed}.intersect_with_${feature_name}.piRNA -b ${bed}.intersect_with_${feature_name}.piRNA -p 1 > ${bed}.intersect_with_${feature_name}.piRNA.pp
 
 Rscript $PIPELINE_DIRECTORY/bin/piPipes_draw_smallRNA_features.R \
 	${bed}.intersect_with_${feature_name} \
@@ -238,13 +243,12 @@ Rscript $PIPELINE_DIRECTORY/bin/piPipes_draw_smallRNA_features.R \
 	${bed}.intersect_with_${feature_name}.piRNA.lendis \
 	${ext_len} \
 	${bed}.intersect_with_${feature_name}.species.5end_60.percentage \
-	${bed}.intersect_with_${feature_name}.species.3end_60.percentage \
+	${bed}.intersect_with_${feature_name}.pp \
 	${bed}.intersect_with_${feature_name}.siRNA.species.5end_60.percentage \
-	${bed}.intersect_with_${feature_name}.siRNA.species.3end_60.percentage \
+	${bed}.intersect_with_${feature_name}.siRNA.pp \
 	${bed}.intersect_with_${feature_name}.piRNA.species.5end_60.percentage \
-	${bed}.intersect_with_${feature_name}.piRNA.species.3end_60.percentage \
-2>&1 1>/dev/null && \
+	${bed}.intersect_with_${feature_name}.piRNA.pp \
+1>&2 && \
 rm -rf ${bed}.intersect_with_${feature_name} ${bed}.intersect_with_${feature_name}.siRNA ${bed}.intersect_with_${feature_name}.piRNA
-
 
 

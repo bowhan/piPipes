@@ -463,8 +463,8 @@ sub _findCandidates
         {
             my $file = $$refTEsF{ $type };
             print qq[Screening for hits to: $type\n];
-#    piper      system( qq[bedtools intersect -a $discordantMatesBed -b $file -u | awk -F"\t" '{print \$4,\$5}' > $$.$type.mates.bed] ) == 0 or die qq[Failed to run bedtools intersect];
-system( qq[bedtools intersect -a $discordantMatesBed -b $file -u | awk -F\"\\t\\" '{print \$4,\$5}' > $$.$type.mates.bed] ) == 0 or die qq[Failed to run bedtools intersect];        # piper 
+#    piPipes      system( qq[bedtools intersect -a $discordantMatesBed -b $file -u | awk -F"\t" '{print \$4,\$5}' > $$.$type.mates.bed] ) == 0 or die qq[Failed to run bedtools intersect];
+system( qq[bedtools intersect -a $discordantMatesBed -b $file -u | awk -F\"\\t\\" '{print \$4,\$5}' > $$.$type.mates.bed] ) == 0 or die qq[Failed to run bedtools intersect];        # piPipes 
 
             #print the mates (i.e. the anchors) of these reads into the discovery output file
             #first load up the readnames

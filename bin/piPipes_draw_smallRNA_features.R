@@ -1,10 +1,10 @@
 
 # piPipes, a set of pipelines for PIWI-interacting RNA (piRNA) and transposon analysis
-# Copyright (C) <2014>  <Bo Han, Wei Wang, Zhiping Weng, Phillip Zamore>
+# Copyright (C) 2014  Bo Han, Wei Wang, Zhiping Weng, Phillip Zamore
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
+# the Free Software Foundation; either version 3 of the License, or
 # (at your option) any later version.
 
 # This program is distributed in the hope that it will be useful,
@@ -33,11 +33,11 @@ siRNA_lendis = argv[3]
 piRNA_lendis = argv[4]
 ext_len = as.numeric (argv[5])
 total_5end_per = argv[6]
-total_3end_per = argv[7]
+total_ping_pong = argv[7]
 siRNA_5end_per = argv[8]
-siRNA_3end_per = argv[9]
+siRNA_ping_pong = argv[9]
 piRNA_5end_per = argv[10]
-piRNA_3end_per = argv[11]
+piRNA_ping_pong = argv[11]
 
 main=basename (main)
 main=gsub ("\\."," ",main)
@@ -49,18 +49,18 @@ siRNA_lendis_gg = draw_smRNA_lendis (siRNA_lendis, "siRNA lendis")
 piRNA_lendis_gg = draw_smRNA_lendis (piRNA_lendis, "piRNA lendis")
 
 total_5end_per_gg = draw_smRNA_percentage (total_5end_per, ext_len, "smRNA 5' end ext")
-total_3end_per_gg = draw_smRNA_percentage (total_3end_per, ext_len, "smRNA 3' end ext")
+total_ping_pong_gg = draw_ping_pong (total_ping_pong, "smRNA")
 
 siRNA_5end_per_gg = draw_smRNA_percentage (siRNA_5end_per, ext_len, "siRNA 5' end ext")
-siRNA_3end_per_gg = draw_smRNA_percentage (siRNA_3end_per, ext_len, "siRNA 3' end ext")
+siRNA_ping_pong_gg = draw_ping_pong (siRNA_ping_pong, "siRNA")
 
 piRNA_5end_per_gg = draw_smRNA_percentage (piRNA_5end_per, ext_len, "piRNA 5' end ext")
-piRNA_3end_per_gg = draw_smRNA_percentage (piRNA_3end_per, ext_len, "piRNA 3' end ext")
+piRNA_ping_pong_gg = draw_ping_pong (piRNA_ping_pong, "piRNA")
 
 grid.arrange(
-		total_3end_per_gg,
-		siRNA_3end_per_gg,
-		piRNA_3end_per_gg,
+		total_ping_pong_gg,
+		siRNA_ping_pong_gg,
+		piRNA_ping_pong_gg,
 		total_5end_per_gg, 
 		siRNA_5end_per_gg, 
 		piRNA_5end_per_gg, 
