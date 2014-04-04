@@ -20,6 +20,7 @@
 source (paste (Sys.getenv ("PIPELINE_DIRECTORY"),"/bin/piPipes.R",sep=""))
 
 pkgTest ("ggplot2")
+pkgTest ("ggthemes")
 pkgTest ("RColorBrewer")
 
 argv  = commandArgs (TRUE)

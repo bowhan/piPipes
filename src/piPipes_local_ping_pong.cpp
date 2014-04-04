@@ -27,6 +27,7 @@
 #include <thread>
 #include <mutex>
 #include <boost/program_options.hpp>
+#include <boost/optional.hpp>
 
 #define UPPERLIMIT 30
 using namespace std;
@@ -36,18 +37,22 @@ class ping_pong_table {
 	deque<T> positions;
 	mutex mx;
 public:
-	ping_pong_table (T N): positions {} {
+	explicit ping_pong_table (T N): positions {} {
 		for (T i {} ; i < N; ++i) {
 			positions.push_back (i);
 		}
 	}
-	T pop () {
+	boost::optional<T> pop () {
 		unique_lock<mutex> locker (mx);
-		T ret = positions.back ();
-		positions.pop_back ();
-		return ret;
+		if (positions.empty ()) {
+			return boost::none;
+		} else {
+			T ret = positions.back ();
+			positions.pop_back ();
+			return ret;
+		}
 	}
-	bool empty () {
+	bool empty () const {
 		return positions.empty ();
 	}
 };
@@ -57,7 +62,7 @@ void do_ping_pong (
 		const unordered_map<string, unordered_map<char, unordered_map<uint64_t, double>>>& ,
 		int ,
 		double* const
-);
+) noexcept ;
 
 template <typename C, typename T>
 class ping_pong_player {
@@ -73,12 +78,14 @@ public:
 	void operator () () {
 		while (! _tasks->empty ()) {
 			auto n = _tasks->pop ();
-			do_ping_pong (*_A, *_B, n, _answers + n );
+			if (!n) {
+				do_ping_pong (*_A, *_B, *n, _answers + *n );
+			}
 		}
 	}
 };
 
-void read_file_into_unordered_map (const string& file_name, unordered_map<string, unordered_map<char, unordered_map<uint64_t, double>>>& umap)
+void read_file_into_unordered_map (const string& file_name, unordered_map<string, unordered_map<char, unordered_map<uint64_t, double>>>& umap) noexcept
 {
 	ifstream in (file_name);
 	if (!in)
@@ -190,7 +197,7 @@ void do_ping_pong (
 		const unordered_map<string, unordered_map<char, unordered_map<uint64_t, double>>>& umapB,
 		int k,
 		double* const z_score
-)
+) noexcept
 {
 	for (auto const & chr_rest : umapA)
 	{

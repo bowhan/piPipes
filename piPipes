@@ -41,11 +41,6 @@ export PIPELINE_DIRECTORY=$(dirname `readlink -f $0`)
 export PATH=${PIPELINE_DIRECTORY}/bin:$PATH
 . $PIPELINE_DIRECTORY/bin/piPipes_bash_functions
 
-################
-# DEBUG switch #
-################
-#export DEBUG='-x'
-
 #########
 # Intro #
 #########

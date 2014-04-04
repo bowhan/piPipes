@@ -3,11 +3,11 @@ piPipes
 =====
 <img src="https://dl.dropboxusercontent.com/u/5238651/Figure%201.jpg" align="middle" />
 
-A set of pipelines developed in the [Zamore Lab](http://www.umassmed.edu/zamore) and [ZLab](http://zlab.umassmed.edu/zlab) to analyze piRNA/transposon from different Next Generation Sequencing (*small RNA-seq*, *RNA-seq*, *Genome-seq*, *ChIP-seq*, *CAGE/Degradome-Seq*).			
+A set of pipelines developed in the [Zamore Lab](http://www.umassmed.edu/zamore) and [ZLab](http://zlab.umassmed.edu/zlab) to analyze piRNA/transposon from different Next Generation Sequencing libraries (*small RNA-seq*, *RNA-seq*, *Genome-seq*, *ChIP-seq*, *CAGE/Degradome-Seq*).			
 
-In order to achieve a generic interface in terms of the genome assembles it supports, **piPipes** also provides a installation pipeline to download ready-to-use genome annotation packages from [Illumina iGenome](https://support.illumina.com/sequencing/sequencing_software/igenome.ilmn) as well as [UCSC Genome Browser](http://genome.ucsc.edu/).			
+In order to achieve a generic interface in terms of the genome assembles it supports, **piPipes** provides a installation pipeline to download ready-to-use genome annotation packages from [Illumina iGenome](https://support.illumina.com/sequencing/sequencing_software/igenome.ilmn) as well as [UCSC Genome Browser](http://genome.ucsc.edu/).			
 
-For *small RNA-Seq*, *RNA-Seq* and *ChIP-Seq* pipelines, **piPipes** provides two modes: `a single library mode` and `dual library mode`, to analyze single library and pair-wise comparison between two samples respectively.     	
+For *small RNA-Seq*, *RNA-Seq* and *ChIP-Seq* pipelines, **piPipes** provides two modes: `a single sample mode` and `dual sample mode`, to analyze single library and pair-wise comparison between two samples respectively. For *degradome-seq*, **piPipes** provide options to perform Ping-Pong analysis between degradome reads and small RNA reads.				
 
 ##INSTALL   
 
@@ -68,23 +68,23 @@ $PATH_TO_piPipes/piPipes	install -g dm3|mm9|hg19 -D
  # 3. to download the iGenome from other explicitly specified location
 $PATH_TO_piPipes/piPipes	install -g hg18 -l ftp://igenome:G3nom3s4u@ussd-ftp.illumina.com/Homo_sapiens/UCSC/hg18/Homo_sapiens_UCSC_hg18.tar.gz
 
-# to run small RNA pipeline in single library mode; input fastq can be gzipped
+# to run small RNA pipeline in single sample mode; input fastq can be gzipped
 $PATH_TO_piPipes/piPipes	small -i input.trimmed.fq[.gz] -g dm3 -c 24
 
-# to run small RNA pipeline in dual library mode (need single library mode output for each sample first)
+# to run small RNA pipeline in dual library mode (need single sample mode output for each sample first)
 $PATH_TO_piPipes/piPipes	small2 -a directory_A -b directory_B -g dm3 -c 24
 # to run small RNA pipeline in dual library mode, normalized to miRNA 
 $PATH_TO_piPipes/piPipes	small2 -a directory_A -b directory_B -g dm3 -c 24 -N miRNA
 # to run small RNA pipeline in dual library mode, normalized to siRNA (structural loci and cis-NATs), for oxidation sample of -fruitfly only-
 $PATH_TO_	/piPipes	small2 -a directory_A -b directory_B -g dm3 -c 24 -N siRNA
 
-# to run RNASeq pipeline in single library mode, dUTP based method
+# to run RNASeq pipeline in single sample mode, dUTP based method
 $PATH_TO_piPipes/piPipes	rnaseq -l left.fq -r right.fq -g mm9 -c 8 -o output_dir
 
-# to run RNASeq pipeline in single library mode, ligation based method
+# to run RNASeq pipeline in single sample mode, ligation based method
 $PATH_TO_piPipes/piPipes	rnaseq -l left.fq -r right.fq -g mm9 -c 8 -o output_dir -L
 
-# to run RNASeq pipeline in dual library mode (need single library mode been ran for each sample first)
+# to run RNASeq pipeline in dual library mode (need single sample mode been ran for each sample first)
 $PATH_TO_piPipes/piPipes	rnaseq2 -a directory_A -b directory_B -g mm9 -c 8 -o output_dir -A w1 -B piwi
 
 # to run Degradome/RACE/CAGE-Seq library 
@@ -93,19 +93,19 @@ $PATH_TO_piPipes/piPipes	deg -l left.fq -r right.fq -g dm3 -c 12 -o output_dir
 # to run Degradome library to check ping-pong signature with a small RNA library (need the small RNA library ran first)
 $PATH_TO_piPipes/piPipes	deg -l left.fq -r right.fq -g dm3 -c 12 -o output_dir -s /path/to/small_RNA_library_output
 
-# to run ChIP Seq library in single library mode, for narrow peak, like transcriptional factor
+# to run ChIP Seq library in single sample mode, for narrow peak, like transcriptional factor
 $PATH_TO_piPipes/piPipes	chip -l left.IP.fq -r right.IP.fq -L left.INPUT.fq -R right.INPUT.fq -g mm9 -c 8 -o output_dir
 
-# to run ChIP Seq library in single library mode, for broad peak, like H3K9me3
+# to run ChIP Seq library in single sample mode, for broad peak, like H3K9me3
 $PATH_TO_piPipes/piPipes	chip -l left.IP.fq -r right.IP.fq -L left.INPUT.fq -R right.INPUT.fq -g mm9 -c 8 -o output_dir -B
 
-# to run ChIP Seq library in single library mode, only use unique mappers (otherwise Bowtie2 randomly choose one best alignment for each read)
+# to run ChIP Seq library in single sample mode, only use unique mappers (otherwise Bowtie2 randomly choose one best alignment for each read)
 $PATH_TO_piPipes/piPipes	chip -l left.IP.fq -r right.IP.fq -L left.INPUT.fq -R right.INPUT.fq -g mm9 -c 8 -o output_dir -Q 10
 
-# to run ChIP Seq library in dual library mode (need single library mode been ran for each sample first)
+# to run ChIP Seq library in dual library mode (need dual sample mode been ran for each sample first)
 $PATH_TO_piPipes/piPipes	chip2 -a directory_A -b directory_B -g mm9 -c 8 -o output_dir
 
-# to run ChIP Seq library in dual library mode, extend up/down stream 5000 bp for TSS/TES/meta analysis (for bwtool)
+# to run ChIP Seq library in dual sample mode, extend up/down stream 5000 bp for TSS/TES/meta analysis (for bwtool)
 $PATH_TO_piPipes/piPipes	chip2 -a directory_A -b directory_B -g mm9 -c 8 -o output_dir -x 5000
 
 # to run Genome Seq library
@@ -126,7 +126,7 @@ piRNA. This pipeline maps those reads to rRNA, microRNA hairpin, genome, repbase
 annotated  transposons, piRNA clusters with bowtie and uses bedtools to assign 
 them to different annotations. For each feature, length distribution, nucleotide percentage, 
 ping-pong score, et al.,  are calculated and graphed. Some microRNA analysis is also included. 
-In the dual library mode, pair-wise comparison of miRNA and piRNAs will be done. We invented this balloon-plot to efficiently compare the heterogeneity of miRNA between two samples. piRNA for different transposon family is also compared. 
+In the dual sample mode, pair-wise comparison of miRNA and piRNAs will be done. We invented this balloon-plot to efficiently compare the heterogeneity of miRNA between two samples. piRNA for different transposon family is also compared. 
 For small RNA tailing analysis, please use [Tailor](http://jhhung.github.io/Tailor/) and its associated pipeline. It is current not included in **piPipes**.			
 
 A more detailed explanation can be found [here](https://github.com/bowhan/piPipes/wiki/smallRNA).
@@ -152,7 +152,7 @@ A more detailed explanation can be found [here](https://github.com/bowhan/piPipe
 
 ###*chip* : ChIP-Seq pipeline
 ChIP Seq pipeline aligns both input and ChIP data to genome with Bowtie2. Peak calling was done
-using MASC2. Signal is normalized in three different methods (ppois, FE and logLR). TSS/TES/meta plots are drawn using bwtool. In the dual library mode, peak calling is redone for each sample without inter-library normalization, by differential peak calling algorithm of MACS2 directly. TSS/TES/meta plots are drawn for those loci using the normalized signal. 
+using MASC2. Signal is normalized in three different methods (ppois, FE and logLR). TSS/TES/meta plots are drawn using bwtool. In the dual-sample mode, peak calling is redone for each sample without inter-library normalization, by differential peak calling algorithm of MACS2 directly. TSS/TES/meta plots are drawn for those loci using the normalized signal. 
 
 A more detailed explanation can be found [here](https://github.com/bowhan/piPipes/wiki/ChIPSeq). 
 

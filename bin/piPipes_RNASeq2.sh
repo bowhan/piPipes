@@ -32,7 +32,7 @@ Please email $CONTACT_EMAILS for any questions or bugs.
 Thank you for using it. 
 
 ${UNDERLINE}usage${RESET}:
-	pipipe rna2	\ 
+	piPipes rna2	\ 
 		-a rnaseq_pipiline_output_dir1 \ 
 		-b rnaseq_pipiline_output_dir2 \ 
 		-g dm3 \ 
@@ -161,7 +161,7 @@ STEP=$((STEP+1))
 ####################################
 echo2 "Analyzing cuffdiff output with cummeRbund"
 [ ! -f .${JOBUID}.status.${STEP}.cummeRbund ] && \
-Rscript --slave ${PIPELINE_DIRECTORY}/bin/pipipe_cummeRbund.R \
+Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_cummeRbund.R \
 	$CUFFDIFF_DIR \
 	$PDF_DIR/${PREFIX} \
 	2> $PDF_DIR/${PREFIX}.cummeRbund.log && \
@@ -173,7 +173,7 @@ STEP=$((STEP+1))
 ############################################
 echo2 "Drawing scatterplot for eXpress counting of mRNA, transposon and cluster"
 [ ! -f .${JOBUID}.status.${STEP}.draw_eXpress ] && \
-Rscript --slave ${PIPELINE_DIRECTORY}/bin/pipipe_draw_scatter_plot_eXpress_counts.R \
+Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_scatter_plot_eXpress_counts.R \
 	$SAMPLE_A_DIR/gene_transposon_cluster_direct_mapping/results.xprs \
 	$SAMPLE_B_DIR/gene_transposon_cluster_direct_mapping/results.xprs \
 	$SAMPLE_A_NAME \

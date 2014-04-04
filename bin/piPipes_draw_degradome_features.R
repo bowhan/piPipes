@@ -35,7 +35,7 @@ main=gsub ("\\."," ",main)
 main=paste(strwrap(main, width = 80), collapse = "\n") 
 pdf (paste (argv[1], ".pdf", sep=''), onefile=TRUE, width=8.5, height=11, title=main)
 
-deg_5end_per_gg = draw_smRNA_percentage (deg_5end_per, ext_len, "degradome 5' end ext")
+deg_5end_per_gg = draw_smRNA_percentage (deg_5end_per, ext_len, "degradome 5' end up/down stream")
 
 if (length(argv)==4) {
 	deg_smRNA_pp = total_ping_pong_gg = draw_ping_pong (argv[4], "smRNA-degradome")

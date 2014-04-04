@@ -19,7 +19,9 @@
 
 source (paste (Sys.getenv ("PIPELINE_DIRECTORY"),"/bin/piPipes.R",sep=""))
 pkgTest ("gdata")
-
+pkgTest ("ggplot2")
+pkgTest ("ggthemes")
+pkgTest ("scales")
 argv = commandArgs (TRUE)
 sample1 = read.table (argv[1], T)
 sample2 = read.table (argv[2], T)
@@ -33,20 +35,23 @@ main = paste (strwrap(main, width = 80), collapse = "\n")
 pdf (paste (argv[5],".pdf", sep=""), onefile=TRUE, width=10, height=10, title=main )
 
 sample = merge (sample1, sample2, by="target_id")
-color = ifelse (startsWith(sample[,1],"NM_"), "black", ifelse (startsWith(sample[,1], "NR_"), "darkgrey", "red"))
-size = ifelse (startsWith(sample[,1],"NM_"), 1, ifelse (startsWith(sample[,1], "NR_"), 1, 1.5))
+Group = ifelse (startsWith(sample[,1],"NM_"), "NM", ifelse (startsWith(sample[,1], "NR_"), "NR", "Transposon"))
+lim = roundUp (10*(max (sample$eff_counts.x, sample$eff_counts.y)))/10
 
-lim = roundUp (10*log2(max (sample$eff_counts.x, sample$eff_counts.y)))/10
+ggplot( sample, aes(x = eff_counts.x, y = eff_counts.y, colour = Group, size = Group) ) + 
+    geom_abline (intercept=0, slope=1, colour="darkgrey", linetype='dashed') + 
+    theme_few() + 
+    scale_colour_few ("dark") + 
+    geom_point(alpha=0.85, na.rm=T) +
+    scale_x_log10 ( limits = c(0.1,lim), 
+                    breaks = trans_breaks("log10", function(x) 10^x),
+                    labels = trans_format("log10", math_format(10^.x) ) ) +
+    scale_y_log10 ( limits = c(0.1,lim),
+                    breaks = trans_breaks("log10", function(x) 10^x),
+                    labels = trans_format("log10", math_format(10^.x) ) ) +
+    annotation_logticks () +
+	xlab ( expression ( paste(italic(name1) ,"  normalized number of reads (log10)"))) +
+	ylab ( expression ( paste(italic(name2),"   normalized number of reads (log10)"))) +
+    coord_fixed()
 
-g = plot ( log2(sample$eff_counts.x), log2(sample$eff_counts.y), 
-		xlim=c(-lim, lim), 
-		ylim=c(-lim, lim), 
-		xlab=paste(name1,"normalized count,log2"), 
-		ylab=paste(name2,"normalized count,log2"), 
-		main = main, 
-		pch=21, col="white", bg=color, cex=size, xaxt='n', yaxt='n', frame=F ) + 
-abline (0,1, lty=2) + 
-axis (1, tck=0.01, lwd=1, cex.axis=1) + 
-axis (2, tck=0.01, lwd=1, cex.axis=1)
-legend ("topleft", c("NM_", "NR_", "transposon & cluster"), col=c("black","darkgrey","red"), pch=16, cex=1.25, box.lwd=0, box.col="transparent", bg="transparent")
 g = dev.off ()

@@ -38,7 +38,7 @@ ${UNDERLINE}usage${RESET}:
 		-g [dm3|mm9|...] \  
 		-l http://www.link.to.iGenome.tar.gz \ 
 		-D 
-	
+
 OPTIONS:
 	-h      Show this message
 	-v      Print out version
@@ -154,15 +154,6 @@ echo2 "------------------------------------------"
 ##############################
 echo2 "Begining installing the genome $GENOME"
 eval LINK='$'`echo $GENOME`
-
-#TODO: the following piece of code is only for developping purpose
-if [ `hostname` == "hpcc01.umasshpcc.edu" -o `hostname` == "ghpcc06" ]; then
-	case $GENOME in
-		hg19)	LINK='http://zlab.umassmed.edu/~hanb/Homo_sapiens_UCSC_hg19.tar.gz';;
-		mm9)	LINK='http://zlab.umassmed.edu/~hanb/Mus_musculus_UCSC_mm9.tar.gz' ;;
-		dm3)	LINK='http://zlab.umassmed.edu/~hanb/Drosophila_melanogaster_UCSC_dm3.tar.gz' ;;
-	esac
-fi
 
 #######################################
 # install R packages if not available #

@@ -25,17 +25,20 @@ argv = commandArgs (TRUE)
 lendis = read.table (argv[1],FALSE)
 main = argv[2]
 pdf (paste (main, ".lendis.pdf", sep=''))
+main = basename (main)
 main=gsub ("\\."," ",main)
 main=paste(strwrap(main, width = 50), collapse = "\n") 
 minRow = min(lendis[lendis[,2]!=0,1])
 maxRow = max(lendis[lendis[,2]!=0,1])
 lendis = lendis[seq(minRow, maxRow),]
 ggplot (lendis, aes (V1,V2)) + 
-	geom_bar (stat="identity") + 
-	scale_x_discrete (breaks=c(minRow:maxRow)) + 
-	coord_cartesian(xlim = c(minRow, maxRow)) + 
-	scale_y_continuous(labels = comma, breaks=seq(0,max(lendis$V2),roundUp(max(lendis$V2)/10))) +
-	labs(title=paste("Length Distribution",main,sep="\n")) + 
-	xlab("Length, nt") + 
-	ylab("Reads")
+    theme_minimal () + 
+    theme (panel.grid.major=element_blank(), panel.grid.minor=element_blank(), axis.ticks.x=element_blank()) +
+    geom_bar (stat="identity") + 
+    scale_x_discrete (breaks=c(minRow:maxRow)) + 
+    coord_cartesian(xlim = c(minRow, maxRow)) + 
+    scale_y_continuous(labels = comma, breaks=seq(0,max(lendis$V2),roundUp(max(lendis$V2)/10))) +
+    labs(title=paste("Length Distribution",main,sep="\n")) + 
+    xlab("Length (nt)") + 
+    ylab("Reads")
 noprint = dev.off ()
