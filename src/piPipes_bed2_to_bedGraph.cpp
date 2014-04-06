@@ -21,9 +21,10 @@
 #include <unordered_map>
 #include <vector>
 #include <iomanip>
-#include "boost/algorithm/string.hpp"
-#include "boost/program_options.hpp"
-#include "boost/thread.hpp"
+#include <boost/algorithm/string.hpp>
+#include <boost/program_options.hpp>
+#include <boost/thread.hpp>
+
 using namespace std;
 
 const string watson="Watson.bedGraph";
@@ -101,7 +102,7 @@ public:
 						pos = stoul (fields[2])-1;
 					else {
 						cerr << "Error: unknown strand " << fields[5] << endl;
-						exit;
+						exit (1);
 					}
 					if (pos < (*_size_table)[chr])
 						_container[pos] +=num_of_reads/num_of_mapping;

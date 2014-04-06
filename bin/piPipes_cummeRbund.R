@@ -21,7 +21,7 @@ source (paste (Sys.getenv ("PIPELINE_DIRECTORY"),"/bin/piPipes.R",sep=""))
 bioConductorTest ("cummeRbund")
 
 topN = 50
-argv = commandargv (TRUE)
+argv = commandArgs (TRUE)
 
 cuff = readCufflinks (argv[1], package = "cummeRbund")
 pdf (paste (argv[2],'.genes.csDensity.pdf',sep=''))
@@ -55,7 +55,7 @@ pdf (paste (argv[2],'.genes.csExpressionBarplot_top', topN, '.pdf',sep=''))
 expressionBarplot(myGenes)
 invisible(dev.off())
 
-pdf (argv[2],'.isoforms.csDensity.pdf',sep=''))
+pdf (paste (argv[2],'.isoforms.csDensity.pdf',sep=''))
 csDensity (isoforms(cuff))
 invisible(dev.off())
 

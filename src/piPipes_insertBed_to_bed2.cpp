@@ -67,10 +67,10 @@ int main (int argc, char** argv) {
 		auto iter2 = ++iter1;
 		while (*++iter1!='\t');
 		int n = stoi (string {iter2, iter1});
-		if (istSize < n) {
-			cerr << "Error: column 4 of " << line << " is larger than the lines of insert file..." << endl;
-			exit (1);
-		}
+		// if (istSize < n) {
+		// 	cerr << "Error: column 4 of " << line << " is larger than the lines of insert file..." << endl;
+		// 	exit (1);
+		// }
 		++istNTM[n];
 	}
 	bed.clear ();

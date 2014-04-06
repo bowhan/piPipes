@@ -25,7 +25,7 @@
 #include <ostream>
 #include <algorithm>
 #include <memory>
-#include <boost/iterator/iterator_facade.hpp>
+//#include <boost/iterator/iterator_facade.hpp>
 
 enum hairpinPosition {
 	unknown,

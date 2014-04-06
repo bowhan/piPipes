@@ -94,10 +94,10 @@ while getopts "hl:r:L:R:c:o:g:Bvx:Q:" OPTION; do
 	esac
 done
 # if INPUT_FASTQ or GENOME is undefined, print out usage and exit
-[[ -z $LEFT_IP_FASTQ ]] && usage && echo2 "Missing option -l for IP fastq, left file " "error" 
-[[ -z $RIGHT_IP_FASTQ ]] && usage && echo2 "Missing option -r for IP fastq, right file " "error" 
-[[ -z $LEFT_INPUT_FASTQ ]] && usage && echo2 "Missing option -L for INPUT fastq, left file " "error" 
-[[ -z $RIGHT_INPUT_FASTQ ]] && usage && echo2 "Missing option -R for INPUT fastq, right file " "error" 
+[[ -z $LEFT_IP_FASTQ ]] && usage && echo2 "Missing option -l for IP fastq of left file, or file does not exist " "error" 
+[[ -z $RIGHT_IP_FASTQ ]] && usage && echo2 "Missing option -r for IP fastq of right file, or file does not exist " "error" 
+[[ -z $LEFT_INPUT_FASTQ ]] && usage && echo2 "Missing option -L for INPUT fastq of left file, or file does not exist " "error" 
+[[ -z $RIGHT_INPUT_FASTQ ]] && usage && echo2 "Missing option -R for INPUT fastq of right file, or file does not exist " "error" 
 [[ -z $GENOME ]]  && usage && echo2 "Missing option -g for specifying which genome assembly to use" "error" 
 # check whether the this genome is supported or not
 check_genome $GENOME

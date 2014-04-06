@@ -206,16 +206,16 @@ draw_agg = function (t1, name) {
 	plots = read.table(t1, F, sep="\t")
 	colnames(plots) = c('Feature','ChIP','Position','Signal')
 	ggplot(plots, aes(x=Position,y=Signal,color=ChIP)) + 
-	    theme_few () + 
-	    scale_colour_few() + 
-	    theme( panel.border = element_blank () ,
-		   panel.grid.major=element_blank(),
-	           panel.grid.minor=element_blank(),
-	           plot.title=element_text(family="Helvetica", lineheight=.8) ) + 
-	    ggtitle(name) + 
-	    geom_line( size=1 ) + 
-	    xlab ("Position (bp)") +
-	    ylab("ChIP-seq enriched signal")
+	theme_few () + 
+	scale_colour_few() + 
+	theme( panel.border = element_blank () ,
+		panel.grid.major=element_blank(),
+		panel.grid.minor=element_blank(),
+		plot.title=element_text(family="Helvetica", lineheight=.8) ) + 
+	ggtitle(name) + 
+	geom_line( size=1, alpha=0.75 ) + 
+	xlab ("Position (bp)") +
+	ylab("ChIP-seq enriched signal")
 }
 
 

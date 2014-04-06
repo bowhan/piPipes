@@ -1,6 +1,6 @@
 CXX = g++
 CXXFLAGS = -Wall -O3 -std=c++11 -I.
-LIBS = -lz -pthread -lboost_system -lboost_program_options
+LIBS = -lboost_system -lboost_program_options
 PROG = piPipes_bed2Summary piPipes_bed2_to_bedGraph piPipes_calculate_miRNA_heterogeneity piPipes_fastq_to_insert piPipes_filter_CIGAR piPipes_insertBed_to_bed2 piPipes_local_ping_pong 
 
 all:	$(PROG)
@@ -15,7 +15,7 @@ piPipes_calculate_miRNA_heterogeneity:	piPipes_calculate_miRNA_heterogeneity.cpp
 	$(CC) $(CXXFLAGS) piPipes_calculate_miRNA_heterogeneity.cpp $(LIBS) -o $@
 
 piPipes_fastq_to_insert:	piPipes_fastq_to_insert.cpp gzstream.h 
-	$(CC) $(CXXFLAGS) piPipes_fastq_to_insert.cpp gzstream.C $(LIBS) -o $@
+	$(CC) $(CXXFLAGS) piPipes_fastq_to_insert.cpp gzstream.C -lz $(LIBS) -o $@
 
 piPipes_filter_CIGAR:	piPipes_filter_CIGAR.cpp piPipes_sam.hpp
 	$(CC) $(CXXFLAGS) piPipes_filter_CIGAR.cpp $(LIBS) -o $@

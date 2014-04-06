@@ -80,8 +80,8 @@ while getopts "hl:r:c:o:g:vL" OPTION; do
 	esac
 done
 # if INPUT_FASTQ or GENOME is undefined, print out usage and exit
-[[ -z $LEFT_FASTQ ]] && usage && echo2 "Missing option -l for input fastq, left file " "error" 
-[[ -z $RIGHT_FASTQ ]] && usage && echo2 "Missing option -r for input fastq, right file " "error" 
+[[ -z $LEFT_FASTQ ]] && usage && echo2 "Missing option -l for input fastq of left file, or file does not exist " "error" 
+[[ -z $RIGHT_FASTQ ]] && usage && echo2 "Missing option -r for input fastq of right file, or file does not exist " "error" 
 [[ -z $GENOME ]]  && usage && echo2 "Missing option -g for specifying which genome assembly to use" "error" 
 # check whether the this genome is supported or not
 check_genome $GENOME
@@ -356,9 +356,10 @@ bowtie2 -x gene+cluster+repBase \
 samtools view -bS - \
 	> ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.bam && \
 touch .${JOBUID}.status.${STEP}.direct_mapping
+
 [ ! -f .${JOBUID}.status.${STEP}.eXpress_quantification ] && \
 express \
-	-B 21 \
+	-B 15 \
 	--output-align-prob \
 	--calc-covar \
 	-o $DIRECTMAPPING_DIR \

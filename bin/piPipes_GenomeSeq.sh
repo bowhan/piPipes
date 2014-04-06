@@ -77,8 +77,8 @@ while getopts "hl:r:c:o:g:d:v" OPTION; do
 	esac
 done
 # if INPUT_FASTQ or GENOME is undefined, print out usage and exit
-[[ -z $LEFT_FASTQ ]] && usage && echo2 "Missing option -l for input fastq, left file " "error" 
-[[ -z $RIGHT_FASTQ ]] && usage && echo2 "Missing option -r for input fastq, right file " "error" 
+[[ -z $LEFT_FASTQ ]] && usage && echo2 "Missing option -l for input fastq of left file, or file does not exist " "error" 
+[[ -z $RIGHT_FASTQ ]] && usage && echo2 "Missing option -r for input fastq of right file, or file does not exist " "error" 
 [[ -z $GENOME ]]  && usage && echo2 "Missing option -g for specifying which genome assembly to use" "error" 
 # check whether the this genome is supported or not
 check_genome $GENOME
