@@ -67,8 +67,8 @@ if (ncol(sample1)==4) { # with grouping information
 		                    breaks = trans_breaks("log10", function(x) 10^x),
 		                    labels = trans_format("log10", math_format(10^.x) ) ) +
 		    annotation_logticks () +
-		    xlab ( expression ( paste(italic(name1) ,"  sense, normalized number of reads (log10)"))) +
-		    ylab ( expression ( paste(italic(name1), "  antisense, normalized number of reads (log10)"))) +
+		    xlab ( substitute ( paste(italic(name1) ,"  sense, normalized number of reads (log10)"), list(name1=name1, name2=name2))) +
+		    ylab ( substitute ( paste(italic(name1), "  antisense, normalized number of reads (log10)"), list(name1=name1, name2=name2))) +
 		    coord_fixed()
 		print (gg)
 		
@@ -96,8 +96,8 @@ if (ncol(sample1)==4) { # with grouping information
 		                    breaks = trans_breaks("log10", function(x) 10^x),
 		                    labels = trans_format("log10", math_format(10^.x) ) ) +
 		    annotation_logticks () +
-		    xlab ( expression ( paste(italic(name2) ,"  sense, normalized number of reads (log10)"))) +
-		    ylab ( expression ( paste(italic(name2), "  antisense, normalized number of reads (log10)"))) +
+		    xlab ( substitute ( paste(italic(name2) ,"  sense, normalized number of reads (log10)"), list(name1=name1, name2=name2))) +
+		    ylab ( substitute ( paste(italic(name2), "  antisense, normalized number of reads (log10)"), list(name1=name1, name2=name2))) +
 		    coord_fixed()
 		print (gg)
 		
@@ -125,8 +125,8 @@ if (ncol(sample1)==4) { # with grouping information
 		                    breaks = trans_breaks("log10", function(x) 10^x),
 		                    labels = trans_format("log10", math_format(10^.x) ) ) +
 		    annotation_logticks () +
-		    xlab ( expression ( paste(italic(name1) ,"  sense, normalized number of reads (log10)"))) +
-		    ylab ( expression ( paste(italic(name2), "  sense, normalized number of reads (log10)"))) +
+		    xlab ( substitute ( paste(italic(name1) ,"  sense, normalized number of reads (log10)"), list(name1=name1, name2=name2))) +
+		    ylab ( substitute ( paste(italic(name2), "  sense, normalized number of reads (log10)"), list(name1=name1, name2=name2))) +
 		    coord_fixed()
 		print (gg)
 		
@@ -154,8 +154,8 @@ if (ncol(sample1)==4) { # with grouping information
 		                    breaks = trans_breaks("log10", function(x) 10^x),
 		                    labels = trans_format("log10", math_format(10^.x) ) ) +
 		    annotation_logticks () +
-		    xlab ( expression ( paste(italic(name1) ,"  antisense, normalized number of reads (log10)"))) +
-		    ylab ( expression ( paste(italic(name2), "  antisense, normalized number of reads (log10)"))) +
+		    xlab ( substitute ( paste(italic(name1) ,"  antisense, normalized number of reads (log10)"), list(name1=name1, name2=name2))) +
+		    ylab ( substitute ( paste(italic(name2), "  antisense, normalized number of reads (log10)"), list(name1=name1, name2=name2))) +
 		    coord_fixed()
 			print (gg)
 
@@ -188,8 +188,8 @@ if (ncol(sample1)==4) { # with grouping information
 		                    breaks = trans_breaks("log10", function(x) 10^x),
 		                    labels = trans_format("log10", math_format(10^.x) ) ) +
 		    annotation_logticks () +
-		    xlab ( expression ( paste(italic(name1) ,"  sense, normalized number of reads (log10)"))) +
-		    ylab ( expression ( paste(italic(name1), "  antisense, normalized number of reads (log10)"))) +
+		    xlab ( substitute ( paste(italic(name1) ,"  sense, normalized number of reads (log10)"), list(name1=name1, name2=name2))) +
+		    ylab ( substitute ( paste(italic(name1), "  antisense, normalized number of reads (log10)"), list(name1=name1, name2=name2))) +
 		    coord_fixed()
 		print (gg)
 
@@ -216,8 +216,8 @@ if (ncol(sample1)==4) { # with grouping information
 		                    breaks = trans_breaks("log10", function(x) 10^x),
 		                    labels = trans_format("log10", math_format(10^.x) ) ) +
 		    annotation_logticks () +
-		    xlab ( expression ( paste(italic(name2) ,"  sense, normalized number of reads (log10)"))) +
-		    ylab ( expression ( paste(italic(name2), "  antisense, normalized number of reads (log10)"))) +
+		    xlab ( substitute ( paste(italic(name2) ,"  sense, normalized number of reads (log10)"), list(name1=name1, name2=name2))) +
+		    ylab ( substitute ( paste(italic(name2), "  antisense, normalized number of reads (log10)"), list(name1=name1, name2=name2))) +
 		    coord_fixed()
 		print (gg)
 
@@ -244,8 +244,8 @@ if (ncol(sample1)==4) { # with grouping information
 		                    breaks = trans_breaks("log10", function(x) 10^x),
 		                    labels = trans_format("log10", math_format(10^.x) ) ) +
 		    annotation_logticks () +
-		    xlab ( expression ( paste(italic(name1) ,"  sense, normalized number of reads (log10)"))) +
-		    ylab ( expression ( paste(italic(name2), "  sense, normalized number of reads (log10)"))) +
+		    xlab ( substitute ( paste(italic(name1) ,"  sense, normalized number of reads (log10)"), list(name1=name1, name2=name2))) +
+		    ylab ( substitute ( paste(italic(name2), "  sense, normalized number of reads (log10)"), list(name1=name1, name2=name2))) +
 		    coord_fixed()
 		print (gg)
 
@@ -272,8 +272,8 @@ if (ncol(sample1)==4) { # with grouping information
 		                    breaks = trans_breaks("log10", function(x) 10^x),
 		                    labels = trans_format("log10", math_format(10^.x) ) ) +
 		    annotation_logticks () +
-		    xlab ( expression ( paste(italic(name1) ,"  antisense, normalized number of reads (log10)"))) +
-		    ylab ( expression ( paste(italic(name2), "  antisense, normalized number of reads (log10)"))) +
+		    xlab ( substitute ( paste(italic(name1) ,"  antisense, normalized number of reads (log10)"), list(name1=name1, name2=name2))) +
+		    ylab ( substitute ( paste(italic(name2), "  antisense, normalized number of reads (log10)"), list(name1=name1, name2=name2))) +
 		    coord_fixed()
 		print (gg)
 }

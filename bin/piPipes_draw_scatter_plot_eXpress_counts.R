@@ -50,8 +50,8 @@ ggplot( sample, aes(x = eff_counts.x, y = eff_counts.y, colour = Group, size = G
                     breaks = trans_breaks("log10", function(x) 10^x),
                     labels = trans_format("log10", math_format(10^.x) ) ) +
     annotation_logticks () +
-	xlab ( expression ( paste(italic(name1) ,"  normalized number of reads (log10)"))) +
-	ylab ( expression ( paste(italic(name2),"   normalized number of reads (log10)"))) +
+	xlab ( substitute( paste( italic(name1), "normalized number of reads (log10)"), list(name1=name1) )) +
+	ylab ( substitute( paste( italic(name2), "normalized number of reads (log10)"), list(name2=name2) )) +
     coord_fixed()
 
 g = dev.off ()

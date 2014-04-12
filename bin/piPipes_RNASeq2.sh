@@ -33,8 +33,8 @@ Thank you for using it.
 
 ${UNDERLINE}usage${RESET}:
 	piPipes rna2	\ 
-		-a rnaseq_pipiline_output_dir1 \ 
-		-b rnaseq_pipiline_output_dir2 \ 
+		-a rnaseq_pipiline_output_sample_A_rep1,rnaseq_pipiline_output_sample_A_rep2,rnaseq_pipiline_output_sample_A_rep3 \ 
+		-b rnaseq_pipiline_output_sample_B_rep1,rnaseq_pipiline_output_sample_B_rep2,rnaseq_pipiline_output_sample_B_rep3 \ 
 		-g dm3 \ 
 		-c 24 [8] \ 
 		-o output_dir [cwd] \ 
@@ -69,8 +69,8 @@ while getopts "hva:b:g:c:o:A:B:" OPTION; do
 	case $OPTION in
 		h)	usage && exit 0 ;;
 		v)	echo2 "SMALLRNA2_VERSION: v$SMALLRNA2_VERSION" && exit 0 ;;
-		a)	SAMPLE_A_DIR=`readlink -f $OPTARG` ;;
-		b)	SAMPLE_B_DIR=`readlink -f $OPTARG` ;;
+		a)	SAMPLE_As=$OPTARG ;;
+		b)	SAMPLE_Bs=$OPTARG ;;
 		o)	OUTDIR=`readlink -f $OPTARG` ;;
 		c)	CPU=$OPTARG ;;
 		g)	export GENOME=`echo ${OPTARG} | tr '[A-Z]' '[a-z]'` ;;
@@ -79,11 +79,17 @@ while getopts "hva:b:g:c:o:A:B:" OPTION; do
 		*)	usage && exit 1 ;;
 	esac
 done
+
 # if INPUT_FASTQ or GENOME is undefined, print out usage and exit
-[[ -z $SAMPLE_A_DIR ]] && usage && echo2 "Missing option -a for input dir for sample A (wild-type) file " "error" 
-[[ ! -d $SAMPLE_A_DIR ]] && echo2 "Cannot find input directory $SAMPLE_A_DIR" "error"
-[[ -z $SAMPLE_B_DIR ]] && usage && echo2 "Missing option -b for input dir for sample B (mutant) file " "error" 
-[[ ! -d $SAMPLE_B_DIR ]] && echo2 "Cannot find input directory $SAMPLE_B_DIR" "error"
+[[ -z $SAMPLE_As ]] && usage && echo2 "Missing option -a for input directories for sample A (wild-type) file, use comma to separete replicates " "error" 
+[[ -z $SAMPLE_Bs ]] && usage && echo2 "Missing option -b for input directories for sample B (mutant) file, use comma to separete replicates" "error" 
+declare -a SAMPLE_A_DIR SAMPLE_B_DIR
+eval `echo $SAMPLE_As | awk 'BEGIN{FS=","}{printf "export SAMPLE_A_DIR_RELATIVE=(" ; ;for (i=1;i<=NF;++i) printf "\"%s\" ", $i; printf ")\n";}'`
+for DIR in "${SAMPLE_A_DIR_RELATIVE[@]}"; do SAMPLE_A_DIR+=(`readlink -f $DIR`); done
+eval `echo $SAMPLE_Bs | awk 'BEGIN{FS=","}{printf "export SAMPLE_B_DIR_RELATIVE=(" ; ;for (i=1;i<=NF;++i) printf "\"%s\" ", $i; printf ")\n";}'`
+for DIR in "${SAMPLE_B_DIR_RELATIVE[@]}"; do SAMPLE_B_DIR+=(`readlink -f $DIR`); done
+echo "${SAMPLE_B_DIR[@]}"
+for DIR in "${SAMPLE_A_DIR[@]}" "${SAMPLE_B_DIR[@]}"; do [[ ! -d $DIR ]] && echo2 "Cannot find input directory $DIR" "error"; done
 [[ -z $GENOME ]]  && usage && echo2 "Missing option -g for specifying which genome assembly to use" "error" 
 check_genome $GENOME
 [[ -z $SAMPLE_A_NAME ]] && SAMPLE_A_NAME=`basename $SAMPLE_A_DIR`
@@ -99,9 +105,15 @@ touch .writting_permission && rm -rf .writting_permission || (echo2 "Cannot writ
 #################
 # Version Check #
 #################
-SAMPLE_A_VERSION=`ls -a $SAMPLE_A_DIR | grep RNASEQ_VERSION`
-SAMPLE_B_VERSION=`ls -a $SAMPLE_B_DIR | grep RNASEQ_VERSION`
-[ "$SAMPLE_A_VERSION" != "$SAMPLE_B_VERSION" ] && echo2 "It appears that the two runs were not done by the same assemly or same version of single library mode pipeline." "error"
+for DIR in "${SAMPLE_A_DIR[@]}" "${SAMPLE_B_DIR[@]}"; do 
+	VERSION=`ls -a $DIR | grep RNASEQ_VERSION` 
+	[[ -z $VERSION ]] && echo2 "RNASeq single sample pipeline not finished in $DIR" "error"
+	echo $VERSION >> .RNASEQ_VERSION
+done
+case `sort -u .RNASEQ_VERSION | wc -l` in 
+	1) ;;
+	*) echo2 "Not all the directories were ran under the same version or condition of the single sample pipeline" "error";;
+esac
 
 #################################
 # creating output files/folders #
@@ -125,8 +137,24 @@ CHROM=$COMMON_FOLDER/${GENOME}.ChromInfo.txt
 # Transcriptome GTF
 TRANSCRIPTOME_GTF=$COMMON_FOLDER/${GENOME}.genes.gtf
 # get depth for each of the two libraries
-SAMPLE_A_NORMFACTOR=`cat $SAMPLE_A_DIR/.*.cufflinks_depth`
-SAMPLE_B_NORMFACTOR=`cat $SAMPLE_B_DIR/.*.cufflinks_depth`
+declare -a SAMPLE_A_NORMFACTOR SAMPLE_B_NORMFACTOR
+SAMPLE_A_BAMS="" # in case enviromental variable has been set
+SAMPLE_B_BAMS=""
+SAMPLE_A_EXPRESS=""
+SAMPLE_B_EXPRESS=""
+for DIR in "${SAMPLE_A_DIR[@]}" ; do 
+	echo2 $DIR
+	NORMFACTOR=`cat $DIR/.*.cufflinks_depth`
+	SAMPLE_A_NORMFACTOR+=( "$NORMFACTOR" )
+	SAMPLE_A_BAMS=`find ${DIR}/genome_mapping/ -name "*${GENOME}.sorted.bam" `","${SAMPLE_A_BAMS}
+	SAMPLE_A_EXPRESS=`find ${DIR}/gene_transposon_cluster_direct_mapping/ -name "*results.xprs.normalized" `" "${SAMPLE_A_EXPRESS}
+done
+for DIR in "${SAMPLE_B_DIR[@]}" ; do 
+	NORMFACTOR=`cat $DIR/.*.cufflinks_depth`
+	SAMPLE_B_NORMFACTOR+=("$NORMFACTOR")
+	SAMPLE_B_BAMS=`find ${DIR}/genome_mapping/ -name "*${GENOME}.sorted.bam" `","${SAMPLE_B_BAMS}
+	SAMPLE_B_EXPRESS=`find ${DIR}/gene_transposon_cluster_direct_mapping/ -name "*results.xprs.normalized" `" "${SAMPLE_B_EXPRESS}
+done
 
 ##############################
 # beginning running pipeline #
@@ -150,8 +178,8 @@ cuffdiff \
 	--library-norm-method geometric \
 	--no-update-check \
 	$TRANSCRIPTOME_GTF \
-	${SAMPLE_A_DIR}/genome_mapping/*${GENOME}.sorted.bam \
-	${SAMPLE_B_DIR}/genome_mapping/*${GENOME}.sorted.bam \
+	${SAMPLE_A_BAMS} \
+	${SAMPLE_B_BAMS} \
 	2> $CUFFDIFF_DIR/${PREFIX}.cuffdiff.log && \
 touch .${JOBUID}.status.${STEP}.cuffdiff
 STEP=$((STEP+1))
@@ -173,17 +201,18 @@ STEP=$((STEP+1))
 ############################################
 echo2 "Drawing scatterplot for eXpress counting of mRNA, transposon and cluster"
 [ ! -f .${JOBUID}.status.${STEP}.draw_eXpress ] && \
+echo -e "target_id\teff_counts" > ${SAMPLE_A_NAME}.results.xprs && \
+echo -e "target_id\teff_counts" > ${SAMPLE_B_NAME}.results.xprs && \
+cat $SAMPLE_A_EXPRESS | cut -f2,8 | grep -v id | sort -k1,1 | bedtools groupby -i stdin -g 1 -c 2 -o mean >> ${SAMPLE_A_NAME}.results.xprs && \
+cat $SAMPLE_B_EXPRESS | cut -f2,8 | grep -v id | sort -k1,1 | bedtools groupby -i stdin -g 1 -c 2 -o mean >> ${SAMPLE_B_NAME}.results.xprs && \
 Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_scatter_plot_eXpress_counts.R \
-	$SAMPLE_A_DIR/gene_transposon_cluster_direct_mapping/results.xprs \
-	$SAMPLE_B_DIR/gene_transposon_cluster_direct_mapping/results.xprs \
+	${SAMPLE_A_NAME}.results.xprs \
+	${SAMPLE_B_NAME}.results.xprs \
 	$SAMPLE_A_NAME \
 	$SAMPLE_B_NAME \
 	$PDF_DIR/${SAMPLE_A_NAME}_vs_${SAMPLE_B_NAME}.gene_transposon_cluster.abundance && \
 	touch .${JOBUID}.status.${STEP}.draw_eXpress
 STEP=$((STEP+1))
-
-
-
 
 
 

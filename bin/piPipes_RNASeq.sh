@@ -330,7 +330,7 @@ echo2 "Quantifying genomic features from genomic mapping using HTSeq-count"
 		echo "htseq-count -m intersection-strict -s $ANTISENSE_HTSEQ_OPT -t exon -i transcript_id -q ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.Aligned.out.sam ${!t} | awk 'BEGIN{FS=OFS=\"\t\"}{n=split (\$1,a,\".\"); ct[a[1]]+=\$2; }END{for (x in ct) {print x, ct[x]}}' | sort -k1,1 > ${HTSEQ_DIR}/${PREFIX}.x_rRNA.${GENOME}.${t}.htseqcount.strict.AS.out" >> $para_file
 		echo "htseq-count -m union -s $SENSE_HTSEQ_OPT -t exon -i transcript_id -q ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.Aligned.out.sam ${!t} | awk 'BEGIN{FS=OFS=\"\t\"}{n=split (\$1,a,\".\"); ct[a[1]]+=\$2; }END{for (x in ct) {print x, ct[x]}}' | sort -k1,1 > ${HTSEQ_DIR}/${PREFIX}.x_rRNA.${GENOME}.${t}.htseqcount.union.S.out" >> $para_file
 		echo "htseq-count -m union -s $ANTISENSE_HTSEQ_OPT -t exon -i transcript_id -q ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.Aligned.out.sam ${!t} | awk 'BEGIN{FS=OFS=\"\t\"}{n=split (\$1,a,\".\"); ct[a[1]]+=\$2; }END{for (x in ct) {print x, ct[x]}}' | sort -k1,1 > ${HTSEQ_DIR}/${PREFIX}.x_rRNA.${GENOME}.${t}.htseqcount.union.AS.out" >> $para_file
-done && \
+	done && \
 ParaFly -c $para_file -CPU $CPU -failed_cmds ${para_file}.failedCommands 1>&2 && \
 rm -rf ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.Aligned.out.sam && \
 touch .${JOBUID}.status.${STEP}.htseq_count
@@ -359,8 +359,7 @@ touch .${JOBUID}.status.${STEP}.direct_mapping
 
 [ ! -f .${JOBUID}.status.${STEP}.eXpress_quantification ] && \
 express \
-	-B 15 \
-	--output-align-prob \
+	-B 21 \
 	--calc-covar \
 	-o $DIRECTMAPPING_DIR \
 	--no-update-check \
@@ -368,6 +367,8 @@ express \
 	$COMMON_FOLDER/${GENOME}.gene+cluster+repBase.fa \
 	${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.bam \
 	1>&2 2> $DIRECTMAPPING_DIR/${PREFIX}.gene+cluster+repBase.eXpress.log && \
+awk -v depth=$NormScale 'BEGIN{OFS="\t"; getline; print}{$8*=depth; print}' $DIRECTMAPPING_DIR/results.xprs > \
+	$DIRECTMAPPING_DIR/results.xprs.normalized && \
 touch .${JOBUID}.status.${STEP}.eXpress_quantification
 STEP=$((STEP+1))
 
