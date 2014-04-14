@@ -4,3 +4,6 @@ bin/htseq-count
 bin/htseq-qa
 bin/macs2
 lib
+piper
+piper_debug
+src

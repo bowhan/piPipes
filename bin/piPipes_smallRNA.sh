@@ -39,7 +39,8 @@ ${UNDERLINE}usage${RESET}:
 		-g dm3 \ 
 		-N uniqueXmiRNA [unique] \ 
 		-o output_directory [current working directory] \ 
-		-c cpu [8] 
+		-c cpu [8] \ 
+		-B 38 [21]
 	
 OPTIONS:
 	-h      Show this message
@@ -63,6 +64,8 @@ ${OPTIONAL}[ optional ]
 		 *You are able to run the same library multiple times with different normalization method. They will not collapse.
 	-c      Number of CPUs to use, default: 8
 	-o      Output directory, default: current directory $PWD
+	-B      How many rounds of batch algorithm to run for eXpress, default: 21
+
 EOF
 echo -e "${COLOR_END}"
 }
@@ -70,7 +73,7 @@ echo -e "${COLOR_END}"
 #############################
 # ARGS reading and checking #
 #############################
-while getopts "hi:c:o:g:vN:" OPTION; do
+while getopts "hi:c:o:g:vN:B:" OPTION; do
 	case $OPTION in
 		h)	usage && exit 0 ;;
 		i)	INPUT_FASTQ=`readlink -f $OPTARG` ;;
@@ -79,6 +82,7 @@ while getopts "hi:c:o:g:vN:" OPTION; do
 		v)	echo2 "SMALLRNA_VERSION: v$SMALLRNA_VERSION" && exit 0 ;;
 		g)	export GENOME=`echo ${OPTARG} | tr '[A-Z]' '[a-z]'` ;;
 		N)	export NORMMETHOD=`echo ${OPTARG} | tr '[A-Z]' '[a-z]'` ;;
+		B)	eXpressBATCH=$OPTARG ;;
 		*)	usage && exit 1 ;;
 	esac
 done
@@ -91,6 +95,7 @@ check_genome $GENOME
 FQ_NAME=`basename $INPUT_FASTQ` && export PREFIX=${FQ_NAME%.f[qa]*}
 [[ -z $NORMMETHOD ]] && export NORMMETHOD="unique";
 [ ! -z "${CPU##*[!0-9]*}" ] || CPU=8
+[ ! -z "${eXpressBATCH##*[!0-9]*}" ] || eXpressBATCH=21
 [ ! -z "$OUTDIR" ] || OUTDIR=$PWD # if -o is not specified, use current directory
 [ "$OUTDIR" != `readlink -f $PWD` ] && (mkdir -p "${OUTDIR}" || echo2 "Cannot create directory ${OUTDIR}" "warning")
 cd ${OUTDIR} || (echo2 "Cannot access directory ${OUTDIR}... Exiting..." "error")
@@ -473,7 +478,7 @@ STEP=$((STEP+1))
 
 [ ! -f .${JOBUID}.status.${STEP}.quantification_by_eXpress ] && \
 express \
-	-B 21 \
+	-B $eXpressBATCH \
 	-m $(( (siRNA + piRNA_top)/2 )) \
 	-s $(( (piRNA_top - 18)/2 )) \
 	--output-align-prob \

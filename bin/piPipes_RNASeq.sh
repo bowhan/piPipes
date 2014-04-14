@@ -37,7 +37,8 @@ ${UNDERLINE}usage${RESET}:
 		-r right.fq \ 
 		-g dm3 \ 
 		-o output_directory [current working directory] \ 
-		-c cpu [8] 
+		-c cpu [8] \ 
+		-B 38 [21]
 	
 Currently, only Paired-End input is accepted. By default, the pipeline assumes dUTR based method 
 and \2 is in the same direction as the transcript, opposite to ligation-based degradome/cage-Seq. 
@@ -58,6 +59,7 @@ ${OPTIONAL}[ optional ]
 		 default: off (dUTR based, \2 reads being in the same direction)
 	-o      Output directory, default: current directory $PWD
 	-c      Number of CPUs to use, default: 8
+	-B      How many rounds of batch algorithm to run for eXpress, default: 21
 	
 EOF
 echo -e "${COLOR_END}"
@@ -66,7 +68,7 @@ echo -e "${COLOR_END}"
 #############################
 # ARGS reading and checking #
 #############################
-while getopts "hl:r:c:o:g:vL" OPTION; do
+while getopts "hl:r:c:o:g:B:vL" OPTION; do
 	case $OPTION in
 		h)	usage && exit 0 ;;
 		l)	LEFT_FASTQ=`readlink -f $OPTARG` ;;
@@ -76,6 +78,7 @@ while getopts "hl:r:c:o:g:vL" OPTION; do
 		g)	export GENOME=`echo ${OPTARG} | tr '[A-Z]' '[a-z]'` ;;
 		v)	echo2 "RNASEQ_VERSION: v$RNASEQ_VERSION" && exit 0 ;;
 		L)	LIGATIONLIB=1 ;; # ligation based
+		B)	eXpressBATCH=$OPTARG ;;
 		*)	usage && exit 1 ;;
 	esac
 done
@@ -88,6 +91,7 @@ check_genome $GENOME
 [ ! -f $LEFT_FASTQ ] && echo2 "Cannot find input file $LEFT_FASTQ" "error"
 [ ! -f $RIGHT_FASTQ ] && echo2 "Cannot find input file $RIGHT_FASTQ" "error"
 [ ! -z "${CPU##*[!0-9]*}" ] || CPU=8
+[ ! -z "${eXpressBATCH##*[!0-9]*}" ] || eXpressBATCH=21
 [ ! -z $OUTDIR ] || OUTDIR=$PWD # if -o is not specified, use current directory
 [ "$OUTDIR" != `readlink -f $PWD` ] && (mkdir -p "${OUTDIR}" || echo2 "Cannot create directory ${OUTDIR}" "warning")
 cd ${OUTDIR} || (echo2 "Cannot access directory ${OUTDIR}... Exiting..." "error")
@@ -359,7 +363,7 @@ touch .${JOBUID}.status.${STEP}.direct_mapping
 
 [ ! -f .${JOBUID}.status.${STEP}.eXpress_quantification ] && \
 express \
-	-B 21 \
+	-B $eXpressBATCH \
 	--calc-covar \
 	-o $DIRECTMAPPING_DIR \
 	--no-update-check \

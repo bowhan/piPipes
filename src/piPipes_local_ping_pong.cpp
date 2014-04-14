@@ -41,16 +41,12 @@ public:
 	}
 	boost::optional<T> pop () {
 		unique_lock<mutex> locker (mx);
-		if (positions.empty ()) {
-			return boost::none;
-		} else {
-			T ret = positions.back ();
+		boost::optional<T> ret {boost::none};
+		if (!positions.empty ()) {
+			ret = positions.back ();
 			positions.pop_back ();
-			return ret;
 		}
-	}
-	bool empty () const {
-		return positions.empty ();
+		return ret;
 	}
 };
 
@@ -59,7 +55,7 @@ void do_ping_pong (
 		const unordered_map<string, unordered_map<char, unordered_map<uint64_t, double>>>& ,
 		int ,
 		double* const
-) noexcept ;
+);
 
 template <typename C, typename T>
 class ping_pong_player {
@@ -73,20 +69,20 @@ public:
 	_A {&A}, _B {&B}, _tasks {&tasks}, _answers {answers}
 	{ }
 	void operator () () {
-		while (! _tasks->empty ()) {
+		while (1) {
 			auto n = _tasks->pop ();
-			if (!n) {
-				do_ping_pong (*_A, *_B, *n, _answers + *n );
+			if (n) {
+				do_ping_pong (*_A, *_B, *n, _answers + *n);
+			} else {
+				break;
 			}
 		}
 	}
 };
 
-void read_file_into_unordered_map (const string& file_name, unordered_map<string, unordered_map<char, unordered_map<uint64_t, double>>>& umap) noexcept
-{
+void read_file_into_unordered_map (const string& file_name, unordered_map<string, unordered_map<char, unordered_map<uint64_t, double>>>& umap) {
 	ifstream in (file_name);
-	if (!in)
-	{
+	if (!in) {
 		cerr << "file " << file_name << " cannot be opened\n";
 		exit (1);
 	}
@@ -96,21 +92,17 @@ void read_file_into_unordered_map (const string& file_name, unordered_map<string
 	uint64_t num_of_reads, num_of_origin;
 	uint64_t start, end;
 	char strand;
-	while (in.getline (buffer, 1024, '\n'))
-	{
+	while (in.getline (buffer, 1024, '\n')) {
 		char* saveptr;
-		chr    =       strtok_r (buffer, "\t", &saveptr) ;
-		start  = strtoul (strtok_r (NULL,   "\t", &saveptr), NULL, 0);
-		end    = strtoul (strtok_r (NULL,   "\t", &saveptr), NULL, 0);
-		num_of_reads   = strtoul (strtok_r (NULL,   "\t", &saveptr), NULL, 0) ;
-		num_of_origin  = strtoul (strtok_r (NULL,   "\t", &saveptr), NULL, 0) ;
-		strand =       strtok_r (NULL,   "\t", &saveptr)[0];
-		if (strand == '+')
-		{
+		chr = strtok_r (buffer, "\t", &saveptr) ;
+		start = strtoul (strtok_r (NULL,   "\t", &saveptr), NULL, 0);
+		end = strtoul (strtok_r (NULL,   "\t", &saveptr), NULL, 0);
+		num_of_reads = strtoul (strtok_r (NULL,   "\t", &saveptr), NULL, 0) ;
+		num_of_origin = strtoul (strtok_r (NULL,   "\t", &saveptr), NULL, 0) ;
+		strand = strtok_r (NULL,   "\t", &saveptr)[0];
+		if (strand == '+') {
 			umap[chr][strand][start] += (double(num_of_reads))/double(num_of_origin);
-		}
-		else
-		{
+		} else {
 			umap[chr][strand][end-1] += (double(num_of_reads))/double(num_of_origin);
 		}
 	}
@@ -151,7 +143,6 @@ Please contact bo.han@Umassmed.edu for any questions.
 			std::cerr << opts << std::endl;
 			exit (1);
 		} /** end of cmdline parsing **/
-
 	unordered_map<string, unordered_map<char, unordered_map<uint64_t, double>>> seq2read1, seq2read2;
 	if (num_of_threads > 1) {
 		thread parse_file_A (read_file_into_unordered_map, file_a, boost::ref (seq2read1));
@@ -193,9 +184,7 @@ void do_ping_pong (
 		const unordered_map<string, unordered_map<char, unordered_map<uint64_t, double>>>& umapA,
 		const unordered_map<string, unordered_map<char, unordered_map<uint64_t, double>>>& umapB,
 		int k,
-		double* const z_score
-) noexcept
-{
+		double* const z_score )  {
 	for (auto const & chr_rest : umapA)
 	{
 		for (auto const & strand_rest : chr_rest.second)
