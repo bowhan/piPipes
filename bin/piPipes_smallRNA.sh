@@ -484,7 +484,6 @@ express \
 	--output-align-prob \
 	-o $EXPRESS_DIR \
 	--no-update-check \
-	--calc-covar \
 	$COMMON_FOLDER/${GENOME}.gene+cluster+repBase.fa \
 	$EXPRESS_DIR/${PREFIX}.bowtie.gene+cluster+repBase.bam \
 	1>&2 2> $EXPRESS_DIR/${PREFIX}.eXpress.log && \

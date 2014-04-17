@@ -40,7 +40,8 @@ ${UNDERLINE}usage${RESET}:
 		-g dm3 \ 
 		-d 500 [100] \ 
 		-o output_directory [current directory] \ 
-		-c cpu [8] 
+		-c cpu [8] \ 
+		-e eGFP.fa
 	
 OPTIONS:
 	-h      Show this message
@@ -55,6 +56,7 @@ ${OPTIONAL}[ optional ]
 	-d      VCF filtering depth, passed to "vcfutils.pl varFilter -D" and "retroseq.pl -call -depth", default: 100
 	-o      Output directory, default: current directory $PWD
 	-c      Number of CPUs to use, default: 8
+	-e      Transgene sequence in fasta format. It can contain multiple sequences.
 	
 EOF
 echo -e "${COLOR_END}"
@@ -63,7 +65,7 @@ echo -e "${COLOR_END}"
 #############################
 # ARGS reading and checking #
 #############################
-while getopts "hl:r:c:o:g:d:v" OPTION; do
+while getopts "hl:r:c:o:g:d:ve:" OPTION; do
 	case $OPTION in
 		h)	usage && exit 1 ;;
 		l)	LEFT_FASTQ=`readlink -f $OPTARG` ;;
@@ -73,6 +75,7 @@ while getopts "hl:r:c:o:g:d:v" OPTION; do
 		g)	GENOME=`echo ${OPTARG} | tr '[A-Z]' '[a-z]'` ;;
 		v)	echo2 "GENOMESEQ_VERSION: v$GENOMESEQ_VERSION" && exit 0 ;;		
 		d)	VCFFILTER_DEPTH=$OPTARG ;;
+		e)	TRANSGENE_FA=`readlink -f $OPTARG` ;;
 		*)	usage && exit 1 ;;
 	esac
 done
@@ -101,8 +104,8 @@ TEMP_OUTDIR=TEMP_output && mkdir -p $TEMP_OUTDIR
 RETROSEQ=retroSeq_discovering && mkdir -p $RETROSEQ
 MRFAST_GENOMIC_MAPPING_DIR=mrFast_VariationHunter_output && mkdir -p $MRFAST_GENOMIC_MAPPING_DIR
 BREAKDANCER_DIR=break_dancer_out && mkdir -p $BREAKDANCER_DIR
-#SUMMARY_DIR=summaries && mkdir -p $SUMMARY_DIR
-#BW_OUTDIR=bigWig && mkdir -p $BW_OUTDIR
+BW_OUTDIR=bigWig && mkdir -p $BW_OUTDIR
+TRANSGENE_MAPPING_DIR=transgene_mapping && mkdir -p $TRANSGENE_MAPPING_DIR
 
 ########################
 # running binary check #
@@ -173,7 +176,7 @@ esac
 #####################################
 # Align reads to genome: 1. Bowtie2 #
 #####################################
-# so far, no tool uses bowtie2 output
+
 # echo2 "Mapping to genome ${GENOME} with Bowtie2"
 # [ ! -f .${JOBUID}.status.${STEP}.genome_mapping_bowtie2 ] && \
 # bowtie2 -x genome \
@@ -185,14 +188,34 @@ esac
 # 	-X 800 \
 # 	--no-mixed \
 # 	-p $CPU \
+# 	--un-conc ${BOWTIE2_GENOMIC_MAPPING_DIR}/${PREFIX%}.un_conc \
 # 	2> ${BOWTIE2_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.b2.log | \
 # 	samtools view -uS -f0x2 - > ${BOWTIE2_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.b2.bam && \
 # 	samtools sort -@ $CPU ${BOWTIE2_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.b2.bam ${BOWTIE2_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.b2.sorted && \
 # 	samtools index ${BOWTIE2_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.b2.sorted.bam && \
 # 	rm -rf ${BOWTIE2_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.b2.bam && \
-# 	touch .${JOBUID}.status.${STEP}.genome_mapping_bowtie2
-# STEP=$((STEP+1))
+# touch .${JOBUID}.status.${STEP}.genome_mapping_bowtie2
+# 
+# # map the location of the transgene
+# if [ ! -z $TRANSGENE_FA ]; then
+# 	TRANSGENE_NAME=${TRANSGENE_FA%.f[aq]*}
+# 	TRANSGENE_INDEX=$TRANSGENE_MAPPING_DIR/$TRANSGENE_NAME
+# 	bowtie2-build $TRANSGENE_FA $TRANSGENE_INDEX && \
+# 	bowtie2 -x $TRANSGENE_INDEX \
+# 		-1 ${BOWTIE2_GENOMIC_MAPPING_DIR}/${PREFIX%}.un_conc.1 \
+# 		-2 ${BOWTIE2_GENOMIC_MAPPING_DIR}/${PREFIX%}.un_conc.2 \
+# 		-q \
+# 		$bowtie2PhredOption \
+# 		--very-sensitive-local \
+# 		-X 800 \
+# 		--no-mixed \
+# 		-p $CPU \
+# 		--un-conc $TRANSGENE_MAPPING_DIR/${PREFIX%}.un_conc \
+# 		2> $TRANSGENE_MAPPING_DIR/${PREFIX}.transgene_mapping.b2.log | \
+# 	touch .${JOBUID}.status.${STEP}.transgene_mapping
+# fi
 
+STEP=$((STEP+1))
 #################################
 # Align reads to genome: 2. BWA #
 #################################
@@ -213,6 +236,8 @@ echo2 "Mapping to genome ${GENOME} with BWA-MEM and calling varation by bcftools
 	bcftools view - | \
 	perl $PIPELINE_DIRECTORY/bin/vcfutils.pl varFilter -D $VCFFILTER_DEPTH > ${BWA_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.bwa-mem.var.flt.vcf && \
 	rm -rf ${BWA_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.bwa-mem.bam && \
+	bedtools_piPipes genomecov -bg -ibam ${BWA_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.bwa-mem.sorted.bam -g $CHROM > ${BWA_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.bwa-mem.sorted.bdg && \
+	bedGraphToBigWig ${BWA_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.bwa-mem.sorted.bdg $CHROM $BW_OUTDIR/${PREFIX}.${GENOME}.bwa-mem.sorted.bigWig && \
 	touch .${JOBUID}.status.${STEP}.genome_mapping_bwa_MEM
 STEP=$((STEP+1))
 
@@ -232,7 +257,7 @@ STEP=$((STEP+1))
 # Discover transposon insert by TEMP #
 ######################################
 echo2 "Discovering transposon insert by TEMP"
-[ ! -f .${JOBUID}.status.${STEP}.TEMP ] && \
+[ ! -f .${JOBUID}.status.${STEP}.TEMP_transposon ] && \
 	if [ -s $REPBASE_FA ] ; then
 		bash $DEBUG $PIPELINE_DIRECTORY/bin/TEMP_Insertion.sh \
 			-i `readlink -f $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.bwa-aln.sorted.bam` \
@@ -242,10 +267,29 @@ echo2 "Discovering transposon insert by TEMP"
 			-t `readlink -f $COMMON_FOLDER/UCSC.RepeatMask.bed` \
 			-m $((READ_LEN/20)) \
 			-c $CPU  && \
-		touch .${JOBUID}.status.${STEP}.TEMP
+		touch .${JOBUID}.status.${STEP}.TEMP_transposon
 	else
 		echo2 "cannot file repBase fasta file $REPBASE_FA. TEMP will not run" "warning"
 	fi
+
+if [ ! -z $TRANSGENE_FA ]; then
+	echo2 "Mapping transgenen insertion by TEMP"
+	[ ! -f .${JOBUID}.status.${STEP}.TEMP_transgene ] && \
+	bowtie2 -x genome -U $TRANSGENE_FA -f | \
+	samtools view -bS - | \
+	bedtools_piPipes bamtobed -i stdin > \
+	$TRANSGENE_MAPPING_DIR/transgene.genome.bed \
+	2> $TRANSGENE_MAPPING_DIR/transgene.genome.log && \
+	bash $DEBUG $PIPELINE_DIRECTORY/bin/TEMP_Insertion.sh \
+		-i `readlink -f $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.bwa-aln.sorted.bam` \
+		-s $PIPELINE_DIRECTORY/bin \
+		-o $TRANSGENE_MAPPING_DIR \
+		-t `readlink -f $TRANSGENE_MAPPING_DIR/transgene.genome.bed` \
+		-r $TRANSGENE_FA \
+		-m $((READ_LEN/20)) \
+		-c $CPU  && \
+	touch .${JOBUID}.status.${STEP}.TEMP_transgene
+fi
 STEP=$((STEP+1))
 
 ####################################
@@ -337,7 +381,6 @@ echo2 "Draw Cisco plot to summarize the finding"
 		$PDF_DIR/${PREFIX}.summary.circos.pdf && \
 touch .${JOBUID}.status.${STEP}.Cisco
 STEP=$((STEP+1))
-
 
 #############
 # finishing #

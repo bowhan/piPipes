@@ -55,3 +55,4 @@ ggplot( sample, aes(x = eff_counts.x, y = eff_counts.y, colour = Group, size = G
     coord_fixed()
 
 g = dev.off ()
+write.csv (sample, file=paste (argv[5],".csv", sep=""))

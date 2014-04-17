@@ -364,7 +364,6 @@ touch .${JOBUID}.status.${STEP}.direct_mapping
 [ ! -f .${JOBUID}.status.${STEP}.eXpress_quantification ] && \
 express \
 	-B $eXpressBATCH \
-	--calc-covar \
 	-o $DIRECTMAPPING_DIR \
 	--no-update-check \
 	--library-size ${MapMass%.*} \

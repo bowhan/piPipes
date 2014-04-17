@@ -39,7 +39,8 @@ ${UNDERLINE}usage${RESET}:
 		-c 24 [8] \ 
 		-o output_dir [cwd] \ 
 		-A piwi_heterozygous [basename of -a] \ 
-		-B piwi_mutant [basename of -b]
+		-B piwi_mutant [basename of -b] \
+		-n 100 [50]
 		
 OPTIONS:
 	-h      Show this message
@@ -55,6 +56,7 @@ ${OPTIONAL}[ optional ]
 	-o      Output directory, default: current directory $PWD
 	-A      Name to use for Sample A, default: using the basename of -a
 	-B      Name to use for Sample B, default: using the basename of -b
+	-n      The top n genes to draw heatmap and bar plot in cummeRbund, sorted by q-value and fold-change, default: 50
 
 The pipeline will automatically detect the version and options of the single library run for the two samples and ensure the consistence. 
 
@@ -65,7 +67,7 @@ echo -e "${COLOR_END}"
 #############################
 # ARGS reading and checking #
 #############################
-while getopts "hva:b:g:c:o:A:B:" OPTION; do
+while getopts "hva:b:g:c:o:A:B:n:" OPTION; do
 	case $OPTION in
 		h)	usage && exit 0 ;;
 		v)	echo2 "SMALLRNA2_VERSION: v$SMALLRNA2_VERSION" && exit 0 ;;
@@ -76,6 +78,7 @@ while getopts "hva:b:g:c:o:A:B:" OPTION; do
 		g)	export GENOME=`echo ${OPTARG} | tr '[A-Z]' '[a-z]'` ;;
 		A)  SAMPLE_A_NAME=$OPTARG ;;
 		B)  SAMPLE_B_NAME=$OPTARG ;;
+		n)	NUM_GENE_CUMM=$OPTARG ;;
 		*)	usage && exit 1 ;;
 	esac
 done
@@ -97,6 +100,7 @@ check_genome $GENOME
 PREFIX=`echo -e "${SAMPLE_A_NAME}\n${SAMPLE_B_NAME}" | sed -e 'N;s/^\(.*\).*\n\1.*$/\1/'` && export PREFIX=${PREFIX%.*}
 [ -z "${PREFIX}" ] && export PREFIX=${SAMPLE_B_NAME} # if $LEFT and $RIGHT does not have any PREFIX, use the name of $LEFT
 [ ! -z "${CPU##*[!0-9]*}" ] || CPU=8
+[ ! -z "NUM_GENE_CUMM##*[!0-9]*}" ] || NUM_GENE_CUMM=50
 [ ! -z $OUTDIR ] || OUTDIR=$PWD # if -o is not specified, use current directory
 [ "$OUTDIR" != `readlink -f $PWD` ] && (mkdir -p "${OUTDIR}" || echo2 "Cannot create directory ${OUTDIR}" "warning")
 cd ${OUTDIR} || (echo2 "Cannot access directory ${OUTDIR}... Exiting..." "error")
@@ -192,6 +196,7 @@ echo2 "Analyzing cuffdiff output with cummeRbund"
 Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_cummeRbund.R \
 	$CUFFDIFF_DIR \
 	$PDF_DIR/${PREFIX} \
+	$NUM_GENE_CUMM \
 	2> $PDF_DIR/${PREFIX}.cummeRbund.log && \
 touch .${JOBUID}.status.${STEP}.cummeRbund
 STEP=$((STEP+1))
