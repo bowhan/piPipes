@@ -93,7 +93,7 @@ check_genome $GENOME
 [[ -z $SAMPLE_A_NAME ]] && export SAMPLE_A_NAME=`basename $SAMPLE_A_DIR`
 [[ -z $SAMPLE_B_NAME ]] && export SAMPLE_B_NAME=`basename $SAMPLE_B_DIR`
 PREFIX=`echo -e "${SAMPLE_A_NAME}\n${SAMPLE_B_NAME}" | sed -e 'N;s/^\(.*\).*\n\1.*$/\1/'` && export PREFIX=${PREFIX%.*}
-[ -z "${PREFIX}" ] && export PREFIX=${SAMPLE_B_NAME}. # if $LEFT and $RIGHT does not have any PREFIX, use the name of $LEFT
+[ -z "${PREFIX}" ] && export PREFIX=${SAMPLE_B_NAME}_${SAMPLE_B_NAME}
 [ ! -z "${CPU##*[!0-9]*}" ] || CPU=8
 [ ! -z "${EXT_LEN##*[!0-9]*}" ] || EXT_LEN=1000
 [ ! -z $OUTDIR ] || OUTDIR=$PWD # if -o is not specified, use current directory

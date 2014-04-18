@@ -41,7 +41,8 @@ if (ncol(sample1)==4) { # with grouping information
         colnames (sample2) = c("name", "group", "S2", "AS2")
         sample = merge (sample1, sample2, by="name")
 
-		lim = roundUp (10*(max (sample$S1, sample$S2, sample$AS1, sample$AS2)))/10
+		lim1 = floor (min (sample$S1, sample$S2, sample$AS1, sample$AS2)) - 0.5
+		lim2 = ceiling (max (sample$S1, sample$S2, sample$AS1, sample$AS2)) + 0.5
 
 		gg=ggplot( sample, aes(x = S1, y = AS1, color= factor (group.x)) ) + 
 			theme (
@@ -60,16 +61,9 @@ if (ncol(sample1)==4) { # with grouping information
 		    geom_point(size=5, alpha=0.75, na.rm=T) +
 		    scale_colour_manual(values=c("lightblue","black","darkgreen","red")) + 
 		    guides(colour = guide_legend (title=expression (paste (italic("Li., Cell, 2009"), " Transposon group")), title.position = "top")) + 
-		    scale_x_log10 ( limits = c(1,lim), 
-		                    breaks = trans_breaks("log10", function(x) 10^x),
-		                    labels = trans_format("log10", math_format(10^.x) ) ) +
-		    scale_y_log10 ( limits = c(1,lim),
-		                    breaks = trans_breaks("log10", function(x) 10^x),
-		                    labels = trans_format("log10", math_format(10^.x) ) ) +
-		    annotation_logticks () +
-		    xlab ( substitute ( paste(italic(name1) ,"  sense, normalized number of reads (log10)"), list(name1=name1, name2=name2))) +
-		    ylab ( substitute ( paste(italic(name1), "  antisense, normalized number of reads (log10)"), list(name1=name1, name2=name2))) +
-		    coord_fixed()
+		    xlab ( substitute ( paste(italic(name1) ,"  sense, mean length"), list(name1=name1, name2=name2))) +
+		    ylab ( substitute ( paste(italic(name1), "  antisense, mean length"), list(name1=name1, name2=name2))) +
+		    coord_fixed(ratio=1, xlim = c(lim1, lim2), ylim = c(lim1, lim2)) 
 		print (gg)
 		
 		gg=ggplot( sample, aes(x = S2, y = AS2, color= factor (group.x)) ) + 
@@ -89,16 +83,9 @@ if (ncol(sample1)==4) { # with grouping information
 		    geom_point(size=5, alpha=0.75, na.rm=T) +
 		    scale_colour_manual(values=c("lightblue","black","darkgreen","red")) + 
 		    guides (colour = guide_legend (title=expression (paste (italic("Li., Cell, 2009"), " Transposon group")), title.position = "top")) + 
-		    scale_x_log10 ( limits = c(1,lim), 
-		                    breaks = trans_breaks("log10", function(x) 10^x),
-		                    labels = trans_format("log10", math_format(10^.x) ) ) +
-		    scale_y_log10 ( limits = c(1,lim),
-		                    breaks = trans_breaks("log10", function(x) 10^x),
-		                    labels = trans_format("log10", math_format(10^.x) ) ) +
-		    annotation_logticks () +
-		    xlab ( substitute ( paste(italic(name2) ,"  sense, normalized number of reads (log10)"), list(name1=name1, name2=name2))) +
-		    ylab ( substitute ( paste(italic(name2), "  antisense, normalized number of reads (log10)"), list(name1=name1, name2=name2))) +
-		    coord_fixed()
+		    xlab ( substitute ( paste(italic(name2) ,"  sense, mean length"), list(name1=name1, name2=name2))) +
+		    ylab ( substitute ( paste(italic(name2), "  antisense, mean length"), list(name1=name1, name2=name2))) +
+		    coord_fixed(ratio=1, xlim = c(lim1, lim2), ylim = c(lim1, lim2)) 
 		print (gg)
 		
 		gg=ggplot( sample, aes(x = S1, y = S2, color= factor (group.x)) ) + 
@@ -118,16 +105,9 @@ if (ncol(sample1)==4) { # with grouping information
 		    geom_point(size=5, alpha=0.75, na.rm=T) +
 		    scale_colour_manual(values=c("lightblue","black","darkgreen","red")) + 
 		    guides(colour = guide_legend (title=expression (paste (italic("Li., Cell, 2009"), " Transposon group")), title.position = "top")) + 
-		    scale_x_log10 ( limits = c(1,lim), 
-		                    breaks = trans_breaks("log10", function(x) 10^x),
-		                    labels = trans_format("log10", math_format(10^.x) ) ) +
-		    scale_y_log10 ( limits = c(1,lim),
-		                    breaks = trans_breaks("log10", function(x) 10^x),
-		                    labels = trans_format("log10", math_format(10^.x) ) ) +
-		    annotation_logticks () +
-		    xlab ( substitute ( paste(italic(name1) ,"  sense, normalized number of reads (log10)"), list(name1=name1, name2=name2))) +
-		    ylab ( substitute ( paste(italic(name2), "  sense, normalized number of reads (log10)"), list(name1=name1, name2=name2))) +
-		    coord_fixed()
+		    xlab ( substitute ( paste(italic(name1) ,"  sense, mean length"), list(name1=name1, name2=name2))) +
+		    ylab ( substitute ( paste(italic(name2), "  sense, mean length"), list(name1=name1, name2=name2))) +
+		    coord_fixed(ratio=1, xlim = c(lim1, lim2), ylim = c(lim1, lim2)) 
 		print (gg)
 		
 		gg=ggplot( sample, aes(x = AS1, y = AS2, color= factor (group.x)) ) + 
@@ -147,23 +127,18 @@ if (ncol(sample1)==4) { # with grouping information
 		    geom_point(size=5, alpha=0.75, na.rm=T) +
 		    scale_colour_manual(values=c("lightblue","black","darkgreen","red")) + 
 		    guides(colour = guide_legend (title=expression (paste (italic("Li., Cell, 2009"), " Transposon group")), title.position = "top")) + 
-		    scale_x_log10 ( limits = c(1,lim), 
-		                    breaks = trans_breaks("log10", function(x) 10^x),
-		                    labels = trans_format("log10", math_format(10^.x) ) ) +
-		    scale_y_log10 ( limits = c(1,lim),
-		                    breaks = trans_breaks("log10", function(x) 10^x),
-		                    labels = trans_format("log10", math_format(10^.x) ) ) +
-		    annotation_logticks () +
-		    xlab ( substitute ( paste(italic(name1) ,"  antisense, normalized number of reads (log10)"), list(name1=name1, name2=name2))) +
-		    ylab ( substitute ( paste(italic(name2), "  antisense, normalized number of reads (log10)"), list(name1=name1, name2=name2))) +
-		    coord_fixed()
+		    xlab ( substitute ( paste(italic(name1) ,"  antisense, mean length"), list(name1=name1, name2=name2))) +
+		    ylab ( substitute ( paste(italic(name2), "  antisense, mean length"), list(name1=name1, name2=name2))) +
+		    coord_fixed(ratio=1, xlim = c(lim1, lim2), ylim = c(lim1, lim2)) 
 			print (gg)
 
 } else {
         colnames (sample1) = c("name", "S1", "AS1")
         colnames (sample2) = c("name", "S2", "AS2")
         sample = merge (sample1, sample2, by="name")
-		lim = roundUp (10*(max (sample$S1, sample$S2, sample$AS1, sample$AS2)))/10
+		
+		lim1 = floor (min (sample$S1, sample$S2, sample$AS1, sample$AS2)) - 1
+		lim2 = ceiling (max (sample$S1, sample$S2, sample$AS1, sample$AS2)) + 1
 		
 		gg=ggplot( sample, aes(x = S1, y = AS1) ) + 
 			theme (
@@ -181,16 +156,9 @@ if (ncol(sample1)==4) { # with grouping information
 		    scale_fill_continuous(guide = "legend") + 
 		    geom_point(size=5, alpha=0.5, na.rm=T) +
 		    scale_colour_manual(values=c("lightblue","black","darkgreen","red")) + 
-		    scale_x_log10 ( limits = c(1,lim), 
-		                    breaks = trans_breaks("log10", function(x) 10^x),
-		                    labels = trans_format("log10", math_format(10^.x) ) ) +
-		    scale_y_log10 ( limits = c(1,lim),
-		                    breaks = trans_breaks("log10", function(x) 10^x),
-		                    labels = trans_format("log10", math_format(10^.x) ) ) +
-		    annotation_logticks () +
-		    xlab ( substitute ( paste(italic(name1) ,"  sense, normalized number of reads (log10)"), list(name1=name1, name2=name2))) +
-		    ylab ( substitute ( paste(italic(name1), "  antisense, normalized number of reads (log10)"), list(name1=name1, name2=name2))) +
-		    coord_fixed()
+		    xlab ( substitute ( paste(italic(name1) ,"  sense, mean length"), list(name1=name1, name2=name2))) +
+		    ylab ( substitute ( paste(italic(name1), "  antisense, mean length"), list(name1=name1, name2=name2))) +
+		    coord_fixed(ratio=1, xlim = c(lim1, lim2), ylim = c(lim1, lim2)) 
 		print (gg)
 
 		gg=ggplot( sample, aes(x = S2, y = AS2) ) + 
@@ -209,16 +177,9 @@ if (ncol(sample1)==4) { # with grouping information
 		    scale_fill_continuous(guide = "legend") + 
 		    geom_point(size=5, alpha=0.5, na.rm=T) +
 		    scale_colour_manual(values=c("lightblue","black","darkgreen","red")) + 
-		    scale_x_log10 ( limits = c(1,lim), 
-		                    breaks = trans_breaks("log10", function(x) 10^x),
-		                    labels = trans_format("log10", math_format(10^.x) ) ) +
-		    scale_y_log10 ( limits = c(1,lim),
-		                    breaks = trans_breaks("log10", function(x) 10^x),
-		                    labels = trans_format("log10", math_format(10^.x) ) ) +
-		    annotation_logticks () +
-		    xlab ( substitute ( paste(italic(name2) ,"  sense, normalized number of reads (log10)"), list(name1=name1, name2=name2))) +
-		    ylab ( substitute ( paste(italic(name2), "  antisense, normalized number of reads (log10)"), list(name1=name1, name2=name2))) +
-		    coord_fixed()
+		    xlab ( substitute ( paste(italic(name2) ,"  sense, mean length"), list(name1=name1, name2=name2))) +
+		    ylab ( substitute ( paste(italic(name2), "  antisense, mean length"), list(name1=name1, name2=name2))) +
+		    coord_fixed(ratio=1, xlim = c(lim1, lim2), ylim = c(lim1, lim2)) 
 		print (gg)
 
 		gg=ggplot( sample, aes(x = S1, y = S2) ) + 
@@ -237,16 +198,9 @@ if (ncol(sample1)==4) { # with grouping information
 		    scale_fill_continuous(guide = "legend") + 
 		    geom_point(size=5, alpha=0.5, na.rm=T) +
 		    scale_colour_manual(values=c("lightblue","black","darkgreen","red")) + 
-		    scale_x_log10 ( limits = c(1,lim), 
-		                    breaks = trans_breaks("log10", function(x) 10^x),
-		                    labels = trans_format("log10", math_format(10^.x) ) ) +
-		    scale_y_log10 ( limits = c(1,lim),
-		                    breaks = trans_breaks("log10", function(x) 10^x),
-		                    labels = trans_format("log10", math_format(10^.x) ) ) +
-		    annotation_logticks () +
-		    xlab ( substitute ( paste(italic(name1) ,"  sense, normalized number of reads (log10)"), list(name1=name1, name2=name2))) +
-		    ylab ( substitute ( paste(italic(name2), "  sense, normalized number of reads (log10)"), list(name1=name1, name2=name2))) +
-		    coord_fixed()
+		    xlab ( substitute ( paste(italic(name1) ,"  sense, mean length"), list(name1=name1, name2=name2))) +
+		    ylab ( substitute ( paste(italic(name2), "  sense, mean length"), list(name1=name1, name2=name2))) +
+		    coord_fixed(ratio=1, xlim = c(lim1, lim2), ylim = c(lim1, lim2)) 
 		print (gg)
 
 		gg=ggplot( sample, aes(x = AS1, y = AS2) ) + 
@@ -265,16 +219,9 @@ if (ncol(sample1)==4) { # with grouping information
 		    scale_fill_continuous(guide = "legend") + 
 		    geom_point(size=5, alpha=0.5, na.rm=T) +
 		    scale_colour_manual(values=c("lightblue","black","darkgreen","red")) + 
-		    scale_x_log10 ( limits = c(1,lim), 
-		                    breaks = trans_breaks("log10", function(x) 10^x),
-		                    labels = trans_format("log10", math_format(10^.x) ) ) +
-		    scale_y_log10 ( limits = c(1,lim),
-		                    breaks = trans_breaks("log10", function(x) 10^x),
-		                    labels = trans_format("log10", math_format(10^.x) ) ) +
-		    annotation_logticks () +
-		    xlab ( substitute ( paste(italic(name1) ,"  antisense, normalized number of reads (log10)"), list(name1=name1, name2=name2))) +
-		    ylab ( substitute ( paste(italic(name2), "  antisense, normalized number of reads (log10)"), list(name1=name1, name2=name2))) +
-		    coord_fixed()
+		    xlab ( substitute ( paste(italic(name1) ,"  antisense, mean length"), list(name1=name1, name2=name2))) +
+		    ylab ( substitute ( paste(italic(name2), "  antisense, mean length"), list(name1=name1, name2=name2))) +
+		    coord_fixed(ratio=1, xlim = c(lim1, lim2), ylim = c(lim1, lim2)) 
 		print (gg)
 }
 
