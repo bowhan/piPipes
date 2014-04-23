@@ -279,7 +279,7 @@ if (ncol(sample1)==4) { # with grouping information
 }
 
 gc = dev.off()
-
+write.csv (sample, file=paste (argv[5],".csv", sep=""))
 
 
 

@@ -25,8 +25,11 @@ pkgTest("multicore")
 
 argv = commandArgs (TRUE)
 mirRelativePos = read.table (argv[1], F, sep="\t", stringsAsFactors=F)
+
 hetName = argv[2]
 mutName = argv[3]
+#hetName = gsub ("\\.", "_", argv[2]) 
+#mutName = gsub ("\\.", "_", argv[3]) 
 numOfCore = argv[4]
 outDir = argv[5]
 mirRelativePosSplitted = split (mirRelativePos, mirRelativePos$V1)

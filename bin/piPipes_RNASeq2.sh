@@ -100,7 +100,7 @@ check_genome $GENOME
 PREFIX=`echo -e "${SAMPLE_A_NAME}\n${SAMPLE_B_NAME}" | sed -e 'N;s/^\(.*\).*\n\1.*$/\1/'` && export PREFIX=${PREFIX%.*}
 [ -z "${PREFIX}" ] && export PREFIX=${SAMPLE_A_NAME}_${SAMPLE_B_NAME}
 [ ! -z "${CPU##*[!0-9]*}" ] || CPU=8
-[ ! -z "NUM_GENE_CUMM##*[!0-9]*}" ] || NUM_GENE_CUMM=50
+[ -z "${NUM_GENE_CUMM##*[!0-9]*}" ] && NUM_GENE_CUMM=50
 [ ! -z $OUTDIR ] || OUTDIR=$PWD # if -o is not specified, use current directory
 [ "$OUTDIR" != `readlink -f $PWD` ] && (mkdir -p "${OUTDIR}" || echo2 "Cannot create directory ${OUTDIR}" "warning")
 cd ${OUTDIR} || (echo2 "Cannot access directory ${OUTDIR}... Exiting..." "error")

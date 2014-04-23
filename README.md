@@ -76,7 +76,7 @@ $PATH_TO_piPipes/piPipes	small2 -a directory_A -b directory_B -g dm3 -c 24
 # to run small RNA pipeline in dual library mode, normalized to miRNA 
 $PATH_TO_piPipes/piPipes	small2 -a directory_A -b directory_B -g dm3 -c 24 -N miRNA
 # to run small RNA pipeline in dual library mode, normalized to siRNA (structural loci and cis-NATs), for oxidation sample of -fruitfly only-
-$PATH_TO_	/piPipes	small2 -a directory_A -b directory_B -g dm3 -c 24 -N siRNA
+$PATH_TO_piPipes/piPipes	small2 -a directory_A -b directory_B -g dm3 -c 24 -N siRNA
 
 # to run RNASeq pipeline in single sample mode, dUTP based method
 $PATH_TO_piPipes/piPipes	rnaseq -l left.fq -r right.fq -g mm9 -c 8 -o output_dir
@@ -86,6 +86,9 @@ $PATH_TO_piPipes/piPipes	rnaseq -l left.fq -r right.fq -g mm9 -c 8 -o output_dir
 
 # to run RNASeq pipeline in dual library mode (need single sample mode been ran for each sample first)
 $PATH_TO_piPipes/piPipes	rnaseq2 -a directory_A -b directory_B -g mm9 -c 8 -o output_dir -A w1 -B piwi
+
+# to run RNASeq pipeline in dual library mode with replicates
+$PATH_TO_piPipes/piPipes	rnaseq2 -a directory_A_rep1,directory_A_rep2,directory_A_rep3 -b directory_B_rep1,directory_B_rep2 -g mm9 -c 8 -o output_dir -A w1 -B piwi
 
 # to run Degradome/RACE/CAGE-Seq library 
 $PATH_TO_piPipes/piPipes	deg -l left.fq -r right.fq -g dm3 -c 12 -o output_dir

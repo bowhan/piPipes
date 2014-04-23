@@ -171,32 +171,32 @@ draw_microRNA_balloon = function (t1, hetName, mutName, outDir) {
 	if (sum6th > 0) { t1[,6] = 100*t1[,6]/sum(t1[,6]); }
 	sum7th = sum(t1[,7])
 	if (sum7th > 0) { t1[,7] = 100*t1[,7]/sum(t1[,7]); }
-	
+
 	fivePrimeArm_het =  xtabs (as.integer (t1$V4) ~ t1$V2 + t1$V3)
 	fivePrimeArm_mut =  xtabs (as.integer (t1$V5) ~ t1$V2 + t1$V3)
 	threePrimeArm_het = xtabs (as.integer (t1$V6) ~ t1$V2 + t1$V3)
 	threePrimeArm_mut = xtabs (as.integer (t1$V7) ~ t1$V2 + t1$V3)
-	
+
 	hetName=gsub ("\\."," ",hetName)
 	mutName=gsub ("\\."," ",mutName)
 	pdf (paste (outDir, '/', hetName, mutName, t1$V1[1], ".miRNAballoonPlot.pdf", sep=''), family="Helvetica")
 	par (mfrow=c(2,2),mar=c(5,2,2,1))
-	
+
 	main = paste (t1$V1[1], hetName," 5' arm:", sum4th, sep=' ')
 	main = paste (strwrap(main, width = 35), collapse = "\n") 
-	balloonplot (fivePrimeArm_het,  main=main,xlab="5'",ylab="3'",sorted=T,label.size=.6,text.size=.5,rowmar=1,show.zeros=F)
+	balloonplot (fivePrimeArm_het,  main=main,xlab="5'",ylab="3'",sorted=T,label.size=.6,text.size=.5,rowmar=1,show.zeros=T)
 	
 	main = paste (t1$V1[1], mutName," 5' arm:", sum5th, sep=' ')
 	main = paste (strwrap(main, width = 35), collapse = "\n") 
-	balloonplot (fivePrimeArm_mut,  main=main,xlab="5'",ylab="3'",sorted=T,label.size=.6,text.size=.5,rowmar=1,show.zeros=F, dotcolor="lightgreen")
+	balloonplot (fivePrimeArm_mut,  main=main,xlab="5'",ylab="3'",sorted=T,label.size=.6,text.size=.5,rowmar=1,show.zeros=T, dotcolor="lightgreen")
 	
 	main = paste (t1$V1[1], hetName," 3' arm:", sum6th, sep=' ')
 	main = paste (strwrap(main, width = 35), collapse = "\n") 
-	balloonplot (threePrimeArm_het, main=main,xlab="5'",ylab="3'",sorted=T,label.size=.6,text.size=.5,rowmar=1,show.zeros=F)
+	balloonplot (threePrimeArm_het, main=main,xlab="5'",ylab="3'",sorted=T,label.size=.6,text.size=.5,rowmar=1,show.zeros=T)
 	
 	main = paste (t1$V1[1], mutName," 3' arm:", sum7th, sep=' ')
 	main = paste (strwrap(main, width = 35), collapse = "\n") 
-	balloonplot (threePrimeArm_mut, main=main,xlab="5'",ylab="3'",sorted=T,label.size=.6,text.size=.5,rowmar=1,show.zeros=F, dotcolor="lightgreen")
+	balloonplot (threePrimeArm_mut, main=main,xlab="5'",ylab="3'",sorted=T,label.size=.6,text.size=.5,rowmar=1,show.zeros=T, dotcolor="lightgreen")
 	
 	invisible(dev.off())
 }

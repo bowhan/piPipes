@@ -23,7 +23,7 @@ bioConductorTest ("cummeRbund")
 argv = commandArgs (TRUE)
 
 cuff = readCufflinks (argv[1], package = "cummeRbund")
-topN = argv[3]
+topN = as.integer (argv[3])
 
 pdf (paste (argv[2],'.genes.csDensity.pdf',sep=''))
 csDensity (genes(cuff))
@@ -44,7 +44,6 @@ csVolcano(genes(cuff),names[1],names[2])
 invisible(dev.off())
 
 gene.diff = diffData(genes(cuff))
-#gene.diff.top = gene.diff[order(gene.diff$q_value),][1:topN,]
 gene.diff.top = gene.diff[order(gene.diff$q_value, -(abs(gene.diff$log2_fold_change))),][1:topN,]
 myGeneIds = gene.diff.top$gene_id
 myGenes = getGenes(cuff, myGeneIds)
