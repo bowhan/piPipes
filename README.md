@@ -105,7 +105,10 @@ $PATH_TO_piPipes/piPipes	chip -l left.IP.fq -r right.IP.fq -L left.INPUT.fq -R r
 # to run ChIP Seq library in single sample mode, only use unique mappers (otherwise Bowtie2 randomly choose one best alignment for each read)
 $PATH_TO_piPipes/piPipes	chip -l left.IP.fq -r right.IP.fq -L left.INPUT.fq -R right.INPUT.fq -g mm9 -c 8 -o output_dir -Q 10
 
-# to run ChIP Seq library in dual library mode (need dual sample mode been ran for each sample first)
+# to run ChIP Seq library in single sample mode with Single-End library
+$PATH_TO_piPipes/piPipes	chip -i IP.fq  -I input.fq  -g dm3
+
+# to run ChIP Seq library in dual library mode (need single sample mode been ran for each sample first)
 $PATH_TO_piPipes/piPipes	chip2 -a directory_A -b directory_B -g mm9 -c 8 -o output_dir
 
 # to run ChIP Seq library in dual sample mode, extend up/down stream 5000 bp for TSS/TES/meta analysis (for bwtool)

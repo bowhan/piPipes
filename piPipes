@@ -185,7 +185,7 @@ $RNASEQ_COLOR$0	rnaseq	-l left.fq -r right.fq -g mm9 -c 8 -o output_dir
 $COMMENT# run RNASeq pipeline for mouse (mm9), ligation based library$RESET
 $RNASEQ_COLOR$0	rnaseq	-l left.fq -r right.fq -g mm9 -c 8 -o output_dir -L 
 $COMMENT# run dual sample RNASeq pipeline for fly (dm3), sample name: w1 and piwi$RESET
-$RNASEQ_COLOR$0	rnaseq2	-a rnaseq_pipeline_output_dir1 -b rnaseq_pipeline_output_dir2 -g dm3 -c 24 -A w1 -B piwi 
+$RNASEQ_COLOR$0	rnaseq2	-a rnaseq_pipeline_output_dir1_rep1,rnaseq_pipeline_output_dir1_rep2 -b rnaseq_pipeline_output_dir2_rep1,rnaseq_pipeline_output_dir2_rep2 -g dm3 -c 24 -A w1 -B piwi 
 
 $COMMENT# run Degradome/CAGE-seq for fly (dm3), under current working directory$RESET
 $DEG_COLOR$0	deg -l left.fq -r right.fq -g dm3
@@ -198,6 +198,8 @@ $COMMENT# run ChIP-seq pipeline for mouse sample, Broad peak (H3K9me3), under cu
 $CHIP_COLOR$0	chip -l left.IP.fq -r right.IP.fq -L left.INPUT.fq -R right.INPUT.fq -g mm9 -c 8 -B
 $COMMENT# run ChIP-seq pipeline for mouse sample, only using unique mappers (otherwise Bowtie2 randomly choose one best alignment for each read)$RESET
 $CHIP_COLOR$0	chip -l left.IP.fq -r right.IP.fq -L left.INPUT.fq -R right.INPUT.fq -g mm9 -c 8 -Q 10
+$COMMENT# run ChIP-seq pipeline for single-end library
+$CHIP_COLOR$0	chip -i IP.fq -I INPUT.fq -g mm9 -c 8 -o single_end
 $COMMENT# to run ChIP-seq library in dual library mode, extending 2000nt for TSS/TES/meta analysis, name two samples w1 and piwi respectively$RESET
 $CHIP_COLOR$0	chip2 -a chipseq_pipeline_output_dir1 -b chipseq_pipeline_output_dir2 -g mm9 -x 2000 -A w1 -B piwi
 

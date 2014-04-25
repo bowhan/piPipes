@@ -110,6 +110,10 @@ SAMPLE_B_VERSION=`ls -a $SAMPLE_B_DIR | grep CHIPSEQ_VERSION`
 BROAD_A=`cat $SAMPLE_A_DIR/.MACS2_BROAD_OPT`
 BROAD_B=`cat $SAMPLE_B_DIR/.MACS2_BROAD_OPT` 
 [ "$BROAD_A" != "$BROAD_B" ] && echo2 "The two run were not done by the same -b option" "error"
+SE_OR_PE_A=`cat $SAMPLE_A_DIR/.SE_OR_PE`
+SE_OR_PE_B=`cat $SAMPLE_B_DIR/.SE_OR_PE`
+[ "$SE_OR_PE_A" != "$SE_OR_PE_B" ] && echo2 "The two run were not done by the type of SE/PE" "error"
+if [[ "${SE_OR_PE_A}" == "SE" ]]; then MACS2_f="BAM"; TN="tags"; else MACS2_f="BAMPE"; TN="fragments"; fi
 
 #################################
 # creating output files/folders #
@@ -154,7 +158,7 @@ SAMPLE_A_INPUT_BAM=$SAMPLE_A_DIR/genome_mapping/*Input.b2.sorted.bam
 echo2 "Running MACS2 without normalization for $SAMPLE_A_NAME"
 [ ! -f .${JOBUID}.status.${STEP}.peak_calling_A ] && \
 	macs2 callpeak \
-		-f BAMPE \
+		-f $MACS2_f \
 		-t ${SAMPLE_A_IP_BAM} \
 		-c ${SAMPLE_A_INPUT_BAM} \
 		-g $GENOME_SIZE \
@@ -165,7 +169,7 @@ echo2 "Running MACS2 without normalization for $SAMPLE_A_NAME"
 		2> $SAMPLE_A_DIR/${SAMPLE_A_NAME}.callpeak.log && \
 	touch .${JOBUID}.status.${STEP}.peak_calling_A
 STEP=$((STEP+1))
-EFFECTIVE_DEPTH_A=`grep 'fragments after filtering in' $PEAKS_CALLING_DIR_A/*_peaks.xls | awk 'BEGIN{FS=" "; getline;m=$NF}{if (m>$NF) {m=$NF}} END{print m}'`
+EFFECTIVE_DEPTH_A=`grep "$TN after filtering in" $PEAKS_CALLING_DIR_A/*_peaks.xls | awk 'BEGIN{FS=" "; getline;m=$NF}{if (m>$NF) {m=$NF}} END{print m}'`
 
 ########################################################
 # Call peaks using MACS2, without --SPMR, for sample B #
@@ -175,7 +179,7 @@ SAMPLE_B_INPUT_BAM=$SAMPLE_B_DIR/genome_mapping/*Input.b2.sorted.bam
 echo2 "Running MACS2 without normalization for $SAMPLE_B_NAME"
 [ ! -f .${JOBUID}.status.${STEP}.peak_calling_B ] && \
 	macs2 callpeak \
-		-f BAMPE \
+		-f $MACS2_f \
 		-t ${SAMPLE_B_IP_BAM} \
 		-c ${SAMPLE_B_INPUT_BAM} \
 		-g $GENOME_SIZE \
@@ -186,7 +190,7 @@ echo2 "Running MACS2 without normalization for $SAMPLE_B_NAME"
 		2> $SAMPLE_B_DIR/${SAMPLE_B_NAME}.callpeak.log && \
 	touch .${JOBUID}.status.${STEP}.peak_calling_B
 STEP=$((STEP+1))
-EFFECTIVE_DEPTH_B=`grep 'fragments after filtering in' $PEAKS_CALLING_DIR_B/*_peaks.xls | awk 'BEGIN{FS=" "; getline;m=$NF}{if (m>$NF) {m=$NF}} END{print m}'`
+EFFECTIVE_DEPTH_B=`grep "$TN after filtering in" $PEAKS_CALLING_DIR_B/*_peaks.xls | awk 'BEGIN{FS=" "; getline;m=$NF}{if (m>$NF) {m=$NF}} END{print m}'`
 
 #######################################
 # Call differentially expressed peaks #
@@ -222,15 +226,3 @@ echo2 "Aggregating signal on each genomic features"
 	`ls $BDGDIFF_DIR/*cond2.bed`  && \
 	touch .${JOBUID}.status.${STEP}.aggregate_beds
 STEP=$((STEP+1))
-
-
-
-
-
-
-
-
-
-
-
- 
