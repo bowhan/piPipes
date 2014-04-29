@@ -166,8 +166,8 @@ echo2 "Testing/Installing missing R packages"
 #################
 if [ "$DOWNLOAD_ONLY" == "1" ] ; then \
 	echo2 "Downloading iGenome in Download ONLY mode."
-	rm -rf $IGENOME_TAR_NAME; $wget "$LINK" || echo2 "Failed to download the genome file, please check the internet." "error"
-	[ "$GENOME" == "dm3" ] && [ ! -s chrU.fa ] && echo2 "Downloading chrU for dm3" && wget "ftp://hgdownload.cse.ucsc.edu/goldenPath/dm3/chromosomes/chrU.fa.gz"
+	rm -rf $IGENOME_TAR_NAME; wget "$LINK" || echo2 "Failed to download the genome file, please check the internet." "error"
+	[ "$GENOME" == "dm3" ] && [ ! -s chrU.fa ] && echo2 "Downloading chrU for dm3" && wget --continue "ftp://hgdownload.cse.ucsc.edu/goldenPath/dm3/chromosomes/chrU.fa.gz"
 	[ ! -s UCSC.RepeatMask.bed -a ! -s UCSC.RepeatMask.bed.gz ] && \
 		echo2 "Downloading repeatMasker files from UCSC." && \
 		mkdir -p rmsk && cd rmsk && \
@@ -185,7 +185,7 @@ fi
 echo2 "Downloading iGenome $GENOME"
 IGENOME_TAR_NAME=`basename $LINK`
 IGENOME_DIR_NAME=${IGENOME_TAR_NAME%_UCSC*} # this only works for UCSC version of the iGenome; if you modify the code to use other assembly, please change here as well
-[ ! -s $IGENOME_TAR_NAME ] && ( rm -rf $IGENOME_TAR_NAME && wget "$LINK" || echo2 "Failed to download the genome file, please check the internet." "error" )
+[ ! -s $IGENOME_TAR_NAME ] && ( rm -rf $IGENOME_TAR_NAME && wget --continue "$LINK" || echo2 "Failed to download the genome file, please check the internet." "error" )
 echo2 "Uncompressing genome $GENOME"
 [ ! -d $IGENOME_DIR_NAME -a -s $IGENOME_TAR_NAME ] && ( tar -zxvf $IGENOME_TAR_NAME || echo2 "Failed to unarchiving iGenome" "error" )
 
@@ -203,7 +203,7 @@ dm3)
 	echo2 "Applying patch to dm3: incorporating chrU and X-TAS"
 	TAS='X-TAS.fa'
 	[ ! -s $TAS ] && echo2 "Cannot file X-TAS.fa file, please reclone your git" "error"
-	[ ! -s chrU.fa -a ! -s chrU.fa.gz ] && ( wget "ftp://hgdownload.cse.ucsc.edu/goldenPath/dm3/chromosomes/chrU.fa.gz" || echo2 "Failed to download chrU for dm3." "error" )
+	[ ! -s chrU.fa -a ! -s chrU.fa.gz ] && ( wget --continue "ftp://hgdownload.cse.ucsc.edu/goldenPath/dm3/chromosomes/chrU.fa.gz" || echo2 "Failed to download chrU for dm3." "error" )
 	[ ! -s chrU.fa -a -s chrU.fa.gz ] && ( gunzip chrU.fa.gz || echo2 "Failed to uncompressing chrU.fa.gz. Please re-download it from ftp://hgdownload.cse.ucsc.edu/goldenPath/dm3/chromosomes/chrU.fa.gz" "error" )
 	[ ! -s ${GENOME}.fa ] && cat $IGENOME_DIR_NAME/UCSC/$GENOME/Sequence/WholeGenomeFasta/genome.fa chrU.fa $TAS > ${GENOME}.fa
 	[ ! -s ${GENOME}.fa.fai ] && samtools faidx ${GENOME}.fa

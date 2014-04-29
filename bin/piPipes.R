@@ -24,7 +24,7 @@ pkgTest <- function(x)
 	if (!require(x,character.only = TRUE))
 	{
 		install.packages(x,dep=TRUE, lib=paste(Sys.getenv ("PIPELINE_DIRECTORY"),"Rlib",sep="/"), repos='http://cran.us.r-project.org')
-		if(!require(x,character.only = TRUE)) stop("Package not found")
+		if(!require(x,character.only = TRUE)) stop ("Failed to install the package. Please check the internet access or update your R if it is too old.")
 	}
 }
 

@@ -31,4 +31,4 @@ pkgTest ("gdata")
 pkgTest ("RCircos")
 
 bioConductorTest ("cummeRbund")
-#bioConductorTest ("edgeR")
+#bioConductorTest ("edgeR") # currently not used
