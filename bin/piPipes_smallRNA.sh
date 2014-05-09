@@ -39,9 +39,8 @@ ${UNDERLINE}usage${RESET}:
 		-g dm3 \ 
 		-N uniqueXmiRNA [unique] \ 
 		-o output_directory [current working directory] \ 
-		-c cpu [8] \ 
-		-B 38 [21]
-	
+		-c cpu [8] 
+			
 OPTIONS:
 	-h      Show this message
 	-v      Print out the version
@@ -64,7 +63,7 @@ ${OPTIONAL}[ optional ]
 		 *You are able to run the same library multiple times with different normalization method. They will not collapse.
 	-c      Number of CPUs to use, default: 8
 	-o      Output directory, default: current directory $PWD
-	-B      How many rounds of batch algorithm to run for eXpress, default: 21
+	-B(deprecated)       How many rounds of batch algorithm to run for eXpress, default: 21
 
 EOF
 echo -e "${COLOR_END}"
@@ -476,19 +475,20 @@ bowtie \
 touch .${JOBUID}.status.${STEP}.direct_mapping_no_normalization
 STEP=$((STEP+1))
 
-[ ! -f .${JOBUID}.status.${STEP}.quantification_by_eXpress ] && \
-express \
-	-B $eXpressBATCH \
-	-m $(( (siRNA + piRNA_top)/2 )) \
-	-s $(( (piRNA_top - 18)/2 )) \
-	--output-align-prob \
-	-o $EXPRESS_DIR \
-	--no-update-check \
-	$COMMON_FOLDER/${GENOME}.gene+cluster+repBase.fa \
-	$EXPRESS_DIR/${PREFIX}.bowtie.gene+cluster+repBase.bam \
-	1>&2 2> $EXPRESS_DIR/${PREFIX}.eXpress.log && \
-touch .${JOBUID}.status.${STEP}.quantification_by_eXpress
-STEP=$((STEP+1))
+# deprecated
+# [ ! -f .${JOBUID}.status.${STEP}.quantification_by_eXpress ] && \
+# express \
+# 	-B $eXpressBATCH \
+# 	-m $(( (siRNA + piRNA_top)/2 )) \
+# 	-s $(( (piRNA_top - 18)/2 )) \
+# 	--output-align-prob \
+# 	-o $EXPRESS_DIR \
+# 	--no-update-check \
+# 	$COMMON_FOLDER/${GENOME}.gene+cluster+repBase.fa \
+# 	$EXPRESS_DIR/${PREFIX}.bowtie.gene+cluster+repBase.bam \
+# 	1>&2 2> $EXPRESS_DIR/${PREFIX}.eXpress.log && \
+# touch .${JOBUID}.status.${STEP}.quantification_by_eXpress
+# STEP=$((STEP+1))
 
 ################
 # Joining Pdfs #

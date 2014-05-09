@@ -208,8 +208,8 @@ echo2 "Drawing scatterplot for eXpress counting of mRNA, transposon and cluster"
 [ ! -f .${JOBUID}.status.${STEP}.draw_eXpress ] && \
 echo -e "target_id\teff_counts" > ${SAMPLE_A_NAME}.results.xprs && \
 echo -e "target_id\teff_counts" > ${SAMPLE_B_NAME}.results.xprs && \
-cat $SAMPLE_A_EXPRESS | cut -f2,8 | grep -v id | sort -k1,1 | bedtools groupby -i stdin -g 1 -c 2 -o mean >> ${SAMPLE_A_NAME}.results.xprs && \
-cat $SAMPLE_B_EXPRESS | cut -f2,8 | grep -v id | sort -k1,1 | bedtools groupby -i stdin -g 1 -c 2 -o mean >> ${SAMPLE_B_NAME}.results.xprs && \
+cat $SAMPLE_A_EXPRESS | cut -f2,8 | grep -v id | sort -k1,1 | bedtools_piPipes groupby -i stdin -g 1 -c 2 -o mean >> ${SAMPLE_A_NAME}.results.xprs && \
+cat $SAMPLE_B_EXPRESS | cut -f2,8 | grep -v id | sort -k1,1 | bedtools_piPipes groupby -i stdin -g 1 -c 2 -o mean >> ${SAMPLE_B_NAME}.results.xprs && \
 Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_scatter_plot_eXpress_counts.R \
 	${SAMPLE_A_NAME}.results.xprs \
 	${SAMPLE_B_NAME}.results.xprs \

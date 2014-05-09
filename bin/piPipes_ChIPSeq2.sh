@@ -52,7 +52,7 @@ ${REQUIRED}[ required ]
 		 Check "$PIPELINE_DIRECTORY/common/genome_supported.txt" for genome assemblies currently installed; 
 		 Use "install" to install new genome
 ${OPTIONAL}[ optional ]
-	-x      Length to extend up/downstream of each genomic features to draw the metagene plot
+	-x      Length (bp) to extend up/downstream of each genomic features to draw the metagene plot
 		 default: 1000
 	-c      Number of CPUs to use, default: 8
 	-o      Output directory, default: current directory $PWD

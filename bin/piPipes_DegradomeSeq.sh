@@ -120,6 +120,7 @@ BEDTOOLS_DIR=bedtools_count && mkdir -p $BEDTOOLS_DIR
 DIRECTMAPPING_DIR=gene_transposon_cluster_direct_mapping && mkdir -p $DIRECTMAPPING_DIR
 SUMMARY_DIR=summaries && mkdir -p $SUMMARY_DIR
 BW_OUTDIR=bigWig && mkdir -p $BW_OUTDIR
+INDEX_OUTDIR=bowtie_index && mkdir -p $INDEX_OUTDIR
 
 ########################
 # running binary check #
@@ -151,6 +152,7 @@ JOBUID=`echo ${INPUT_FASTQ} | md5sum | cut -d" " -f1`
 LEFT_FASTQ_NAME=`basename $LEFT_FASTQ`
 RIGHT_FASTQ_NAME=`basename $RIGHT_FASTQ`
 PREFIX=`echo -e "${LEFT_FASTQ_NAME}\n${RIGHT_FASTQ_NAME}" | sed -e 'N;s/^\(.*\).*\n\1.*$/\1/'` && export PREFIX=${PREFIX%.*}
+READLEN=`head -2 $LEFT_FASTQ | awk '{getline; print length($0)}'`
 [ -z "${PREFIX}" ] && export PREFIX=${LEFT_FASTQ_NAME%.f[aq]} # if $LEFT and $RIGHT does not have any PREFIX, use the name of $LEFT
 # table to store the basic statistics of the library (genomic mappability)
 TABLE=${PREFIX}.basic_stats
@@ -328,9 +330,9 @@ echo2 "Quantifying genomic features from genomic mapping using BEDTools"
 	touch .${JOBUID}.status.${STEP}.bedtools
 STEP=$((STEP+1))
 
-##################################################
-# direct mapping and quantification with eXpress #
-##################################################
+#################################################
+#direct mapping and quantification with eXpress #
+#################################################
 echo2 "Mapping to genes, transposon and piRNA cluster directly with Bowtie2"
 . $COMMON_FOLDER/genomic_features
 [ ! -f .${JOBUID}.status.${STEP}.direct_mapping ] && \
@@ -352,8 +354,6 @@ touch .${JOBUID}.status.${STEP}.direct_mapping
 [ ! -f .${JOBUID}.status.${STEP}.eXpress_quantification ] && \
 express \
 	-B 21 \
-	--output-align-prob \
-	--calc-covar \
 	-o $DIRECTMAPPING_DIR \
 	--no-update-check \
 	--library-size ${AllMapReads} \
@@ -363,16 +363,42 @@ express \
 touch .${JOBUID}.status.${STEP}.eXpress_quantification
 STEP=$((STEP+1))
 
+##########################################################
+# building bowtie index from left read for piRNA mapping #
+##########################################################
+[ ! -f .${JOBUID}.status.${STEP}.generate_bowtie_index ] && \
+	echo ">${PREFIX}" > $INDEX_OUTDIR/${PREFIX}.r1.unique.fa && \
+	samtools view -hb -f0x40 -F0x100 ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.bam | \
+	samtools bam2fq - | \
+	awk '{getline; if (!printed[$0]) { print $0; printed[$0]=1;} getline; getline }' >> $INDEX_OUTDIR/${PREFIX}.r1.unique.fa && \
+	bowtie-build $INDEX_OUTDIR/${PREFIX}.r1.unique.fa $INDEX_OUTDIR/${PREFIX} 1>&2 && \
+	touch .${JOBUID}.status.${STEP}.generate_bowtie_index
+STEP=$((STEP+1))
+
+if [ -n $SRA_UNIQ_BED2 ]; then 
+	[ ! -f .${JOBUID}.status.${STEP}.map_smRNA_to_deg_index ] && \
+		awk '{if (!printed[$7]) {print ">"$7"_"$4"\n"$7; printed[$7]=1}}' $SRA_UNIQ_BED2 | \
+		bowtie -f -a --best --strata -v 0 -p $CPU -S $INDEX_OUTDIR/${PREFIX} - 2> $INDEX_OUTDIR/`basename $SRA_UNIQ_BED2`.map_to.${PREFIX}.log | \
+		samtools view -bS - | \
+		bedtools_piPipes bamtobed -i > \
+			$INDEX_OUTDIR/`basename $SRA_UNIQ_BED2`.map_to.${PREFIX}.bed1 && \
+		awk 'BEGIN{FS=OFS="\t"}{if (ARGIND==1) ++ct[$4]; else {split ($4,ar,"_");  print $1,$2,$3,ar[2],ct[$4],$6,ar[1]}}' \
+			$INDEX_OUTDIR/`basename $SRA_UNIQ_BED2`.map_to.${PREFIX}.bed1 $INDEX_OUTDIR/`basename $SRA_UNIQ_BED2`.map_to.${PREFIX}.bed1 > \
+			$INDEX_OUTDIR/`basename $SRA_UNIQ_BED2`.map_to.${PREFIX}.bed2 && \
+		rm -rf $INDEX_OUTDIR/`basename $SRA_UNIQ_BED2`.map_to.${PREFIX}.bed1 && \
+		awk -v read_len=$READLEN '{if ($6=="+") {ct[$2%read_len]+=1.0/$5}}   END{for (a=0;a<=(read_len-1);++a){printf "%d\t%.2f\n",a,ct[a]}}' \
+			$INDEX_OUTDIR/`basename $SRA_UNIQ_BED2`.map_to.${PREFIX}.bed2 > \
+			$INDEX_OUTDIR/`basename $SRA_UNIQ_BED2`.map_to.${PREFIX}.species.5end && \
+		awk -v read_len=$READLEN '{if ($6=="+") {ct[$2%read_len]+=1.0*$4/$5}}END{for (a=0;a<=(read_len-1);++a){printf "%d\t%.2f\n",a,ct[a]}}' \
+			$INDEX_OUTDIR/`basename $SRA_UNIQ_BED2`.map_to.${PREFIX}.bed2 > \
+			$INDEX_OUTDIR/`basename $SRA_UNIQ_BED2`.map_to.${PREFIX}.reads.5end && \
+		touch .${JOBUID}.status.${STEP}.map_smRNA_to_deg_index
+	STEP=$((STEP+1))
+fi
+
 #############
 # finishing #
 #############
 echo2 "Finished running ${PACKAGE_NAME} Degradome pipeline version $DEG_VERSION"
 echo2 "---------------------------------------------------------------------------------"
 touch .${GENOME}.DEG_VERSION.${DEG_VERSION}
-
-
-
-
-
-
-

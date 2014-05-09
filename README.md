@@ -133,7 +133,7 @@ annotated  transposons, piRNA clusters with bowtie and uses bedtools to assign
 them to different annotations. For each feature, length distribution, nucleotide percentage, 
 ping-pong score, et al.,  are calculated and graphed. Some microRNA analysis is also included. 
 In the dual sample mode, pair-wise comparison of miRNA and piRNAs will be done. We invented this balloon-plot to efficiently compare the heterogeneity of miRNA between two samples. piRNA for different transposon family is also compared. 
-For small RNA tailing analysis, please use [Tailor](http://jhhung.github.io/Tailor/) and its associated pipeline. It is current not included in **piPipes**.			
+For small RNA tailing analysis, please use [Tailor](http://jhhung.github.io/Tailor/) and its associated pipeline. It is currently not included in **piPipes**.			
 
 A more detailed explanation can be found [here](https://github.com/bowhan/piPipes/wiki/smallRNA).
 

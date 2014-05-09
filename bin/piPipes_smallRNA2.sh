@@ -179,8 +179,6 @@ sirna)
 	;;
 	*)
 		echo2 "The annotation for siRNA in ${GENOME} is poor. Please choose a different normalization method. \nIf unox library, choose \"miRNA\". If ox, choose \"uniquexmirna\"" "error"
-		# SAMPLE_A_NORMFACTOR=`grep -P "refSeq_GENE" $SAMPLE_A_DIR/summaries/*siRNA.sum | awk '{a+=$9}END{print 1000000/# a}'`
-		# SAMPLE_B_NORMFACTOR=`grep -P "refSeq_GENE" $SAMPLE_B_DIR/summaries/*siRNA.sum | awk '{a+=$9}END{print 1000000/a}'`	
 	;;
 	esac
 	
@@ -259,15 +257,16 @@ STEP=$((STEP+1))
 ############################################
 # count transposon & piRNA cluster & genes #
 ############################################
-echo2 "Drawing scatterplot for eXpress counting of mRNA, transposon and cluster"
-[ ! -f .${JOBUID}.status.${STEP}.draw_eXpress.normalized_by_$NORMMETHOD ] && \
-awk -v depth=$SAMPLE_A_NORMFACTOR 'BEGIN{FS=OFS="\t"; getline; print }{$8*=depth; print }' $SAMPLE_A_DIR/eXpress_quantification_no_normalization/results.xprs > $SAMPLE_A_DIR/eXpress_quantification_no_normalization/results.xprs.normalized_by_${NORMMETHOD} && \
-awk -v depth=$SAMPLE_B_NORMFACTOR 'BEGIN{FS=OFS="\t"; getline; print }{$8*=depth; print }' $SAMPLE_B_DIR/eXpress_quantification_no_normalization/results.xprs > $SAMPLE_B_DIR/eXpress_quantification_no_normalization/results.xprs.normalized_by_${NORMMETHOD} && \
-Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_scatter_plot_eXpress_counts.R \
-	$SAMPLE_A_DIR/eXpress_quantification_no_normalization/results.xprs.normalized_by_${NORMMETHOD} \
-	$SAMPLE_B_DIR/eXpress_quantification_no_normalization/results.xprs.normalized_by_${NORMMETHOD} \
-	$SAMPLE_A_NAME \
-	$SAMPLE_B_NAME \
-	$PDF_DIR/${SAMPLE_A_NAME}_vs_${SAMPLE_B_NAME}.gene_transposon_cluster.normalized_by_${NORMMETHOD}.abundance && \
-	touch .${JOBUID}.status.${STEP}.draw_eXpress.normalized_by_$NORMMETHOD
-STEP=$((STEP+1))
+# deprecated
+# echo2 "Drawing scatterplot for eXpress counting of mRNA, transposon and cluster"
+# [ ! -f .${JOBUID}.status.${STEP}.draw_eXpress.normalized_by_$NORMMETHOD ] && \
+# awk -v depth=$SAMPLE_A_NORMFACTOR 'BEGIN{FS=OFS="\t"; getline; print }{$8*=depth; print }' $SAMPLE_A_DIR/eXpress_quantification_no_normalization/results.xprs > $SAMPLE_A_DIR/eXpress_quantification_no_normalization/results.xprs.normalized_by_${NORMMETHOD} && \
+# awk -v depth=$SAMPLE_B_NORMFACTOR 'BEGIN{FS=OFS="\t"; getline; print }{$8*=depth; print }' $SAMPLE_B_DIR/eXpress_quantification_no_normalization/results.xprs > $SAMPLE_B_DIR/eXpress_quantification_no_normalization/results.xprs.normalized_by_${NORMMETHOD} && \
+# Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_scatter_plot_eXpress_counts.R \
+# 	$SAMPLE_A_DIR/eXpress_quantification_no_normalization/results.xprs.normalized_by_${NORMMETHOD} \
+# 	$SAMPLE_B_DIR/eXpress_quantification_no_normalization/results.xprs.normalized_by_${NORMMETHOD} \
+# 	$SAMPLE_A_NAME \
+# 	$SAMPLE_B_NAME \
+# 	$PDF_DIR/${SAMPLE_A_NAME}_vs_${SAMPLE_B_NAME}.gene_transposon_cluster.normalized_by_${NORMMETHOD}.abundance && \
+# 	touch .${JOBUID}.status.${STEP}.draw_eXpress.normalized_by_$NORMMETHOD
+# STEP=$((STEP+1))
