@@ -119,6 +119,13 @@ case `sort -u .RNASEQ_VERSION | wc -l` in
 	*) echo2 "Not all the directories were ran under the same version or condition of the single sample pipeline" "error";;
 esac
 
+########################
+# running binary check #
+########################
+checkBin "gs"
+checkBin "Rscript"
+checkBin "cuffdiff"
+
 #################################
 # creating output files/folders #
 #################################

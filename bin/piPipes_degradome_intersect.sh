@@ -26,6 +26,8 @@ export ext_len=30 # extend 30nt up/downstream
 
 # intersect with the bed without strand information
 bedtools_piPipes intersect -split -wo -f 0.5 -a $bed -b $feature_bed > ${bed}.intersect_with_${feature_name} && \
+bedtools_piPipes intersect -split -wo -f 0.5 -a ${bed}.intersect_with_${feature_name} -b $feature_bed -s > ${bed}.intersect_with_${feature_name}.S && \
+bedtools_piPipes intersect -split -wo -f 0.5 -a ${bed}.intersect_with_${feature_name} -b $feature_bed -S > ${bed}.intersect_with_${feature_name}.AS && \
 awk -v lib_uniq_reads=$unique_reads \
 	-v lib_all_reads=$all_reads \
 	-v lib_unique_species=$unique_species \
@@ -74,7 +76,9 @@ awk -v lib_uniq_reads=$unique_reads \
 		(sense_uniq_species+antisense_uniq_species)!=0? (sense_uniq_species/(sense_uniq_species+antisense_uniq_species)):0;\
 }' ${bed}.intersect_with_${feature_name} > ${total_lib_stats_file}.${feature_name}
 
-awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$9])) {printed[$9]=1; if ($2>=ext_len) { for (i=1;i<=1;++i) { if ($6=="+") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}' ${bed}.intersect_with_${feature_name} | bedtools_piPipes getfasta -fi $GENOME_FA -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${bed}.intersect_with_${feature_name}.species.5end_60.percentage
+awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$9])) {printed[$9]=1; if ($2>=ext_len) { for (i=1;i<=1;++i) { if ($6=="+") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}' ${bed}.intersect_with_${feature_name}    | bedtools_piPipes getfasta -fi $GENOME_FA -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${bed}.intersect_with_${feature_name}.species.5end_60.percentage
+awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$9])) {printed[$9]=1; if ($2>=ext_len) { for (i=1;i<=1;++i) { if ($6=="+") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}' ${bed}.intersect_with_${feature_name}.S  | bedtools_piPipes getfasta -fi $GENOME_FA -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${bed}.intersect_with_${feature_name}.species.5end_60.percentage.S
+awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$9])) {printed[$9]=1; if ($2>=ext_len) { for (i=1;i<=1;++i) { if ($6=="+") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}' ${bed}.intersect_with_${feature_name}.AS | bedtools_piPipes getfasta -fi $GENOME_FA -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${bed}.intersect_with_${feature_name}.species.5end_60.percentage.AS
 
 # if small RNA 
 if [ ! -z "$5" ] ; then 
@@ -87,13 +91,13 @@ if [ ! -z "$5" ] ; then
 		${bed}.intersect_with_${feature_name}.species.5end_60.percentage \
 		${bed}.intersect_with_${feature_name}.pp.`basename $5` \
 		1>&2 && \
-	rm -rf ${5}.intersect_with_${feature_name} ${bed}.intersect_with_${feature_name}
+	rm -rf ${5}.intersect_with_${feature_name} ${bed}.intersect_with_${feature_name} ${bed}.intersect_with_${feature_name}.S ${bed}.intersect_with_${feature_name}.AS
 else
 	Rscript $PIPELINE_DIRECTORY/bin/piPipes_draw_degradome_features.R \
 		${bed}.intersect_with_${feature_name} \
 		${ext_len} \
 		${bed}.intersect_with_${feature_name}.species.5end_60.percentage \
 		1>&2 && \
-	rm -rf ${bed}.intersect_with_${feature_name}
+	rm -rf ${bed}.intersect_with_${feature_name} ${bed}.intersect_with_${feature_name}.S ${bed}.intersect_with_${feature_name}.AS
 fi
 

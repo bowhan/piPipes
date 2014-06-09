@@ -106,15 +106,24 @@ touch .writting_permission && rm -rf .writting_permission || (echo2 "Cannot writ
 #################
 SAMPLE_A_VERSION=`ls -a $SAMPLE_A_DIR | grep CHIPSEQ_VERSION`
 SAMPLE_B_VERSION=`ls -a $SAMPLE_B_DIR | grep CHIPSEQ_VERSION`
+[ -z $SAMPLE_A_VERSION ] && echo2 "Please make sure the pipeline finishes for $SAMPLE_A_DIR" "error"
+[ -z $SAMPLE_B_VERSION ] && echo2 "Please make sure the pipeline finishes for $SAMPLE_B_DIR" "error"
 [ "$SAMPLE_A_VERSION" != "$SAMPLE_B_VERSION" ] && echo2 "It appears that the two runs were not done by the same assemly or same version." "error"
 BROAD_A=`cat $SAMPLE_A_DIR/.MACS2_BROAD_OPT`
-BROAD_B=`cat $SAMPLE_B_DIR/.MACS2_BROAD_OPT` 
+BROAD_B=`cat $SAMPLE_B_DIR/.MACS2_BROAD_OPT`
 [ "$BROAD_A" != "$BROAD_B" ] && echo2 "The two run were not done by the same -b option" "error"
 SE_OR_PE_A=`cat $SAMPLE_A_DIR/.SE_OR_PE`
 SE_OR_PE_B=`cat $SAMPLE_B_DIR/.SE_OR_PE`
 [ "$SE_OR_PE_A" != "$SE_OR_PE_B" ] && echo2 "The two run were not done by the type of SE/PE" "error"
 if [[ "${SE_OR_PE_A}" == "SE" ]]; then MACS2_f="BAM"; TN="tags"; else MACS2_f="BAMPE"; TN="fragments"; fi
 
+########################
+# running binary check #
+########################
+checkBin "gs"
+checkBin "Rscript"
+checkBin "macs2"
+	
 #################################
 # creating output files/folders #
 #################################
@@ -123,7 +132,7 @@ export PDF_DIR=$OUTDIR/pdfs && mkdir -p $PDF_DIR
 PEAKS_CALLING_DIR_A=macs2_peaks_calling_no_normalization_${SAMPLE_A_NAME} && mkdir -p $PEAKS_CALLING_DIR_A
 PEAKS_CALLING_DIR_B=macs2_peaks_calling_no_normalization_${SAMPLE_B_NAME} && mkdir -p $PEAKS_CALLING_DIR_B
 BDGDIFF_DIR=differential_peaks_calling && mkdir -p $BDGDIFF_DIR
-BW_OUTDIR=bigWig && mkdir -p $BW_OUTDIR
+# BW_OUTDIR=bigWig && mkdir -p $BW_OUTDIR
 AGG_DIR=aggregate_output && mkdir -p $AGG_DIR
 
 #############
