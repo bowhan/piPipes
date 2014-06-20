@@ -420,7 +420,13 @@ STEP=$((STEP+1))
 echo2 "Making bigWig files for genome browser"
 [ ! -f .${JOBUID}.status.${STEP}.make_bigWig_normalized_by_$NORMMETHOD ] && \
 	bash $DEBUG piPipes_smallRNA_bed2_to_bw.sh \
-		${GENOME_UNIQUEMAP_HAIRPIN_BED2} \
+		${GENOME_ALLMAP_BED2} \
+		${CHROM} \
+		${NormScale} \
+		$CPU \
+		$BW_OUTDIR && \
+	bash $DEBUG piPipes_smallRNA_bed2_to_bw.sh \
+		${GENOME_ALLMAP_BED2%bed2}piRNA.bed2 \
 		${CHROM} \
 		${NormScale} \
 		$CPU \

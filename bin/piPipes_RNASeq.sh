@@ -361,16 +361,16 @@ bowtie2 -x gene+cluster+repBase \
 	2> ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.log | \
 samtools view -bSq 10 - > ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.bam && \
 samtools sort -o -@ $CPU ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.bam ${DIRECTMAPPING_DIR}/foo | \
-bedtools bamtobed -i - | \
+bedtools_piPipes bamtobed -i - | \
 awk -v etr=$END_TO_REVERSE_STRAND 'BEGIN{FS=OFS="\t"}{l=split($4,arr,""); if (arr[l]==etr) $6=($6=="+"?"-":"+"); print $0}' > ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.bed && \
 touch .${JOBUID}.status.${STEP}.direct_mapping
 
 echo2 "Making summary graph"
 [ ! -f .${JOBUID}.status.${STEP}.make_direct_mapping_sum ] && \
 grep -v 'NM_' $TRANSCRIPTOME_SIZES | grep -v 'NR_' > ${DIRECTMAPPING_DIR}/transposon.sizes && \
-bedtools genomecov -i ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.bed -g $TRANSCRIPTOME_SIZES -strand + -bg \
+bedtools_piPipes genomecov -i ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.bed -g $TRANSCRIPTOME_SIZES -strand + -bg \
 	> ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.plus.bedGraph && \
-bedtools genomecov -i ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.bed -g $TRANSCRIPTOME_SIZES -strand - -bg \
+bedtools_piPipes genomecov -i ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.bed -g $TRANSCRIPTOME_SIZES -strand - -bg \
 	| awk 'BEGIN{FS=OFS="\t"}{$4=-$4;print $0}' \
 	> ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.minus.bedGraph && \
 bedGraphToBigWig ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.plus.bedGraph  $TRANSCRIPTOME_SIZES ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.plus.bigWig && \

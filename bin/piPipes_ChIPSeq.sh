@@ -169,14 +169,14 @@ checkBin "macs2"
 # Variables #
 #############
 STEP=1
-JOBUID=`echo ${LEFT_IP_FASTQ} | md5sum | cut -d" " -f1`
-
 if [[ -n $SE_MODE ]]; then 
+	JOBUID=`echo $IP_FASTQ | md5sum | cut -d" " -f1`
 	IP_FASTQ_NAME=`basename $IP_FASTQ`
 	INPUT_FASTQ_NAME=`basename $INPUT_FASTQ`
 	PREFIX=`echo -e "${IP_FASTQ_NAME}\n${INPUT_FASTQ_NAME}" | sed -e 'N;s/^\(.*\).*\n\1.*$/\1/'` && export PREFIX=${PREFIX%.*}
 	[ -z "${PREFIX}" ] && export PREFIX=${IP_FASTQ_NAME%.f[aq]}
 else
+	JOBUID=`echo ${LEFT_IP_FASTQ} | md5sum | cut -d" " -f1`
 	LEFT_IP_FASTQ_NAME=`basename $LEFT_IP_FASTQ`
 	RIGHT_IP_FASTQ_NAME=`basename $RIGHT_IP_FASTQ`
 	PREFIX=`echo -e "${LEFT_IP_FASTQ_NAME}\n${RIGHT_IP_FASTQ_NAME}" | sed -e 'N;s/^\(.*\).*\n\1.*$/\1/'` && export PREFIX=${PREFIX%.*}
