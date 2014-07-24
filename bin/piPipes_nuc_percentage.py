@@ -18,8 +18,8 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 import sys
-from collections import defaultdict, Counter
-ct = defaultdict ( lambda: Counter () )
+from collections import defaultdict #, Counter # Counter is not available in python until 2.7
+ct = defaultdict ( lambda: defaultdict (int) )
 ext = int (sys.argv[1]) * 2 + 1
 for line in sys.stdin:
         seq = str (line.split()[1])

@@ -40,10 +40,10 @@ Thank you for using it.
 			-L left.INPUT.fq \ 
 			-R right.INPUT.fq \ 
 			-g mm9 \ 
-			-m 20 [10] \ 
 			-c cpu[8] \ 
 			-o output_dir[cwd] \ 
-			-x 500 [1000]
+			-x 500 [1000] \ 
+			-M /path/to/user/defined/region.bed1,/path/to/user/defined/region2.bed,/path/to/user/defined/region3.bed...
 			
 ==================< single-end >==================
 	${UNDERLINE}usage${RESET}:
@@ -51,10 +51,10 @@ Thank you for using it.
 			-i IP.fq \ 
 			-I INPUT.fq \ 
 			-g mm9 \ 
-			-m 20 [10] \ 
 			-c cpu[8] \ 
 			-o output_dir[cwd] \ 
-			-x 500 [1000]
+			-x 500 [1000] \ 
+			-M /path/to/user/defined/region.bed1,/path/to/user/defined/region2.bed,/path/to/user/defined/region3.bed...
 
 OPTIONS:
 	-h      Show this message
@@ -71,7 +71,7 @@ ${REQUIRED}[ required ]
 
 	-g      Genome assembly name, like mm9 or dm3. required 
 		 Check $PIPELINE_DIRECTORY/common/genome_supported.txt for genome assemblies currently installed; 
-		 Use "$install" to install new genome
+		 Use "piPipes install" to install new genome
 ${OPTIONAL}[ optional ] 
 	-B      Use "Broader" peak calling algorithm in MACS2; should be used for library like H3K9me3. default: off
 	-Q      MAPQ value used as threshold to filter alignments from Bowtie2 SAM/BAM output. The higher the MAPQ, the more unique the alignment. default: 1
@@ -79,8 +79,8 @@ ${OPTIONAL}[ optional ]
 		 If all the alignments are equally good, Bowtie2 chooses one randomly (see Bowtie2 manual for more details). 
 		 Including multiple mappers ensures repetitive regions are not depleted. Keeping only one alignment avoids false positive signal on repetitive regions. 
 		*If you would like to only consider unique mapper, set this option to more than 1, like 10. This usually removes multiple mappers which have equal good alignments.
-
 	-x      Length to extend up/downstream of each genomic features to draw the metagene plot. default: 1000
+	-M      Path to BED files for meta-plot analysis on user-defined regions. One plot for each BED file and different BED files should be delimited by comma.
 	-o      Output directory, default: current directory: $PWD
 	-c      Number of CPUs to use, default: 8 
 EOF
@@ -90,7 +90,7 @@ echo -e "${COLOR_END}"
 #############################
 # ARGS reading and checking #
 #############################
-while getopts "hl:r:L:R:c:o:g:Bvx:Q:i:I:" OPTION; do
+while getopts "hl:r:L:R:c:o:g:Bvx:Q:i:I:M:" OPTION; do
 	case $OPTION in
 		h)	usage && exit 0 ;;
 		v)	echo2 "CHIPSEQ_VERSION: v$CHIPSEQ_VERSION" && exit 0 ;;
@@ -101,6 +101,7 @@ while getopts "hl:r:L:R:c:o:g:Bvx:Q:i:I:" OPTION; do
 		i)	IP_FASTQ=`readlink -f $OPTARG`; SE_MODE=1 ;;
 		I)	INPUT_FASTQ=`readlink -f $OPTARG`; SE_MODE=1 ;;
 		o)	OUTDIR=`readlink -f $OPTARG` ;;
+		M)	export USER_DEFINED_BED_FILES=$OPTARG ;;
 		c)	export CPU=$OPTARG ;;
 		g)	export GENOME=`echo ${OPTARG} | tr '[A-Z]' '[a-z]'` ;;
 		B)	export MACS2_BROAD_OPT="--broad" ;;
@@ -118,14 +119,21 @@ if [[ -n $PE_MODE ]]; then
 	[[ -z $RIGHT_IP_FASTQ ]] && usage && echo2 "Missing option -r for IP fastq of right file, or file does not exist " "error" 
 	[[ -z $LEFT_INPUT_FASTQ ]] && usage && echo2 "Missing option -L for INPUT fastq of left file, or file does not exist " "error" 
 	[[ -z $RIGHT_INPUT_FASTQ ]] && usage && echo2 "Missing option -R for INPUT fastq of right file, or file does not exist " "error" 
+	[[ ! -f $LEFT_IP_FASTQ ]] && usage && echo2 "Missing option -l for IP fastq of left file, or file does not exist " "error" 
+	[[ ! -f $RIGHT_IP_FASTQ ]] && usage && echo2 "Missing option -r for IP fastq of right file, or file does not exist " "error" 
+	[[ ! -f $LEFT_INPUT_FASTQ ]] && usage && echo2 "Missing option -L for INPUT fastq of left file, or file does not exist " "error" 
+	[[ ! -f $RIGHT_INPUT_FASTQ ]] && usage && echo2 "Missing option -R for INPUT fastq of right file, or file does not exist " "error" 
 fi
 
 if [[ -n $SE_MODE ]]; then
 	[[ -z $IP_FASTQ ]] && usage && echo2 "Missing option -i for IP fastq, or file does not exist " "error" 
 	[[ -z $INPUT_FASTQ ]] && usage && echo2 "Missing option -I for IP fastq, or file does not exist " "error" 
+	[[ ! -f $IP_FASTQ ]] && usage && echo2 "Missing option -i for IP fastq, or file does not exist " "error" 
+	[[ ! -f $INPUT_FASTQ ]] && usage && echo2 "Missing option -I for IP fastq, or file does not exist " "error" 
 fi
 
-[[ -z $GENOME ]]  && usage && echo2 "Missing option -g for specifying which genome assembly to use" "error" 
+[[ -z $GENOME ]] && usage && echo2 "Missing option -g for specifying which genome assembly to use" "error" 
+[ "$OUTDIR" != `readlink -f $PWD` ] && (mkdir -p "${OUTDIR}" || echo2 "Cannot create directory ${OUTDIR}" "warning")
 
 # check whether the this genome is supported or not
 check_genome $GENOME
@@ -133,7 +141,6 @@ check_genome $GENOME
 [ ! -z $MINIMAL_MAPQ ] || MINIMAL_MAPQ=1; export MINIMAL_MAPQ
 [ ! -z "${EXT_LEN##*[!0-9]*}" ] || EXT_LEN=1000; export EXT_LEN
 [ ! -z $OUTDIR ] || OUTDIR=$PWD # if -o is not specified, use current directory
-[ "$OUTDIR" != `readlink -f $PWD` ] && (mkdir -p "${OUTDIR}" || echo2 "Cannot create directory ${OUTDIR}" "warning")
 cd ${OUTDIR} || (echo2 "Cannot access directory ${OUTDIR}... Exiting..." "error")
 touch .writting_permission && rm -rf .writting_permission || (echo2 "Cannot write in directory ${OUTDIR}... Exiting..." "error")
 

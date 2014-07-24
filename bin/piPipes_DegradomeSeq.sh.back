@@ -418,9 +418,9 @@ echo2 "Quantifying genomic features from genomic mapping using HTSeq-count"
 if [[ -n $PE_MODE ]]; then
 	[ ! -f .${JOBUID}.status.${STEP}.htseq_count ] && \
 		. $COMMON_FOLDER/genomic_features && \
-		[ ! -z $HTSEQ_TARGETS_SHORT ] && \
+		[ ! -z $HTSEQ_TARGETS ] && \
 		para_file=$HTSEQ_DIR/${RANDOM}${RANDOM}.para && \
-		for t in "${HTSEQ_TARGETS_SHORT[@]}"; do \
+		for t in "${HTSEQ_TARGETS[@]}"; do \
 			echo "htseq-count -m intersection-strict -s $SENSE_HTSEQ_OPT -t exon -i transcript_id -q ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.Aligned.out.sam ${!t} | awk 'BEGIN{FS=OFS=\"\t\"}{n=split (\$1,a,\".\"); ct[a[1]]+=\$2; }END{for (x in ct) {print x, ct[x]}}' | sort -k1,1 > ${HTSEQ_DIR}/${PREFIX}.x_rRNA.${GENOME}.${t}.htseqcount.strict.S.out" >> $para_file
 			echo "htseq-count -m intersection-strict -s $ANTISENSE_HTSEQ_OPT -t exon -i transcript_id -q ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.Aligned.out.sam ${!t} | awk 'BEGIN{FS=OFS=\"\t\"}{n=split (\$1,a,\".\"); ct[a[1]]+=\$2; }END{for (x in ct) {print x, ct[x]}}' | sort -k1,1 > ${HTSEQ_DIR}/${PREFIX}.x_rRNA.${GENOME}.${t}.htseqcount.strict.AS.out" >> $para_file
 			echo "htseq-count -m union -s $SENSE_HTSEQ_OPT -t exon -i transcript_id -q ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.Aligned.out.sam ${!t} | awk 'BEGIN{FS=OFS=\"\t\"}{n=split (\$1,a,\".\"); ct[a[1]]+=\$2; }END{for (x in ct) {print x, ct[x]}}' | sort -k1,1 > ${HTSEQ_DIR}/${PREFIX}.x_rRNA.${GENOME}.${t}.htseqcount.union.S.out" >> $para_file
@@ -521,7 +521,6 @@ fi
 ##########################################################
 # building bowtie index from left read for piRNA mapping #
 ##########################################################
-echo2 "Generating bowtie index for the 5' end of degradome reads"
 if [[ -n $PE_MODE ]]; then
 	[ ! -f .${JOBUID}.status.${STEP}.generate_bowtie_index ] && \
 		echo ">${PREFIX}" > $INDEX_OUTDIR/${PREFIX}.r1.unique.fa && \
@@ -542,40 +541,31 @@ else
 	STEP=$((STEP+1))
 fi
 
-echo2 "Exacting sequence from the 5' and 3' of degradome reads and generate bowtie index"
-. $COMMON_FOLDER/genomic_features
 if [[ -n $PE_MODE ]]; then
 	[ ! -f .${JOBUID}.status.${STEP}.generate_cleavage_strand_bowtie_index ] && \
-		for t in ${TARGETS_SHORT[@]}; do \
-			echo ">${PREFIX}.${t}.ext$RC_EXT.RC" > $INDEX_OUTDIR/${PREFIX}.${t}.r1.RC.ext${RC_EXT}.unique.fa && \
-			bedtools_piPipes intersect -wa -u -a ${BEDTOOLS_DIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.f0x40.noS.all.x_rpmk_MASK.bed12 -b ${!t} | \
-			awk 'BEGIN{OFS="\t"}{if ($6=="-"){$2=$3-1;} else {$3=$2+1;} print $0}' | \
-			bedtools_piPipes slop -b $RC_EXT -i stdin -g $CHROM | \
-			awk -v total_len=$((2*RC_EXT+1)) 'BEGIN{OFS="\t"}{ if ($3-$2==total_len) { $6=($6=="+"?"-":"+"); print $0} }' | \
-			bedtools_piPipes getfasta -fi $GENOME_FA -bed stdin -tab -s -fo /dev/stdout | cut -f2 | sort -u --temporary-directory=$INDEX_OUTDIR --parallel=$CPU >> $INDEX_OUTDIR/${PREFIX}.${t}.r1.RC.ext${RC_EXT}.unique.fa && \
-			bowtie2-build $INDEX_OUTDIR/${PREFIX}.${t}.r1.RC.ext${RC_EXT}.unique.fa $INDEX_OUTDIR/${PREFIX}.${t}.r1.RC.ext${RC_EXT}.unique 
-		done && \
-	touch .${JOBUID}.status.${STEP}.generate_cleavage_strand_bowtie_index
-	
+		echo ">${PREFIX}.ext$RC_EXT.RC" > $INDEX_OUTDIR/${PREFIX}.r1.RC.ext${RC_EXT}.unique.fa && \
+		awk 'BEGIN{OFS="\t"}{if ($6=="-"){$2=$3-1;} else {$3=$2+1;} print $0}' $BEDTOOLS_DIR/${PREFIX}.x_rRNA.${GENOME}.sorted.f0x40.noS.all.x_rpmk_MASK.bed12 | \
+		bedtools slop -b $RC_EXT -i stdin -g $CHROM | \
+		awk -v total_len=$((2*RC_EXT+1)) 'BEGIN{OFS="\t"}{ if ($3-$2==total_len) { $6=($6=="+"?"-":"+"); print $0} }' | \
+		bedtools getfasta -fi $GENOME_FA -bed stdin -tab -s -fo /dev/stdout | cut -f2 | sort -u --temporary-directory=$INDEX_OUTDIR --parallel=$CPU >> $INDEX_OUTDIR/${PREFIX}.r1.RC.ext${RC_EXT}.unique.fa && \
+		bowtie2-build $INDEX_OUTDIR/${PREFIX}.r1.RC.ext${RC_EXT}.unique.fa $INDEX_OUTDIR/${PREFIX}.r1.RC.ext${RC_EXT}.unique && \
+		touch .${JOBUID}.status.${STEP}.generate_cleavage_strand_bowtie_index
+	STEP=$((STEP+1))
 else
 	[ ! -f .${JOBUID}.status.${STEP}.generate_cleavage_strand_bowtie_index ] && \
-		for t in ${TARGETS_SHORT[@]}; do \
-			echo ">${PREFIX}.${t}.ext$RC_EXT.RC" > $INDEX_OUTDIR/${PREFIX}.${t}.RC.ext${RC_EXT}.unique.fa && \
-			bedtools_piPipes intersect -wa -u -a ${BEDTOOLS_DIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.noS.all.bed12 -b ${!t} | \
-			awk 'BEGIN{OFS="\t"}{if ($6=="-"){$2=$3-1;} else {$3=$2+1;} print $0}' | \
-			bedtools_piPipes slop -b $RC_EXT -i stdin -g $CHROM | \
-			awk -v total_len=$((2*RC_EXT+1)) 'BEGIN{OFS="\t"}{ if ($3-$2==total_len) { $6=($6=="+"?"-":"+"); print $0} }' | \
-			bedtools_piPipes getfasta -fi $GENOME_FA -bed stdin -tab -s -fo /dev/stdout | cut -f2 | sort -u --temporary-directory=$INDEX_OUTDIR --parallel=$CPU >> $INDEX_OUTDIR/${PREFIX}.${t}.r1.RC.ext${RC_EXT}.unique.fa && \
-			bowtie2-build $INDEX_OUTDIR/${PREFIX}.${t}.r1.RC.ext${RC_EXT}.unique.fa $INDEX_OUTDIR/${PREFIX}.${t}.r1.RC.ext${RC_EXT}.unique
-		done && \
-	touch .${JOBUID}.status.${STEP}.generate_cleavage_strand_bowtie_index
+		echo ">${PREFIX}.ext$RC_EXT.RC" > $INDEX_OUTDIR/${PREFIX}.RC.ext${RC_EXT}.unique.fa && \
+		awk 'BEGIN{OFS="\t"}{if ($6=="-"){$2=$3-1;} else {$3=$2+1;} print $0}' ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.noS.all.bed12 | \
+		bedtools slop -b $RC_EXT -i stdin -g $CHROM | \
+		awk -v total_len=$((2*RC_EXT+1)) 'BEGIN{OFS="\t"}{ if ($3-$2==total_len) { $6=($6=="+"?"-":"+"); print $0} }' | \
+		bedtools getfasta -fi $GENOME_FA -bed stdin -tab -s -fo /dev/stdout | cut -f2 | sort -u --temporary-directory=$INDEX_OUTDIR --parallel=$CPU >> $INDEX_OUTDIR/${PREFIX}.RC.ext${RC_EXT}.unique.fa && \
+		bowtie2-build $INDEX_OUTDIR/${PREFIX}.RC.ext${RC_EXT}.unique.fa $INDEX_OUTDIR/${PREFIX}.RC.ext${RC_EXT}.unique && \
+		touch .${JOBUID}.status.${STEP}.generate_cleavage_strand_bowtie_index
+	STEP=$((STEP+1))
 fi
-STEP=$((STEP+1))
 
 if [ -n $SRA_ALL_BED2 ]; then 
 	if [[ -n $PE_MODE ]]; then
 		SMRNA_ID=`echo $SRA_ALL_BED2 | md5sum | cut -d" " -f1`
-		echo2 "Map corresponding small RNA to the degradome index"
 		[ ! -f .${JOBUID}.status.${STEP}.map_smRNA_to_deg_index_$SMRNA_ID ] && \
 			awk '{if (!printed[$7]) {print ">"$7"_"$4"\n"$7; printed[$7]=1}}' $SRA_ALL_BED2 | \
 			bowtie -f -a --best --strata -v 0 -p $CPU -S $INDEX_OUTDIR/${PREFIX} - 2> $SMRNA_MAP_DIR/`basename $SRA_ALL_BED2`.map_to.${PREFIX}.log | \
@@ -594,33 +584,30 @@ if [ -n $SRA_ALL_BED2 ]; then
 				$SMRNA_MAP_DIR/`basename $SRA_ALL_BED2`.map_to.${PREFIX}.reads.5end && \
 			touch .${JOBUID}.status.${STEP}.map_smRNA_to_deg_index_$SMRNA_ID
 		STEP=$((STEP+1))
-		
-		echo2 "Map corresponding small RNA to the the extended degradome index"
+	
 		[ ! -f .${JOBUID}.status.${STEP}.map_smRNA_to_degRC_index_$SMRNA_ID ] && \
-			for t in ${TARGETS_SHORT[@]}; do \
-				awk -v piRNA_bot=$piRNA_bot -v piRNA_top=$piRNA_top '{if (!printed[$7] && $3-$2 >= piRNA_bot && $3-$2 <= piRNA_top) {print ">"$7"_"$4"\n"$7; printed[$7]=1}}' $SRA_ALL_BED2 | \
-				bowtie2 \
-					-x $INDEX_OUTDIR/${PREFIX}.${t}.r1.RC.ext${RC_EXT}.unique \
-					-f -p $CPU \
-					-U - 2>$SMRNA_MAP_DIR/`basename $SRA_ALL_BED2`.piRNA_map_to.${PREFIX}.${t}.species.b2.log | \
-				samtools view -bS - | \
-				bedtools_piPipes bamtobed -i | \
-				awk -v len=$((2*RC_EXT+1)) '{if($6=="+") { a[$2%len]++; b[($3-1)%len]++} else {c[$2%len]++;d[($3-1)%len]++}}END{for (i=0;i<len;++i) printf "%d\t%d\t%d\t%d\t%d\n", i+1, a[i], b[i], c[i], d[i]}' \
-					> $SMRNA_MAP_DIR/`basename $SRA_ALL_BED2`.piRNA_map_to.${PREFIX}.${t}.species #&& \
-#				awk -v siRNA_bot=$siRNA_bot -v siRNA_top=$siRNA_top '{if (!printed[$7] && $3-$2 >= siRNA_bot && $3-$2 <= siRNA_top) {print ">"$7"_"$4"\n"$7; printed[$7]=1}}' $SRA_ALL_BED2 | \
-#				bowtie2 \
-# 					-x $INDEX_OUTDIR/${PREFIX}.r1.RC.ext${RC_EXT}.unique \
-# 					-f -p $CPU \
-# 					-U - 2>$SMRNA_MAP_DIR/`basename $SRA_ALL_BED2`.siRNA_map_to.${PREFIX}.species.b2.log | \
-# 				samtools view -bS - | \
-# 				bedtools_piPipes bamtobed -i | \
-# 				awk -v len=$((2*RC_EXT+1)) '{if($6=="+") { a[$2%len]++; b[($3-1)%len]++} else {c[$2%len]++;d[($3-1)%len]++}}END{for (i=0;i<len;++i) printf "%d\t%d\t%d\t%d\t%d\n", i+1, a[i], b[i], c[i], d[i]}' \
-# 					> $SMRNA_MAP_DIR/`basename $SRA_ALL_BED2`.siRNA_map_to.${PREFIX}.species
-			done && \
+			awk -v piRNA_bot=$piRNA_bot -v piRNA_top=$piRNA_top '{if (!printed[$7] && $3-$2 >= piRNA_bot && $3-$2 <= piRNA_top) {print ">"$7"_"$4"\n"$7; printed[$7]=1}}' $SRA_ALL_BED2 | \
+			bowtie2 \
+				-x $INDEX_OUTDIR/${PREFIX}.r1.RC.ext${RC_EXT}.unique \
+				-f -p $CPU \
+				-U - 2>$SMRNA_MAP_DIR/`basename $SRA_ALL_BED2`.piRNA_map_to.${PREFIX}.species.b2.log | \
+			samtools view -bS - | \
+			bedtools bamtobed -i | \
+			awk -v len=$((2*RC_EXT+1)) '{if($6=="+") { a[$2%len]++; b[($3-1)%len]++} else {c[$2%len]++;d[($3-1)%len]++}}END{for (i=0;i<len;++i) printf "%d\t%d\t%d\t%d\t%d\n", i+1, a[i], b[i], c[i], d[i]}' \
+				> $SMRNA_MAP_DIR/`basename $SRA_ALL_BED2`.piRNA_map_to.${PREFIX}.species && \
+			awk -v siRNA_bot=$siRNA_bot -v siRNA_top=$siRNA_top '{if (!printed[$7] && $3-$2 >= siRNA_bot && $3-$2 <= siRNA_top) {print ">"$7"_"$4"\n"$7; printed[$7]=1}}' $SRA_ALL_BED2 | \
+			bowtie2 \
+				-x $INDEX_OUTDIR/${PREFIX}.r1.RC.ext${RC_EXT}.unique \
+				-f -p $CPU \
+				-U - 2>$SMRNA_MAP_DIR/`basename $SRA_ALL_BED2`.siRNA_map_to.${PREFIX}.species.b2.log | \
+			samtools view -bS - | \
+			bedtools bamtobed -i | \
+			awk -v len=$((2*RC_EXT+1)) '{if($6=="+") { a[$2%len]++; b[($3-1)%len]++} else {c[$2%len]++;d[($3-1)%len]++}}END{for (i=0;i<len;++i) printf "%d\t%d\t%d\t%d\t%d\n", i+1, a[i], b[i], c[i], d[i]}' \
+				> $SMRNA_MAP_DIR/`basename $SRA_ALL_BED2`.siRNA_map_to.${PREFIX}.species && \
 			touch .${JOBUID}.status.${STEP}.map_smRNA_to_degRC_index_$SMRNA_ID
+		STEP=$((STEP+1))
 	else # SE
 		SMRNA_ID=`echo $SRA_ALL_BED2 | md5sum | cut -d" " -f1`
-		echo2 "Map corresponding small RNA to the degradome index"
 		[ ! -f .${JOBUID}.status.${STEP}.map_smRNA_to_deg_index_$SMRNA_ID ] && \
 			awk '{if (!printed[$7]) {print ">"$7"_"$4"\n"$7; printed[$7]=1}}' $SRA_ALL_BED2 | \
 			bowtie -f -a --best --strata -v 0 -p $CPU -S $INDEX_OUTDIR/${PREFIX} - 2> $SMRNA_MAP_DIR/`basename $SRA_ALL_BED2`.map_to.${PREFIX}.log | \
@@ -639,33 +626,30 @@ if [ -n $SRA_ALL_BED2 ]; then
 				$SMRNA_MAP_DIR/`basename $SRA_ALL_BED2`.map_to.${PREFIX}.reads.5end && \
 			touch .${JOBUID}.status.${STEP}.map_smRNA_to_deg_index_$SMRNA_ID
 		STEP=$((STEP+1))
-		
-		echo2 "Map corresponding small RNA to the the extended degradome index"
+	
 		[ ! -f .${JOBUID}.status.${STEP}.map_smRNA_to_degRC_index_$SMRNA_ID ] && \
-			for t in ${TARGETS_SHORT[@]}; do \
-				awk -v piRNA_bot=$piRNA_bot -v piRNA_top=$piRNA_top '{if (!printed[$7] && $3-$2 >= piRNA_bot && $3-$2 <= piRNA_top) {print ">"$7"_"$4"\n"$7; printed[$7]=1}}' $SRA_ALL_BED2 | \
-				bowtie2 \
-					-x $INDEX_OUTDIR/${PREFIX}.${t}.RC.ext${RC_EXT}.unique \
-					-f -p $CPU \
-					-U - 2>$SMRNA_MAP_DIR/`basename $SRA_ALL_BED2`.piRNA_map_to.${PREFIX}.${t}.species.b2.log | \
-				samtools view -bS - | \
-				bedtools_piPipes bamtobed -i | \
-				awk -v len=$((2*RC_EXT+1)) '{if($6=="+") { a[$2%len]++; b[($3-1)%len]++} else {c[$2%len]++;d[($3-1)%len]++}}END{for (i=0;i<len;++i) printf "%d\t%d\t%d\t%d\t%d\n", i+1, a[i], b[i], c[i], d[i]}' \
-					> $SMRNA_MAP_DIR/`basename $SRA_ALL_BED2`.piRNA_map_to.${PREFIX}.${t}.species #&& \
-			# awk -v siRNA_bot=$siRNA_bot -v siRNA_top=$siRNA_top '{if (!printed[$7] && $3-$2 >= siRNA_bot && $3-$2 <= siRNA_top) {print ">"$7"_"$4"\n"$7; printed[$7]=1}}' $SRA_ALL_BED2 | \
-			# bowtie2 \
-			# 	-x $INDEX_OUTDIR/${PREFIX}.RC.ext${RC_EXT}.unique \
-			# 	-f -p $CPU \
-			# 	-U - 2>$SMRNA_MAP_DIR/`basename $SRA_ALL_BED2`.siRNA_map_to.${PREFIX}.species.b2.log | \
-			# samtools view -bS - | \
-			# bedtools_piPipes bamtobed -i | \
-			# awk -v len=$((2*RC_EXT+1)) '{if($6=="+") { a[$2%len]++; b[($3-1)%len]++} else {c[$2%len]++;d[($3-1)%len]++}}END{for (i=0;i<len;++i) printf "%d\t%d\t%d\t%d\t%d\n", i+1, a[i], b[i], c[i], d[i]}' \
-			# 	> $SMRNA_MAP_DIR/`basename $SRA_ALL_BED2`.siRNA_map_to.${PREFIX}.species && \
-			done && \
-		touch .${JOBUID}.status.${STEP}.map_smRNA_to_degRC_index_$SMRNA_ID
+			awk -v piRNA_bot=$piRNA_bot -v piRNA_top=$piRNA_top '{if (!printed[$7] && $3-$2 >= piRNA_bot && $3-$2 <= piRNA_top) {print ">"$7"_"$4"\n"$7; printed[$7]=1}}' $SRA_ALL_BED2 | \
+			bowtie2 \
+				-x $INDEX_OUTDIR/${PREFIX}.RC.ext${RC_EXT}.unique \
+				-f -p $CPU \
+				-U - 2>$SMRNA_MAP_DIR/`basename $SRA_ALL_BED2`.piRNA_map_to.${PREFIX}.species.b2.log | \
+			samtools view -bS - | \
+			bedtools bamtobed -i | \
+			awk -v len=$((2*RC_EXT+1)) '{if($6=="+") { a[$2%len]++; b[($3-1)%len]++} else {c[$2%len]++;d[($3-1)%len]++}}END{for (i=0;i<len;++i) printf "%d\t%d\t%d\t%d\t%d\n", i+1, a[i], b[i], c[i], d[i]}' \
+				> $SMRNA_MAP_DIR/`basename $SRA_ALL_BED2`.piRNA_map_to.${PREFIX}.species && \
+			awk -v siRNA_bot=$siRNA_bot -v siRNA_top=$siRNA_top '{if (!printed[$7] && $3-$2 >= siRNA_bot && $3-$2 <= siRNA_top) {print ">"$7"_"$4"\n"$7; printed[$7]=1}}' $SRA_ALL_BED2 | \
+			bowtie2 \
+				-x $INDEX_OUTDIR/${PREFIX}.RC.ext${RC_EXT}.unique \
+				-f -p $CPU \
+				-U - 2>$SMRNA_MAP_DIR/`basename $SRA_ALL_BED2`.siRNA_map_to.${PREFIX}.species.b2.log | \
+			samtools view -bS - | \
+			bedtools bamtobed -i | \
+			awk -v len=$((2*RC_EXT+1)) '{if($6=="+") { a[$2%len]++; b[($3-1)%len]++} else {c[$2%len]++;d[($3-1)%len]++}}END{for (i=0;i<len;++i) printf "%d\t%d\t%d\t%d\t%d\n", i+1, a[i], b[i], c[i], d[i]}' \
+				> $SMRNA_MAP_DIR/`basename $SRA_ALL_BED2`.siRNA_map_to.${PREFIX}.species && \
+			touch .${JOBUID}.status.${STEP}.map_smRNA_to_degRC_index_$SMRNA_ID
+		STEP=$((STEP+1))
 	fi
 fi
-STEP=$((STEP+1))
 
 #############
 # finishing #

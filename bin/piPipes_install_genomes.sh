@@ -231,7 +231,7 @@ esac
 
 # converting gtf to bed and extract the fasta
 echo2 "Extracting sequence from iGenome gtf file"
-ln -s $IGENOME_DIR_NAME/UCSC/$GENOME/Annotation/Genes/genes.gtf ${GENOME}.genes.gtf
+ln -s $IGENOME_DIR_NAME/UCSC/$GENOME/Annotation/Genes/genes.gtf ${GENOME}.genes.gtf 2>/dev/null
 [ ! -s ${GENOME}.genes.bed12 ] && gtfToGenePred ${GENOME}.genes.gtf ${GENOME}.genes.gp && genePredToBed ${GENOME}.genes.gp ${GENOME}.genes.bed12
 [ ! -s ${GENOME}.genes.fa ] && bedtools_piPipes getfasta -fi ${GENOME}.fa -bed ${GENOME}.genes.bed12 -fo ${GENOME}.genes.fa -name -split -s
 
@@ -249,13 +249,16 @@ echo2 "Building mrFast index for genome"
 
 # rRNA index
 echo2 "Building Bowtie/Bowtie2 index for rRNA"
-ln -s $IGENOME_DIR_NAME/UCSC/$GENOME/Sequence/AbundantSequences/*ibosomal.fa rRNA.fa
+ln -s $IGENOME_DIR_NAME/UCSC/$GENOME/Sequence/AbundantSequences/*ibosomal.fa rRNA.fa 2>/dev/null
 [ ! -s BowtieIndex/rRNA.sizes ] && bowtie-build rRNA.fa BowtieIndex/rRNA && faSize -tab -detailed rRNA.fa > BowtieIndex/rRNA.sizes
 [ ! -s Bowtie2Index/rRNA.sizes ] && bowtie2-build rRNA.fa Bowtie2Index/rRNA && faSize -tab -detailed rRNA.fa > Bowtie2Index/rRNA.sizes
 
 # microRNA and hairpin index
 echo2 "Building index for microRNA hairpin"
-[ ! -s ${GENOME}.hairpin.fa ] && awk '{if ($1~/^>/) print $1; else {gsub ("U","T", $0); print}}' $IGENOME_DIR_NAME/UCSC/$GENOME/Annotation/SmallRNA/precursor.fa > ${GENOME}.hairpin.fa
+if [ ! -s ${GENOME}.hairpin.fa ]; then
+	[ -f $IGENOME_DIR_NAME/UCSC/$GENOME/Annotation/SmallRNA/hairpin.fa ] && awk '{if ($1~/^>/) print $1; else {gsub ("U","T", $0); print}}' $IGENOME_DIR_NAME/UCSC/$GENOME/Annotation/SmallRNA/hairpin.fa > ${GENOME}.hairpin.fa
+	[ -f $IGENOME_DIR_NAME/UCSC/$GENOME/Annotation/SmallRNA/precursor.fa ] && awk '{if ($1~/^>/) print $1; else {gsub ("U","T", $0); print}}' $IGENOME_DIR_NAME/UCSC/$GENOME/Annotation/SmallRNA/precursor.fa > ${GENOME}.hairpin.fa
+fi
 [ ! -s ${GENOME}.mature.fa ] &&  awk '{if ($1~/^>/) print $1; else {gsub ("U","T", $0); print}}' $IGENOME_DIR_NAME/UCSC/$GENOME/Annotation/SmallRNA/mature.fa > ${GENOME}.mature.fa
 [ ! -s BowtieIndex/hairpin.sizes ] && bowtie-build ${GENOME}.hairpin.fa BowtieIndex/hairpin && faSize -tab -detailed ${GENOME}.hairpin.fa > BowtieIndex/hairpin.sizes
 [ ! -s mature2hairpin.uniq.bed ]  && bowtie -S -f -v 0 -m 1 --best --strata --max ${GENOME}.mature.multiMapper.fa BowtieIndex/hairpin ${GENOME}.mature.fa 1> /dev/stdout 2> /dev/null | samtools view -uS - | bedtools_piPipes bamtobed -i - | awk '$6=="+"' > mature2hairpin.uniq.bed
@@ -273,6 +276,14 @@ echo2 "Building Bowtie/BWA index for piRNA cluster"
 [ ! -s ${GENOME}.piRNAcluster.bed.gz ] && echo2 "Missing ${GENOME}.piRNAcluster.bed.gz, you are using a genome that is not optimized, some functions of the pipeline won't work." "warning"
 [ ! -s ${GENOME}.piRNAcluster.fa ] && bedtools_piPipes getfasta -fi ${GENOME}.fa -bed ${GENOME}.piRNAcluster.bed.gz -fo ${GENOME}.piRNAcluster.fa -name -split -s
 [ ! -s BowtieIndex/piRNAcluster.sizes ] && bowtie-build ${GENOME}.piRNAcluster.fa BowtieIndex/piRNAcluster && faSize -tab -detailed ${GENOME}.piRNAcluster.fa > BowtieIndex/piRNAcluster.sizes
+
+case $GENOME in	
+dm3)
+	[ ! -s ${GENOME}.gene+transposon.fa ] && cat ${GENOME}.genes.fa  ${GENOME}.transposon.fa  >  ${GENOME}.gene+transposon.fa
+	[ ! -s BowtieIndex/gene+transposon.sizes ] && bowtie-build		${GENOME}.gene+transposon.fa BowtieIndex/gene+transposon  && faSize -tab -detailed ${GENOME}.gene+transposon.fa > BowtieIndex/gene+transposon.sizes
+	[ ! -s Bowtie2Index/gene+transposon.sizes ] && bowtie2-build	${GENOME}.gene+transposon.fa Bowtie2Index/gene+transposon && faSize -tab -detailed ${GENOME}.gene+transposon.fa > Bowtie2Index/gene+transposon.sizes
+;;
+esac
 
 # genes + repBase + cluster indexes
 echo2 "Building Bowtie/BWA index for repBase + piRNA cluster + genes"

@@ -39,7 +39,9 @@ ${UNDERLINE}usage${RESET}:
 		-g dm3 \ 
 		-N uniqueXmiRNA [unique] \ 
 		-o output_directory [current working directory] \ 
-		-c cpu [8] 
+		-c cpu [8] \ 
+		-P miniwhite.fa \ 
+		-O gfp.fa,luciferase.fa
 			
 OPTIONS:
 	-h      Show this message
@@ -59,12 +61,12 @@ ${OPTIONAL}[ optional ]
 	 	 all:	use non-rRNA genomic all mappers including microRNAs.
 	 	 allXmiRNA:	use non-rRNA genomic all mappers excluding microRNAs. 
 	 	 miRNA:	use microRNAs. normalized to: reads per millions of miRNA <for unoxidized library for piRNA mutant>.
-		 *Different normalization methods, including "siRNA", are available in the dual library mode.
+		 *Different normalization methods, including "siRNA", are available in the dual sample mode.
 		 *You are able to run the same library multiple times with different normalization method. They will not collapse.
 	-c      Number of CPUs to use, default: 8
 	-o      Output directory, default: current directory $PWD
-	-B(deprecated)       How many rounds of batch algorithm to run for eXpress, default: 21
-
+	-P      A list of Fasta files, delimited by comma, used to do pre-genomic mapping and analysis. For example, given "-P miniwhite.fa,virus.fa", after removing reads mappable to rRNA and miRNA hairpin, reads are mapped to miniWhite sequence first. Only the non-miniWhite-mappers are mapped to virus sequence. And only the non-miniWhite, non-virus mappers will be used in the genome mapping and further analysis.
+	-O      A list of Fasta files, delimited by comma, used to do post-genomic mapping and analysis. For example, given "-O gfp.fa,luciferase.fa", after removing reads mappable rRNA, miRNA hairpin and genome, reads are mapped to gfp sequence first. Only the non-genome non-gfp mappers are mapped to luciferase sequence. If more than one sequences are put in one Fasta file, they will be treated equally. ${UNDERLINE}Please only use letters and numbers as filename and USE \$HOME instead of ~ to indicate the home directory.${RESET}
 EOF
 echo -e "${COLOR_END}"
 }
@@ -72,7 +74,7 @@ echo -e "${COLOR_END}"
 #############################
 # ARGS reading and checking #
 #############################
-while getopts "hi:c:o:g:vN:B:" OPTION; do
+while getopts "hi:c:o:g:vN:P:O:" OPTION; do
 	case $OPTION in
 		h)	usage && exit 0 ;;
 		i)	INPUT_FASTQ=`readlink -f $OPTARG` ;;
@@ -81,7 +83,8 @@ while getopts "hi:c:o:g:vN:B:" OPTION; do
 		v)	echo2 "SMALLRNA_VERSION: v$SMALLRNA_VERSION" && exit 0 ;;
 		g)	export GENOME=`echo ${OPTARG} | tr '[A-Z]' '[a-z]'` ;;
 		N)	export NORMMETHOD=`echo ${OPTARG} | tr '[A-Z]' '[a-z]'` ;;
-		B)	eXpressBATCH=$OPTARG ;;
+		P)	PRE_GENOME_MAPPING_FILE_LIST=$OPTARG ;;
+		O)	POST_GENOME_MAPPING_FILE_LIST=$OPTARG ;;
 		*)	usage && exit 1 ;;
 	esac
 done
@@ -108,13 +111,14 @@ export PDF_DIR=$OUTDIR/pdfs && mkdir -p $PDF_DIR
 READS_DIR=input_read_files && mkdir -p $READS_DIR 
 rRNA_DIR=rRNA_mapping && mkdir -p $rRNA_DIR
 MIRNA_DIR=hairpins_mapping && mkdir -p $MIRNA_DIR
-CUSTOM_MAPPING_DIR=custom_mapping && mkdir -p $CUSTOM_MAPPING_DIR
+PRE_GENOME_MAPPING_DIR=pre_genome_mapping && mkdir -p $PRE_GENOME_MAPPING_DIR
+POST_GENOME_MAPPING_DIR=post_genome_mapping && mkdir -p $POST_GENOME_MAPPING_DIR
 GENOMIC_MAPPING_DIR=genome_mapping && mkdir -p $GENOMIC_MAPPING_DIR
 INTERSECT_DIR=intersect_genomic_features && mkdir -p $INTERSECT_DIR
 SUMMARY_DIR=summaries && mkdir -p $SUMMARY_DIR
 BW_OUTDIR=bigWig_normalized_by_$NORMMETHOD && mkdir -p $BW_OUTDIR
 TRN_OUTDIR=transposon_piRNAcluster_mapping_normalized_by_$NORMMETHOD && mkdir -p $TRN_OUTDIR
-EXPRESS_DIR=eXpress_quantification_no_normalization && mkdir -p $EXPRESS_DIR
+# EXPRESS_DIR=direct_mapping_to_cluster_transposon_gene && mkdir -p $EXPRESS_DIR
 
 ########################
 # running binary check #
@@ -239,46 +243,41 @@ echo2 "Calculate microRNA heterogeneity"
 	touch .${JOBUID}.status.${STEP}.miRNA_pipeline
 STEP=$((STEP+1))
 
-##################
-# custom mapping #
-##################
-# Begin of custumer variables
-# PreMappingList stores an array of variable names. those variables names store the address of bowtie indexes. 
-# this pipeline will map input reads (fater rRNA and miRNA mapping) to each one of those bowite indexes sequentially
-# mapped reads will be excluded from mapping to next index and the GENOME mapping
-# candidates: virus/primer contamination
-declare -a PreMappingList=() 
-declare -a PreMappingMM=()	
-#----------example----------
-#virus=$COMMON_FOLDER/dmel_virus
-#PreMappingList=("${PreMappingList[@]}" "virus")
-#PreMappingMM=("${PreMappingMM[@]}" "2")
-#----------end of example----------
-# count how many indexed need to map
-COUNTER=0
+#############################
+# custom pre-genome mapping #
+#############################
 INPUT=$x_rRNA_x_hairpin_INSERT
-# if there are any indexes need to be run
-[[ ${#PreMappingList[@]} > 0 ]] && \
-for COUNTER in `seq 0 $((${#PreMappingList[@]}-1))`; do \
-	TARGET=${PreMappingList[$COUNTER]} && \
-	OUTDIR1=$CUSTOM_MAPPING_DIR/${TARGET} && mkdir -p $OUTDIR1 && \
-	PREFIX1=`basename $INPUT` && PREFIX1=${OUTDIR1}/${PREFIX1%.insert} && \
-	MM=${PreMappingMM[$COUNTER]} && \
-	echo2 "Mapping to ${TARGET}, with $MM mismatch(es) allowed" && \
-	[ ! -f .${JOBUID}.status.${STEP}.${TARGET}_mapping ] && \
-		bowtie -r -v $MM -a --best --strata -p $CPU -S \
-			${BOWTIE_PHRED_OPTION} \
-			--un ${INPUT%.insert}.x_${TARGET}.insert \
-			${!TARGET} \
+MM=0 # haven't implement method to take mismatch # from user
+# parsing customer defined pre-genomic mapping variables
+[[ ! -z $PRE_GENOME_MAPPING_FILE_LIST ]] && \
+	echo2 "Mapping to customer defined pre-genome mapping indexes"
+	eval `echo $PRE_GENOME_MAPPING_FILE_LIST | awk 'BEGIN{FS=","}{printf "export PRE_GENOME_MAPPING_FILES=(" ; ;for (i=1;i<=NF;++i) printf "\"%s\" ", $i; printf ")\n";}'`
+	for TARGET in "${PRE_GENOME_MAPPING_FILES[@]}"; do
+		TARGET_NAME1=`basename $TARGET`
+		TARGET_NAME=${TARGET_NAME1%.fa}
+		TARGET_FA=`readlink -f $TARGET`
+		[[ ! -f $TARGET_FA ]] && echo2 "File $TARGET specified by -P do not exist" "error"
+		OUTDIR1=$PRE_GENOME_MAPPING_DIR/${TARGET_NAME} && mkdir -p $OUTDIR1 || echo2 "Cannot create directory $OUTDIR1, please check the permission. And try to only use letter and number to name the Fasta file" "error"
+		bowtie-build $TARGET_FA $OUTDIR1/$TARGET_NAME || echo2 "Failed to build the bowtie index for $TARGET_FA" "error"
+		faSize -tab -detailed $TARGET_FA > $OUTDIR1/${TARGET_NAME}.sizes
+		PREFIX1=`basename $INPUT` && PREFIX1=${OUTDIR1}/${PREFIX1%.insert} && \
+		echo2 "Mapping to ${TARGET_NAME}" && \
+		bowtie -r -v 0 -a --best --strata -p $CPU -S \
+			--un ${INPUT%.insert}.x_${TARGET_NAME}.insert \
+			$OUTDIR1/$TARGET_NAME \
 			$INPUT \
 			2> ${PREFIX1}.log | \
-		samtools view -bSF 0x4 - 2>/dev/null | bedtools_piPipes bamtobed -i - > ${PREFIX1}.${TARGET}.v${MM}a.bed && \
-		piPipes_insertBed_to_bed2 $INPUT ${PREFIX1}.${TARGET}.v${MM}a.bed > ${PREFIX1}.${TARGET}.v${MM}a.bed2 && \
-		rm -rf ${PREFIX1}.${TARGET}.v${MM}a.bed && \
-		touch .${JOBUID}.status.${STEP}.${TARGET}_mapping
-	STEP=$((STEP+1))
-	INPUT=${INPUT%.insert}.x_${TARGET}.insert
-done
+		samtools view -bSF 0x4 - 2>/dev/null | bedtools_piPipes bamtobed -i - > ${PREFIX1}.${TARGET_NAME}.v${MM}a.bed && \
+		piPipes_insertBed_to_bed2 $INPUT ${PREFIX1}.${TARGET_NAME}.v${MM}a.bed > ${PREFIX1}.${TARGET_NAME}.v${MM}a.bed2 && \
+		rm -rf ${PREFIX1}.${TARGET_NAME}.v${MM}a.bed && \
+		piPipes_bed2Summary -5 -i ${PREFIX1}.${TARGET_NAME}.v${MM}a.bed2 -c $OUTDIR1/${TARGET_NAME}.sizes -o $OUTDIR1/${TARGET_NAME}.summary && \
+		Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_summary.R $OUTDIR1/${TARGET_NAME}.summary $OUTDIR1/ $CPU 1 1>&2 && \
+		PDFs=$OUTDIR1/*pdf && \
+		gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=$PDF_DIR/`basename ${PREFIX1}`.pre-genome.${TARGET_NAME}.pdf ${PDFs} && \
+		touch .${JOBUID}.status.${STEP}.${TARGET_NAME}_mapping
+		INPUT=${INPUT%.insert}.x_${TARGET_NAME}.insert
+		rm -f $OUTDIR1/${TARGET_NAME}.1.ebwt $OUTDIR1/${TARGET_NAME}.2.ebwt $OUTDIR1/${TARGET_NAME}.3.ebwt $OUTDIR1/${TARGET_NAME}.4.ebwt $OUTDIR1/${TARGET_NAME}.rev.1.ebwt $OUTDIR1/${TARGET_NAME}.rev.2.ebwt $OUTDIR1/${TARGET_NAME}.sizes
+	done
 
 ##################
 # GENOME Mapping #
@@ -324,6 +323,41 @@ STEP=$((STEP+1))
 totalMapCount=`cat .${JOBUID}.totalMapCount`
 uniqueMapCount=`cat .${JOBUID}.uniqueMapCount`
 multipMapCount=`cat .${JOBUID}.multipMapCount`
+
+#############################
+# custom post-genome mapping #
+#############################
+INPUT=${INPUT%.insert}.${GENOME}v${genome_MM}a.un.insert
+# parsing customer defined post-genomic mapping variables
+[[ ! -z $post_GENOME_MAPPING_FILE_LIST ]] && \
+	echo2 "Mapping to customer defined post-genome mapping indexes"
+	eval `echo $POST_GENOME_MAPPING_FILE_LIST | awk 'BEGIN{FS=","}{printf "export POST_GENOME_MAPPING_FILES=(" ; ;for (i=1;i<=NF;++i) printf "\"%s\" ", $i; printf ")\n";}'`
+	for TARGET in "${POST_GENOME_MAPPING_FILES[@]}"; do
+		TARGET_NAME1=`basename $TARGET`
+		TARGET_NAME=${TARGET_NAME1%.fa}
+		TARGET_FA=`readlink -f $TARGET`
+		[[ ! -f $TARGET_FA ]] && echo2 "File $TARGET specified by -P do not exist" "error"
+		OUTDIR1=$POST_GENOME_MAPPING_DIR/${TARGET_NAME} && mkdir -p $OUTDIR1 || echo2 "Cannot create directory $OUTDIR1, please check the permission. And try to only use letter and number to name the Fasta file" "error"
+		bowtie-build $TARGET_FA $OUTDIR1/$TARGET_NAME || echo2 "Failed to build the bowtie index for $TARGET_FA" "error"
+		faSize -tab -detailed $TARGET_FA > $OUTDIR1/${TARGET_NAME}.sizes
+		PREFIX1=`basename $INPUT` && PREFIX1=${OUTDIR1}/${PREFIX1%.insert} && \
+		echo2 "Mapping to ${TARGET_NAME}" && \
+		bowtie -r -v 0 -a --best --strata -p $CPU -S \
+			--un ${INPUT%.insert}.${GENOME}v${genome_MM}a.un.x_${TARGET_NAME}.insert \
+			$OUTDIR1/$TARGET_NAME \
+			$INPUT \
+			2> ${PREFIX1}.log | \
+		samtools view -bSF 0x4 - 2>/dev/null | bedtools_piPipes bamtobed -i - > ${PREFIX1}.${TARGET_NAME}.v${MM}a.bed && \
+		piPipes_insertBed_to_bed2 $INPUT ${PREFIX1}.${TARGET_NAME}.v${MM}a.bed > ${PREFIX1}.${TARGET_NAME}.v${MM}a.bed2 && \
+		rm -rf ${PREFIX1}.${TARGET_NAME}.v${MM}a.bed && \
+		piPipes_bed2Summary -5 -i ${PREFIX1}.${TARGET_NAME}.v${MM}a.bed2 -c $OUTDIR1/${TARGET_NAME}.sizes -o $OUTDIR1/${TARGET_NAME}.summary && \
+		Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_summary.R $OUTDIR1/${TARGET_NAME}.summary $OUTDIR1/ $CPU 1 1>&2 && \
+		PDFs=$OUTDIR1/*pdf && \
+		gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=$PDF_DIR/`basename ${PREFIX1}`.post-genome.${TARGET_NAME}.pdf ${PDFs} && \
+		touch .${JOBUID}.status.${STEP}.${TARGET_NAME}_mapping
+		INPUT=${INPUT%.insert}.${GENOME}v${genome_MM}a.un.x_${TARGET_NAME}.insert
+		rm -f $OUTDIR1/${TARGET_NAME}.1.ebwt $OUTDIR1/${TARGET_NAME}.2.ebwt $OUTDIR1/${TARGET_NAME}.3.ebwt $OUTDIR1/${TARGET_NAME}.4.ebwt $OUTDIR1/${TARGET_NAME}.rev.1.ebwt $OUTDIR1/${TARGET_NAME}.rev.2.ebwt $OUTDIR1/${TARGET_NAME}.sizes
+	done
 
 #####################
 # Length Separation #
@@ -402,7 +436,7 @@ echo $NormScale > .depth
 ####################################
 # Intersecting with GENOME Feature #
 ####################################
-echo2 "Intersecting with genomic features with bedtools"
+echo2 "Intersecting with genomic features, make length distribution, nucleotide fraction for siRNA/piRNA assigned to each feature"
 [ ! -f .${JOBUID}.status.${STEP}.intersect_with_genomic_features ] && \
 bash $DEBUG piPipes_intersect_smallRNA_with_genomic_features.sh \
 	${GENOME_ALLMAP_BED2} \
@@ -437,7 +471,7 @@ STEP=$((STEP+1))
 ##############################################
 # Direct mapping to transposon/piRNA cluster #
 ##############################################
-echo2 "Direct mapping to transposon and piRNA cluster"
+echo2 "Direct mapping to transposon and piRNA cluster and make distribution plot"
 . $COMMON_FOLDER/genomic_features
 INSERT=`basename $INPUT`
 [ ! -f .${JOBUID}.status.${STEP}.direct_mapping_normalized_by_$NORMMETHOD ] && \
@@ -465,21 +499,21 @@ STEP=$((STEP+1))
 # Direct mapping to and quantification with eXpress #
 #####################################################
 # for accurate quantification, we map to the index of gene+cluster+repBase. 
-echo2 "Quantification by direct mapping and eXpress"
-[ ! -f .${JOBUID}.status.${STEP}.direct_mapping_no_normalization ] && \
-awk '{for (j=0;j<$2;++j) print $1}' $x_rRNA_x_hairpin_INSERT | \
-bowtie \
-	-r \
-	-v ${transposon_MM} \
-	-a --best --strata \
-	-p $CPU \
-	-S \
-	gene+cluster+repBase \
-	- 2> $EXPRESS_DIR/${PREFIX}.bowtie.gene+cluster+repBase.bowtie.log | \
-	samtools view -bS - > \
-	$EXPRESS_DIR/${PREFIX}.bowtie.gene+cluster+repBase.bam && \
-touch .${JOBUID}.status.${STEP}.direct_mapping_no_normalization
-STEP=$((STEP+1))
+# echo2 "Quantification by direct mapping and eXpress"
+# [ ! -f .${JOBUID}.status.${STEP}.direct_mapping_no_normalization ] && \
+# awk '{for (j=0;j<$2;++j) print $1}' $x_rRNA_x_hairpin_INSERT | \
+# bowtie \
+# 	-r \
+# 	-v ${transposon_MM} \
+# 	-a --best --strata \
+# 	-p $CPU \
+# 	-S \
+# 	gene+cluster+repBase \
+# 	- 2> $EXPRESS_DIR/${PREFIX}.bowtie.gene+cluster+repBase.bowtie.log | \
+# 	samtools view -bS - > \
+# 	$EXPRESS_DIR/${PREFIX}.bowtie.gene+cluster+repBase.bam && \
+# touch .${JOBUID}.status.${STEP}.direct_mapping_no_normalization
+# STEP=$((STEP+1))
 
 # deprecated
 # [ ! -f .${JOBUID}.status.${STEP}.quantification_by_eXpress ] && \
