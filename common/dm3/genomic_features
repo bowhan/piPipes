@@ -52,6 +52,24 @@
 	"lincRNA" \
 	"unannotated" )
 
+	declare -a TARGETS_SHORT=( \
+	"piRNA_Cluster" \
+	"piRNA_Cluster_42AB" \
+	"piRNA_Cluster_20A" \
+	"piRNA_Cluster_flam" \
+	"repeatMasker" \
+	"Trn" \
+	"Trn_GROUP1" \
+	"Trn_GROUP2" \
+	"Trn_GROUP3" \
+	"Trn_GROUP0" \
+	"flyBase_Gene" \
+	"flyBase_Exon" \
+	"flyBase_Intron_xRM" \
+	"flyBase_5UTR" \
+	"flyBase_3UTR" \
+	"lincRNA" )
+	
 # variables for small RNA direct mapping
 	declare -a DIRECT_MAPPING=( "transposon" "repBase" "piRNAcluster" )
 	

@@ -47,7 +47,17 @@
 	"repeatMasker_Satellite" \
 	"repeatMasker_Simple_repeat" \
 	)
-
+	
+	declare -a TARGETS_SHORT=( \
+	"piRNA_Cluster_EXON" \
+	"prepachytene_piRNA_Cluster_EXON" \
+	"hybrid_piRNA_Cluster_EXON" \
+	"pachytene_piRNA_Cluster_EXON" \
+	"Zamore_NM_EXON" \
+	"Zamore_NR_EXON" \
+	"refSeq_GENE" \
+	"repeatMasker" \
+	)
 # variables for small RNA direct mapping
 	declare -a DIRECT_MAPPING=( "repBase" "piRNAcluster" )
 # gtf files for rnaseq/deg/cage htseq-count

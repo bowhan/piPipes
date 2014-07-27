@@ -56,7 +56,8 @@ ${OPTIONAL}[ optional ]
 	-d      VCF filtering depth, passed to "vcfutils.pl varFilter -D" and "retroseq.pl -call -depth", default: 100
 	-o      Output directory, default: current directory $PWD
 	-c      Number of CPUs to use, default: 8
-	-e      Transgene sequence in fasta format. It can contain multiple sequences.
+	-e      Transgene sequence in fasta format, GFP for example. It can contain multiple sequences. piPipes calls TEMP to identify new insertion site.
+	-M      Use mrFast and VariationHunter. mrFast requires large amount of memory. So default: off
 	
 EOF
 echo -e "${COLOR_END}"
@@ -65,7 +66,7 @@ echo -e "${COLOR_END}"
 #############################
 # ARGS reading and checking #
 #############################
-while getopts "hl:r:c:o:g:d:ve:" OPTION; do
+while getopts "hl:r:c:o:g:d:ve:M" OPTION; do
 	case $OPTION in
 		h)	usage && exit 1 ;;
 		l)	LEFT_FASTQ=`readlink -f $OPTARG` ;;
@@ -76,6 +77,7 @@ while getopts "hl:r:c:o:g:d:ve:" OPTION; do
 		v)	echo2 "GENOMESEQ_VERSION: v$GENOMESEQ_VERSION" && exit 0 ;;		
 		d)	VCFFILTER_DEPTH=$OPTARG ;;
 		e)	TRANSGENE_FA=`readlink -f $OPTARG` ;;
+		M)	USE_MRFAST=1 ;;
 		*)	usage && exit 1 ;;
 	esac
 done
@@ -215,7 +217,7 @@ esac
 # 	touch .${JOBUID}.status.${STEP}.transgene_mapping
 # fi
 
-STEP=$((STEP+1))
+# STEP=$((STEP+1))
 #################################
 # Align reads to genome: 2. BWA #
 #################################
@@ -316,38 +318,6 @@ echo2 "Discovering deletions by retroSeq using BWA output"
 	touch .${JOBUID}.status.${STEP}.retroSeq
 STEP=$((STEP+1))
 
-#####################################
-# Align reads to genome: 3. mrFast #
-#####################################
-echo2 "Mapping to genome ${GENOME} with mrFast. The memory used by mrFast is propotional to the size of input, so it might uses lots of memory. Please be ware of this."
-mrFast_min=0
-mrFast_max=800
-[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_mrFast ] && \
-	mrfast --search $MRFAST_INDEX/${GENOME}.fa --pe --discordant-vh --seq1 $LEFT_FASTQ --seq2 $RIGHT_FASTQ --min $mrFast_min --max $mrFast_max -o ${MRFAST_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.mrFast.sam 1>&2 && \
-	samtools view -uS -f0x2 ${MRFAST_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.mrFast.sam > ${MRFAST_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.mrFast.bam && \
-	samtools sort -@ $CPU ${MRFAST_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.mrFast.bam ${MRFAST_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.mrFast.sorted && \
-	samtools index ${MRFAST_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.mrFast.sorted.bam && \
-	rm -rf ${MRFAST_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.mrFast.sam ${MRFAST_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.mrFast.bam unmapped && \
-	touch .${JOBUID}.status.${STEP}.genome_mapping_mrFast
-STEP=$((STEP+1))
-
-########################################
-# Variation calling by VariationHunter #
-########################################
-echo2 "Calling variation by VariationHunter"
-[ ! -f .${JOBUID}.status.${STEP}.VariationHunter ] && \
-	if [ -f .${JOBUID}.status.${STEP}.genome_mapping_mrFast ]; 
-	then
-		echo 1 > $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.sample.lib && \
-		echo -e "${PREFIX}\t${PREFIX}\t${mrFast_min}\t${mrFast_max}\t${READ_LEN}" > $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.sample.lib && \
-		VH -c $CHROM -i $PIPELINE_DIRECTORY/bin/VH_initInfo -l $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.sample.lib -r $COMMON_FOLDER/UCSC.RepeatMask.Satellite.bed -g $COMMON_FOLDER/${GENOME}.gap.bed -o $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.VHcluster.out -t $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.VHcluster.sample.name -x 500 -p 0.001 1>&2 && \
-		multiInd_SetCover -l $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.sample.lib -r $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.VHcluster.sample.name -c $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.VHcluster.out -t 1000000 -o $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.VHcluster.sample.Out.SV 1>&2 && \
-		touch .${JOBUID}.status.${STEP}.VariationHunter
-	else
-		echo2 "Mapping by mrFast failed. VariationHunter cannot run" "warning"
-	fi
-STEP=$((STEP+1))
-
 #################################
 # Discovering SV by BreakDancer #
 #################################
@@ -363,8 +333,8 @@ echo2 "Discovering Variation by BreakDancer using BWA output"
 		$BREAKDANCER_DIR/config \
 		1> $BREAKDANCER_DIR/${PREFIX}.breakdancer.out && \
 	grep -v '#' $BREAKDANCER_DIR/${PREFIX}.breakdancer.out | \
-	awk 'BEGIN{OFS="\t"}{print $1,$2,$2+1,$4,$5,$5+1}' > $BREAKDANCER_DIR/${PREFIX}.breakdancer.out.for_Circos
-touch .${JOBUID}.status.${STEP}.BreakDancer
+	awk 'BEGIN{OFS="\t"}{print $1,$2,$2+1,$4,$5,$5+1}' > $BREAKDANCER_DIR/${PREFIX}.breakdancer.out.for_Circos && \
+	touch .${JOBUID}.status.${STEP}.BreakDancer
 STEP=$((STEP+1))
 
 ################################
@@ -379,8 +349,42 @@ echo2 "Draw Cisco plot to summarize the finding"
 		`readlink -f $RETROSEQ/*bed` \
 		$BREAKDANCER_DIR/${PREFIX}.breakdancer.out.for_Circos \
 		$PDF_DIR/${PREFIX}.summary.circos.pdf && \
-touch .${JOBUID}.status.${STEP}.Cisco
+	touch .${JOBUID}.status.${STEP}.Cisco
 STEP=$((STEP+1))
+
+#####################################
+# Align reads to genome: 3. mrFast #
+#####################################
+if [[ ! -z $USE_MRFAST ]]; then
+	echo2 "Mapping to genome ${GENOME} with mrFast. The memory used by mrFast is propotional to the size of input, so it might uses lots of memory. Please be ware of this."
+	mrFast_min=0
+	mrFast_max=800
+	[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_mrFast ] && \
+		mrfast --search $MRFAST_INDEX/${GENOME}.fa --pe --discordant-vh --seq1 $LEFT_FASTQ --seq2 $RIGHT_FASTQ --min $mrFast_min --max $mrFast_max -o ${MRFAST_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.mrFast.sam 1>&2 && \
+		samtools view -uS -f0x2 ${MRFAST_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.mrFast.sam > ${MRFAST_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.mrFast.bam && \
+		samtools sort -@ $CPU ${MRFAST_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.mrFast.bam ${MRFAST_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.mrFast.sorted && \
+		samtools index ${MRFAST_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.mrFast.sorted.bam && \
+		rm -rf ${MRFAST_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.mrFast.sam ${MRFAST_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.mrFast.bam unmapped && \
+		touch .${JOBUID}.status.${STEP}.genome_mapping_mrFast
+	STEP=$((STEP+1))
+
+	########################################
+	# Variation calling by VariationHunter #
+	########################################
+	echo2 "Calling variation by VariationHunter"
+	[ ! -f .${JOBUID}.status.${STEP}.VariationHunter ] && \
+		if [ -f .${JOBUID}.status.${STEP}.genome_mapping_mrFast ]; 
+		then
+			echo 1 > $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.sample.lib && \
+			echo -e "${PREFIX}\t${PREFIX}\t${mrFast_min}\t${mrFast_max}\t${READ_LEN}" > $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.sample.lib && \
+			VH -c $CHROM -i $PIPELINE_DIRECTORY/bin/VH_initInfo -l $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.sample.lib -r $COMMON_FOLDER/UCSC.RepeatMask.Satellite.bed -g $COMMON_FOLDER/${GENOME}.gap.bed -o $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.VHcluster.out -t $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.VHcluster.sample.name -x 500 -p 0.001 1>&2 && \
+			multiInd_SetCover -l $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.sample.lib -r $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.VHcluster.sample.name -c $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.VHcluster.out -t 1000000 -o $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.VHcluster.sample.Out.SV 1>&2 && \
+			touch .${JOBUID}.status.${STEP}.VariationHunter
+		else
+			echo2 "Mapping by mrFast failed. VariationHunter cannot run" "warning"
+		fi
+	STEP=$((STEP+1))
+fi
 
 #############
 # finishing #

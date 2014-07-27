@@ -148,10 +148,10 @@ touch .writting_permission && rm -rf .writting_permission || (echo2 "Cannot writ
 # creating output files/folders #
 #################################
 export PDF_DIR=$OUTDIR/pdfs && mkdir -p $PDF_DIR
-READS_DIR=input_read_files && mkdir -p $READS_DIR 
+# READS_DIR=input_read_files && mkdir -p $READS_DIR 
 GENOMIC_MAPPING_DIR=genome_mapping && mkdir -p $GENOMIC_MAPPING_DIR
 PEAKS_CALLING_DIR=macs2_peaks_calling && mkdir -p $PEAKS_CALLING_DIR
-SUMMARY_DIR=summaries && mkdir -p $SUMMARY_DIR
+# SUMMARY_DIR=summaries && mkdir -p $SUMMARY_DIR
 BW_OUTDIR=bigWig && mkdir -p $BW_OUTDIR
 AGG_DIR=aggregate_output && mkdir -p $AGG_DIR
 
@@ -180,14 +180,14 @@ if [[ -n $SE_MODE ]]; then
 	JOBUID=`echo $IP_FASTQ | md5sum | cut -d" " -f1`
 	IP_FASTQ_NAME=`basename $IP_FASTQ`
 	INPUT_FASTQ_NAME=`basename $INPUT_FASTQ`
-	PREFIX=`echo -e "${IP_FASTQ_NAME}\n${INPUT_FASTQ_NAME}" | sed -e 'N;s/^\(.*\).*\n\1.*$/\1/'` && export PREFIX=${PREFIX%.*}
-	[ -z "${PREFIX}" ] && export PREFIX=${IP_FASTQ_NAME%.f[aq]}
+	export PREFIX=`echo -e "${IP_FASTQ_NAME}\n${INPUT_FASTQ_NAME}" | sed -e 'N;s/^\(.*\).*\n\1.*$/\1/'` # && export PREFIX=${PREFIX%.*}
+	[ -z "${PREFIX}" ] && export PREFIX=${IP_FASTQ_NAME%.f[aq]*}
 else
 	JOBUID=`echo ${LEFT_IP_FASTQ} | md5sum | cut -d" " -f1`
 	LEFT_IP_FASTQ_NAME=`basename $LEFT_IP_FASTQ`
 	RIGHT_IP_FASTQ_NAME=`basename $RIGHT_IP_FASTQ`
-	PREFIX=`echo -e "${LEFT_IP_FASTQ_NAME}\n${RIGHT_IP_FASTQ_NAME}" | sed -e 'N;s/^\(.*\).*\n\1.*$/\1/'` && export PREFIX=${PREFIX%.*}
-	[ -z "${PREFIX}" ] && export PREFIX=${LEFT_FASTQ_NAME%.f[aq]} # if $LEFT and $RIGHT does not have any PREFIX, use the name of $LEFT
+	export PREFIX=`echo -e "${LEFT_IP_FASTQ_NAME}\n${RIGHT_IP_FASTQ_NAME}" | sed -e 'N;s/^\(.*\).*\n\1.*$/\1/'` # && export PREFIX=${PREFIX%.*}
+	[ -z "${PREFIX}" ] && export PREFIX=${LEFT_FASTQ_NAME%.f[aq]*} # if $LEFT and $RIGHT does not have any PREFIX, use the name of $LEFT
 fi
 
 # table to store the basic statistics of the library (genomic mappability)
@@ -324,11 +324,11 @@ if [[ -n $SE_MODE ]]; then
 			-n ${PREFIX} \
 			-B --SPMR \
 			2> $PEAKS_CALLING_DIR/${PREFIX}.callpeak.SPMR.log && \
-		macs2 bdgcmp -t $PEAKS_CALLING_DIR/${PREFIX}_treat_pileup.bdg -c $PEAKS_CALLING_DIR/${PREFIX}_control_lambda.bdg -o ${PEAKS_CALLING_DIR}/${PREFIX}.ppois.bdg -m ppois && \
+		macs2 bdgcmp -t $PEAKS_CALLING_DIR/${PREFIX}_treat_pileup.bdg -c $PEAKS_CALLING_DIR/${PREFIX}_control_lambda.bdg -o ${PEAKS_CALLING_DIR}/${PREFIX}.ppois.bdg -m ppois 1> ${PEAKS_CALLING_DIR}/${PREFIX}.ppois.stdout 2> ${PEAKS_CALLING_DIR}/${PREFIX}.ppois.stderr && \
 		bedGraphToBigWig ${PEAKS_CALLING_DIR}/${PREFIX}.ppois.bdg $CHROM $BW_OUTDIR/${PREFIX}.ppois.bigWig && \
-		macs2 bdgcmp -t $PEAKS_CALLING_DIR/${PREFIX}_treat_pileup.bdg -c $PEAKS_CALLING_DIR/${PREFIX}_control_lambda.bdg -o ${PEAKS_CALLING_DIR}/${PREFIX}.FE.bdg -m FE && \
+		macs2 bdgcmp -t $PEAKS_CALLING_DIR/${PREFIX}_treat_pileup.bdg -c $PEAKS_CALLING_DIR/${PREFIX}_control_lambda.bdg -o ${PEAKS_CALLING_DIR}/${PREFIX}.FE.bdg -m FE 1> ${PEAKS_CALLING_DIR}/${PREFIX}.FE.stdout 2> ${PEAKS_CALLING_DIR}/${PREFIX}.FE.stderr  && \
 		bedGraphToBigWig ${PEAKS_CALLING_DIR}/${PREFIX}.FE.bdg $CHROM $BW_OUTDIR/${PREFIX}.FE.bigWig && \
-		macs2 bdgcmp -t $PEAKS_CALLING_DIR/${PREFIX}_treat_pileup.bdg -c $PEAKS_CALLING_DIR/${PREFIX}_control_lambda.bdg -o ${PEAKS_CALLING_DIR}/${PREFIX}.logLR.bdg -m logLR -p 0.00001 && \
+		macs2 bdgcmp -t $PEAKS_CALLING_DIR/${PREFIX}_treat_pileup.bdg -c $PEAKS_CALLING_DIR/${PREFIX}_control_lambda.bdg -o ${PEAKS_CALLING_DIR}/${PREFIX}.logLR.bdg -m logLR -p 0.00001 1> ${PEAKS_CALLING_DIR}/${PREFIX}.logLR.stdout 2> ${PEAKS_CALLING_DIR}/${PREFIX}.logLR.stderr  && \
 		bedGraphToBigWig ${PEAKS_CALLING_DIR}/${PREFIX}.logLR.bdg $CHROM $BW_OUTDIR/${PREFIX}.logLR.bigWig && \
 	touch  .${JOBUID}.status.${STEP}.peak_calling_with_macs2
 else
@@ -343,11 +343,11 @@ else
 			-n ${PREFIX} \
 			-B --SPMR \
 			2> $PEAKS_CALLING_DIR/${PREFIX}.callpeak.SPMR.log && \
-		macs2 bdgcmp -t $PEAKS_CALLING_DIR/${PREFIX}_treat_pileup.bdg -c $PEAKS_CALLING_DIR/${PREFIX}_control_lambda.bdg -o ${PEAKS_CALLING_DIR}/${PREFIX}.ppois.bdg -m ppois && \
+		macs2 bdgcmp -t $PEAKS_CALLING_DIR/${PREFIX}_treat_pileup.bdg -c $PEAKS_CALLING_DIR/${PREFIX}_control_lambda.bdg -o ${PEAKS_CALLING_DIR}/${PREFIX}.ppois.bdg -m ppois 1> ${PEAKS_CALLING_DIR}/${PREFIX}.ppois.stdout 2> ${PEAKS_CALLING_DIR}/${PREFIX}.ppois.stderr && \
 		bedGraphToBigWig ${PEAKS_CALLING_DIR}/${PREFIX}.ppois.bdg $CHROM $BW_OUTDIR/${PREFIX}.ppois.bigWig && \
-		macs2 bdgcmp -t $PEAKS_CALLING_DIR/${PREFIX}_treat_pileup.bdg -c $PEAKS_CALLING_DIR/${PREFIX}_control_lambda.bdg -o ${PEAKS_CALLING_DIR}/${PREFIX}.FE.bdg -m FE && \
+		macs2 bdgcmp -t $PEAKS_CALLING_DIR/${PREFIX}_treat_pileup.bdg -c $PEAKS_CALLING_DIR/${PREFIX}_control_lambda.bdg -o ${PEAKS_CALLING_DIR}/${PREFIX}.FE.bdg -m FE 1> ${PEAKS_CALLING_DIR}/${PREFIX}.FE.stdout 2> ${PEAKS_CALLING_DIR}/${PREFIX}.FE.stderr && \
 		bedGraphToBigWig ${PEAKS_CALLING_DIR}/${PREFIX}.FE.bdg $CHROM $BW_OUTDIR/${PREFIX}.FE.bigWig && \
-		macs2 bdgcmp -t $PEAKS_CALLING_DIR/${PREFIX}_treat_pileup.bdg -c $PEAKS_CALLING_DIR/${PREFIX}_control_lambda.bdg -o ${PEAKS_CALLING_DIR}/${PREFIX}.logLR.bdg -m logLR -p 0.00001 && \
+		macs2 bdgcmp -t $PEAKS_CALLING_DIR/${PREFIX}_treat_pileup.bdg -c $PEAKS_CALLING_DIR/${PREFIX}_control_lambda.bdg -o ${PEAKS_CALLING_DIR}/${PREFIX}.logLR.bdg -m logLR -p 0.00001 1> ${PEAKS_CALLING_DIR}/${PREFIX}.logLR.stdout 2> ${PEAKS_CALLING_DIR}/${PREFIX}.logLR.stderr && \
 		bedGraphToBigWig ${PEAKS_CALLING_DIR}/${PREFIX}.logLR.bdg $CHROM $BW_OUTDIR/${PREFIX}.logLR.bigWig && \
 	touch  .${JOBUID}.status.${STEP}.peak_calling_with_macs2
 fi

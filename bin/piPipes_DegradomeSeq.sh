@@ -553,21 +553,24 @@ if [[ -n $PE_MODE ]]; then
 			bedtools_piPipes slop -b $RC_EXT -i stdin -g $CHROM | \
 			awk -v total_len=$((2*RC_EXT+1)) 'BEGIN{OFS="\t"}{ if ($3-$2==total_len) { $6=($6=="+"?"-":"+"); print $0} }' | \
 			bedtools_piPipes getfasta -fi $GENOME_FA -bed stdin -tab -s -fo /dev/stdout | cut -f2 | sort -u --temporary-directory=$INDEX_OUTDIR --parallel=$CPU >> $INDEX_OUTDIR/${PREFIX}.${t}.r1.RC.ext${RC_EXT}.unique.fa && \
-			bowtie2-build $INDEX_OUTDIR/${PREFIX}.${t}.r1.RC.ext${RC_EXT}.unique.fa $INDEX_OUTDIR/${PREFIX}.${t}.r1.RC.ext${RC_EXT}.unique 
+			bowtie2-build $INDEX_OUTDIR/${PREFIX}.${t}.r1.RC.ext${RC_EXT}.unique.fa $INDEX_OUTDIR/${PREFIX}.${t}.r1.RC.ext${RC_EXT}.unique  && \
+			rm -rf $INDEX_OUTDIR/${PREFIX}.${t}.r1.RC.ext${RC_EXT}.unique.fa
 		done && \
 	touch .${JOBUID}.status.${STEP}.generate_cleavage_strand_bowtie_index
 	
 else
-	[ ! -f .${JOBUID}.status.${STEP}.generate_cleavage_strand_bowtie_index ] && \
+	if [ ! -f .${JOBUID}.status.${STEP}.generate_cleavage_strand_bowtie_index ]; then
 		for t in ${TARGETS_SHORT[@]}; do \
 			echo ">${PREFIX}.${t}.ext$RC_EXT.RC" > $INDEX_OUTDIR/${PREFIX}.${t}.RC.ext${RC_EXT}.unique.fa && \
-			bedtools_piPipes intersect -wa -u -a ${BEDTOOLS_DIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.noS.all.bed12 -b ${!t} | \
+			bedtools_piPipes intersect -wa -u -a ${BEDTOOLS_DIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.noS.all.x_rpmk_MASK.bed12 -b ${!t} | \
 			awk 'BEGIN{OFS="\t"}{if ($6=="-"){$2=$3-1;} else {$3=$2+1;} print $0}' | \
 			bedtools_piPipes slop -b $RC_EXT -i stdin -g $CHROM | \
 			awk -v total_len=$((2*RC_EXT+1)) 'BEGIN{OFS="\t"}{ if ($3-$2==total_len) { $6=($6=="+"?"-":"+"); print $0} }' | \
-			bedtools_piPipes getfasta -fi $GENOME_FA -bed stdin -tab -s -fo /dev/stdout | cut -f2 | sort -u --temporary-directory=$INDEX_OUTDIR --parallel=$CPU >> $INDEX_OUTDIR/${PREFIX}.${t}.r1.RC.ext${RC_EXT}.unique.fa && \
-			bowtie2-build $INDEX_OUTDIR/${PREFIX}.${t}.r1.RC.ext${RC_EXT}.unique.fa $INDEX_OUTDIR/${PREFIX}.${t}.r1.RC.ext${RC_EXT}.unique
-		done && \
+			bedtools_piPipes getfasta -fi $GENOME_FA -bed stdin -tab -s -fo /dev/stdout | cut -f2 | sort -u --temporary-directory=$INDEX_OUTDIR --parallel=$CPU >> $INDEX_OUTDIR/${PREFIX}.${t}.RC.ext${RC_EXT}.unique.fa && \
+			bowtie2-build $INDEX_OUTDIR/${PREFIX}.${t}.RC.ext${RC_EXT}.unique.fa $INDEX_OUTDIR/${PREFIX}.${t}.RC.ext${RC_EXT}.unique && \
+			rm -rf $INDEX_OUTDIR/${PREFIX}.${t}.RC.ext${RC_EXT}.unique.fa
+		done
+	fi && \
 	touch .${JOBUID}.status.${STEP}.generate_cleavage_strand_bowtie_index
 fi
 STEP=$((STEP+1))
