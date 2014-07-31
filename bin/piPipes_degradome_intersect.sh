@@ -81,7 +81,7 @@ awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$9])) {printed
 awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$9])) {printed[$9]=1; if ($2>=ext_len) { for (i=1;i<=1;++i) { if ($6=="+") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}' ${bed}.intersect_with_${feature_name}.AS | bedtools_piPipes getfasta -fi $GENOME_FA -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${bed}.intersect_with_${feature_name}.species.5end_60.percentage.AS
 
 # if small RNA 
-if [ ! -z "$5" ] ; then 
+if [ -n "$5" ] ; then 
 	bedtools_piPipes intersect        -wa -u -f 0.5 -a $5   -b $feature_bed > ${5}.intersect_with_${feature_name} && \
 	bedtools_piPipes intersect -split -wa -u -f 0.5 -a $bed -b $feature_bed | awk 'BEGIN{FS=OFS="\t"}{print $1,$2,$3,int($5),1,$6}' > ${bed}.intersect_with_${feature_name} && \
 	piPipes_local_ping_pong -a ${5}.intersect_with_${feature_name} -b ${bed}.intersect_with_${feature_name} -p 1 > ${bed}.intersect_with_${feature_name}.pp.`basename $5`

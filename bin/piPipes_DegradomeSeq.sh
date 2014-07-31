@@ -140,7 +140,7 @@ export PDF_DIR=$OUTDIR/pdfs && mkdir -p $PDF_DIR
 READS_DIR=input_read_files && mkdir -p $READS_DIR 
 rRNA_DIR=rRNA_mapping && mkdir -p $rRNA_DIR
 GENOMIC_MAPPING_DIR=genome_mapping && mkdir -p $GENOMIC_MAPPING_DIR
-CUFFLINKS_DIR=cufflinks_output && mkdir -p $CUFFLINKS_DIR
+# CUFFLINKS_DIR=cufflinks_output && mkdir -p $CUFFLINKS_DIR
 HTSEQ_DIR=htseq_count && mkdir -p $HTSEQ_DIR
 BEDTOOLS_DIR=bedtools_count && mkdir -p $BEDTOOLS_DIR
 DIRECTMAPPING_DIR=gene_transposon_cluster_direct_mapping && mkdir -p $DIRECTMAPPING_DIR
@@ -379,7 +379,7 @@ echo2 "Making bigWig from sorted bam \1 reads without 5' soft-clipping"
 if [[ -n $PE_MODE ]]; then
 	[ ! -f .${JOBUID}.status.${STEP}.make_bigWig ] && \
 		samtools view -huf0x40 ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.bam | \
-		bedtools bamtobed -bed12 -tag NH -i - | \
+		bedtools_piPipes bamtobed -bed12 -tag NH -i - | \
 		awk 'BEGIN{FS=OFS="\t"}{ if ($5==1) print $0 > "/dev/stderr"; $4=1; $5=1.0/$5; print $0 > "/dev/stdout"}' \
 			2> ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.f0x40.noS.unique.bed12 | \
 		sort -k1,3 -k6,12 --parallel=$CPU --temporary-directory=${GENOMIC_MAPPING_DIR} | \
@@ -395,7 +395,7 @@ if [[ -n $PE_MODE ]]; then
 	STEP=$((STEP+1))
 else
 	[ ! -f .${JOBUID}.status.${STEP}.make_bigWig ] && \
-		bedtools bamtobed -bed12 -tag NH -i ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.bam | \
+		bedtools_piPipes bamtobed -bed12 -tag NH -i ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.bam | \
 		awk 'BEGIN{FS=OFS="\t"}{ if ($5==1) print $0 > "/dev/stderr"; $4=1; $5=1.0/$5; print $0 > "/dev/stdout"}' \
 			2> ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.noS.unique.bed12 | \
 		sort -k1,3 -k6,12 --parallel=$CPU --temporary-directory=${GENOMIC_MAPPING_DIR} | \
