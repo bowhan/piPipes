@@ -68,8 +68,16 @@ while getopts "hg:c:l:vD" OPTION; do
 		*)	usage && exit 1 ;;
 	esac
 done
-[[ -z $GENOME ]] && usage && echo2 "Missing option -g for version of genome assembly to install" "error"
+
 [ ! -z "${CPU##*[!0-9]*}" ] || CPU=8
+
+# use a different script for dm6
+if [[ "$GENOME" == "dm6" ]]; then 
+	echo2 "Installing new Drosophila melanogaster assembly 6" && bash $DEBUG piPipes_install_dm6.sh $CPU $DOWNLOAD_ONLY
+	exit
+fi
+
+[[ -z $GENOME ]] && usage && echo2 "Missing option -g for version of genome assembly to install" "error"
 mkdir -p $PIPELINE_DIRECTORY/common/$GENOME || echo2 "Cannot create directory $PIPELINE_DIRECTORY/common/$GENOME... Exiting..." "error"
 cd $PIPELINE_DIRECTORY/common/$GENOME || echo2 "Cannot access directory $PIPELINE_DIRECTORY/common/$GENOME... Exiting..." "error"
 
