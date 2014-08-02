@@ -27,7 +27,7 @@ function print_header {
 ###############
 #configuration#
 ###############
-GENOME_ALLMAP_BED2=$1 # genome wide alignment of all mappers, in bed2 format
+GENOME_ALLMAP_BED2=`readlink -f $1` # genome wide alignment of all mappers, in bed2 format
 SUMMARY_PREFIX=$2 # prefix to store the summary file
 smRNA_SUM=${SUMMARY_PREFIX}.smRNA.sum # summary for total small RNA
 siRNA_SUM=${SUMMARY_PREFIX}.siRNA.sum # summary for siRNA
@@ -41,7 +41,7 @@ ALL_BED=`basename ${GENOME_ALLMAP_BED2%bed2}x_rpmk_MASK.bed2` # names for the fi
 # get rid of tRNA, rRNA, snoRNA...
 if [ -z $MASK ]; then
     echo2 "undefined \$MASK. No masking will be done. If you would like to mask rRNA, tRNA, et al., please edit the $COMMON_FOLDER/genomic_features file." "warning"
-    ln -s $GENOME_ALLMAP_BED2 $INTERSECT_OUTDIR/${ALL_BED}
+    [ ! -s $INTERSECT_OUTDIR/${ALL_BED} ] && ln -s $GENOME_ALLMAP_BED2 $INTERSECT_OUTDIR/${ALL_BED}
     awk '{total[$7]=$4; if ($5==1) {unique_reads+=$4; ++unique_species}}END{for (seq in total) {all_reads+=total[seq]; ++all_species}; printf "%d\t%d\t%d\t%d\t", unique_reads, all_reads, unique_species, all_species}' $INTERSECT_OUTDIR/${ALL_BED} > $INTERSECT_OUTDIR/.stats
 else
     bedtools_piPipes intersect -v -wa -a $GENOME_ALLMAP_BED2 -b $MASK | \
