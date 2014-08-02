@@ -72,7 +72,7 @@ done
 [ ! -z "${CPU##*[!0-9]*}" ] || CPU=8
 
 # use a different script for dm6
-if [[ "$GENOME" == "dm6" ]]; then 
+if [[ "$GENOME" == "dm6" || "$GENOME" == "BDGP6" ]]; then 
 	echo2 "Installing new Drosophila melanogaster assembly 6" && bash $DEBUG piPipes_install_dm6.sh $CPU $DOWNLOAD_ONLY
 	exit
 fi

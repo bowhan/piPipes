@@ -182,7 +182,7 @@ echo2 "Building Bowtie/BWA index for repBase transposon annotation"
 # piRNA cluster indexes
 echo2 "Building Bowtie/BWA index for piRNA cluster"
 # TODO: annotate new piRNA cluster
-[ ! -s ${GENOME}.piRNAcluster.bed ] && ln -s Brennecke.piRNAcluster.bed6.gz ${GENOME}.piRNAcluster.bed
+[ ! -s ${GENOME}.piRNAcluster.bed ] && ln -s Brennecke.piRNAcluster.bed6 ${GENOME}.piRNAcluster.bed
 [ ! -s ${GENOME}.piRNAcluster.fa ] && bedtools_piPipes getfasta -fi ${GENOME}.fa -bed ${GENOME}.piRNAcluster.bed -fo ${GENOME}.piRNAcluster.fa -name -split -s
 [ ! -s BowtieIndex/piRNAcluster.sizes ] && bowtie-build ${GENOME}.piRNAcluster.fa BowtieIndex/piRNAcluster && faSize -tab -detailed ${GENOME}.piRNAcluster.fa > BowtieIndex/piRNAcluster.sizes
 
