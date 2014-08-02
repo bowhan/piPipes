@@ -1,26 +1,22 @@
 # variables for small RNA pipeline intersecting
 	# MASK=$COMMON_FOLDER/UCSC.rRNA+tRNA+nonCoding.bed6.gz # tRNA, rRNA, nonCoding RNA (flyBase) from UCSC table browser
-	piRNA_Cluster=$COMMON_FOLDER/Brennecke.piRNAcluster.bed6 # piRNA cluster defined in Brennecke, et al,. Cell, 2007; no strand information
-	piRNA_Cluster_42AB=$COMMON_FOLDER/Brennecke.piRNAcluster.42AB.bed6 # 42AB
-	piRNA_Cluster_20A=$COMMON_FOLDER/Brennecke.piRNAcluster.20A.bed6 # 20A
-	piRNA_Cluster_flam=$COMMON_FOLDER/Brennecke.piRNAcluster.flam.bed6 # flam
-	# repeatMasker=$COMMON_FOLDER/UCSC.RepeatMask.bed # repeatMakser obtained from UCSC
-	# repeatMasker_IN_Cluster=$COMMON_FOLDER/UCSC.RepeatMask.inCluster.bed.gz # repeat masker identified region that fall into piRNA cluster
-	# repeatMasker_OUT_Cluster=$COMMON_FOLDER/UCSC.RepeatMask.outCluster.bed.gz # repeat masker identified region that fall outside piRNA cluster
+	piRNA_Cluster=$COMMON_FOLDER/Brennecke.piRNAcluster.bed6.gz # piRNA cluster defined in Brennecke, et al,. Cell, 2007; no strand information
+	piRNA_Cluster_42AB=$COMMON_FOLDER/Brennecke.piRNAcluster.42AB.bed6.gz # 42AB
+	piRNA_Cluster_20A=$COMMON_FOLDER/Brennecke.piRNAcluster.20A.bed6.gz # 20A
+	piRNA_Cluster_flam=$COMMON_FOLDER/Brennecke.piRNAcluster.flam.bed6.gz # flam
+	repBase_repeatMasker=$COMMON_FOLDER/dm6.repBase.repeatMasker.bed.gz # 
+	flyBase_repeatMasker=$COMMON_FOLDER/dm6.flyBase.repeatMasker.bed.gz # 
 	# Trn=$COMMON_FOLDER/Zamore.transposon.bed.gz # transposon region used in Li, et al., Cell, 2009. More conserved than repeat masker
-	# Trn_IN_Cluster=$COMMON_FOLDER/Zamore.transposon.inCluster.bed.gz # transposon region in cluster
-	# Trn_OUT_Cluster=$COMMON_FOLDER/Zamore.transposon.outCluster.bed.gz # transposon region out cluster
 	# Trn_GROUP0=$COMMON_FOLDER/Zamore.transposon.group0.bed.gz # transposons that failed to pass threshold in Li, et al., Cell, 2009. More conserved than repeat masker
 	# Trn_GROUP1=$COMMON_FOLDER/Zamore.transposon.group1.bed.gz # group 1 transposon in Li, et al., Cell, 2009, mainly germline
 	# Trn_GROUP2=$COMMON_FOLDER/Zamore.transposon.group2.bed.gz # group 2 transposon in Li, et al., Cell, 2009
 	# Trn_GROUP3=$COMMON_FOLDER/Zamore.transposon.group3.bed.gz # group 3 transposon in Li, et al., Cell, 2009, mainly somatic
-	# flyBase_Gene=$COMMON_FOLDER/UCSC.flyBase.Genes.bed12.gz # flyBase gene
-	# flyBase_Exon=$COMMON_FOLDER/UCSC.flyBase.Exons.bed.gz # flyBase exons
-	# flyBase_Intron=$COMMON_FOLDER/UCSC.flyBase.Introns.bed.gz # flyBase introns
-	# flyBase_Intron_xRM=$COMMON_FOLDER/UCSC.flyBase.Introns_xRM.bed.gz  ## flyBase introns that subtract repeatMasker
-	# flyBase_5UTR=$COMMON_FOLDER/UCSC.flyBase.5UTR.bed.gz # flyBase 5' UTR
-	# flyBase_CDS=$COMMON_FOLDER/UCSC.flyBase.CDS.bed.gz # flyBase CDS
-	# flyBase_3UTR=$COMMON_FOLDER/UCSC.flyBase.3UTR.bed.gz # flyBase 3' UTR
+	Genes=$COMMON_FOLDER/dm6.genes.bed6.gz # = gene
+	Exons=$COMMON_FOLDER/dm6.exons.bed6.gz # = exons
+	Introns=$COMMON_FOLDER/dm6.introns.bed6.gz # = introns
+	FiveUTR=$COMMON_FOLDER/dm6.5UTR.bed6.gz # = 5' UTR
+	CDS=$COMMON_FOLDER/dm6.cds.bed6.gz # = CDS
+	ThreeUTR=$COMMON_FOLDER/dm6.3UTR.bed6.gz # = 3' UTR
 	# cisNATs=$COMMON_FOLDER/cisNATs.bed.gz # cis-NATs
 	# structural_loci=$COMMON_FOLDER/structured_loci.bed.gz # structural loci
 	# lincRNA=$COMMON_FOLDER/lincRNA.Young.bed6.gz # linc RNA identified in 'Identification and properties of 1,119 candidate lincRNA loci in the Drosophila melanogaster genome. Genome Biol Evol. 2012;4(4):427-42.'
@@ -30,50 +26,35 @@
 	"piRNA_Cluster_42AB" \
 	"piRNA_Cluster_20A" \
 	"piRNA_Cluster_flam" \
-	"repeatMasker" \
-	"repeatMasker_IN_Cluster" \
-	"repeatMasker_OUT_Cluster" \
-	"Trn" \
-	"Trn_IN_Cluster" \
-	"Trn_OUT_Cluster" \
-	"Trn_GROUP1" \
-	"Trn_GROUP2" \
-	"Trn_GROUP3" \
-	"Trn_GROUP0" \
-	"flyBase_Gene" \
-	"flyBase_Exon" \
-	"flyBase_Intron" \
-	"flyBase_Intron_xRM" \
-	"flyBase_5UTR" \
-	"flyBase_CDS" \
-	"flyBase_3UTR" \
-	"cisNATs" \
-	"structural_loci" \
-	"lincRNA" \
-	"unannotated" )
+	"repBase_repeatMasker" \
+	"flyBase_repeatMasker" \
+	"Genes" \
+	"Exons" \
+	"Introns" \
+	"FiveUTR" \
+	"CDS" \
+	"ThreeUTR" \
+ 	)
 
 	declare -a TARGETS_SHORT=( \
 	"piRNA_Cluster" \
 	"piRNA_Cluster_42AB" \
 	"piRNA_Cluster_20A" \
 	"piRNA_Cluster_flam" \
-	"repeatMasker" \
-	"Trn" \
-	"Trn_GROUP1" \
-	"Trn_GROUP2" \
-	"Trn_GROUP3" \
-	"Trn_GROUP0" \
-	"flyBase_Gene" \
-	"flyBase_Exon" \
-	"flyBase_Intron_xRM" \
-	"flyBase_5UTR" \
-	"flyBase_3UTR" \
-	"lincRNA" )
+	"repBase_repeatMasker" \
+	"flyBase_repeatMasker" \
+	"Genes" \
+	"Exons" \
+	"Introns" \
+	"FiveUTR" \
+	"CDS" \
+	"ThreeUTR" \
+ 	)
 	
 # variables for small RNA direct mapping
-	declare -a DIRECT_MAPPING=( "transposon" "repBase" "piRNAcluster" )
+	declare -a DIRECT_MAPPING=( "repBase" "piRNAcluster" )
 	
 # gtf files for rnaseq/deg/cage htseq-count
-	Genes_transposon_Cluster=$COMMON_FOLDER/dm3.genes+transposon+piRNACluster.gtf
-	Genes_repBase_Cluster=$COMMON_FOLDER/dm3.genes+repBase+piRNACluster.gtf
-	declare -a HTSEQ_TARGETS=( "Genes_transposon_Cluster" "Genes_repBase_Cluster" )
+	# Genes_transposon_Cluster=$COMMON_FOLDER/
+	# Genes_repBase_Cluster=$COMMON_FOLDER/
+	declare -a HTSEQ_TARGETS=( "" )
