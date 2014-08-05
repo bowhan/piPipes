@@ -7,10 +7,12 @@ A set of pipelines developed in the [Zamore Lab](http://www.umassmed.edu/zamore)
 
 In order to achieve a generic interface in terms of the genome assembles it supports, **piPipes** provides a installation pipeline to download ready-to-use genome annotation packages from [Illumina iGenome](https://support.illumina.com/sequencing/sequencing_software/igenome.ilmn) as well as [UCSC Genome Browser](http://genome.ucsc.edu/).			
 
-For *small RNA-Seq*, *RNA-Seq* and *ChIP-Seq* pipelines, **piPipes** provides two modes: `a single sample mode` and `dual sample mode`, to analyze single library and pair-wise comparison between two samples respectively. For *degradome-seq*, **piPipes** provide options to perform Ping-Pong analysis between degradome reads and small RNA reads.				
+For *small RNA-Seq*, *RNA-Seq* and *ChIP-Seq* pipelines, **piPipes** provides two modes: `single-sample mode` and `dual-sample mode`, to analyze single library and pair-wise comparison between two samples respectively. For *degradome-seq*, **piPipes** provide options to perform Ping-Pong analysis between degradome reads and small RNA reads.				
+
+
+Visit our [Wiki Page](https://github.com/bowhan/piPipes/wiki) for more details.
 
 ##INSTALL   
-
 ```bash
 # get piPipes code from github
 git clone https://github.com/bowhan/piPipes.git
@@ -135,7 +137,7 @@ ping-pong score, et al.,  are calculated and graphed. Some microRNA analysis is 
 In the dual sample mode, pair-wise comparison of miRNA and piRNAs will be done. We invented this balloon-plot to efficiently compare the heterogeneity of miRNA between two samples. piRNA for different transposon family is also compared. 
 For small RNA tailing analysis, please use [Tailor](http://jhhung.github.io/Tailor/) and its associated pipeline. It is currently not included in **piPipes**.			
 
-A more detailed explanation can be found [here](https://github.com/bowhan/piPipes/wiki/smallRNA).
+A more detailed explanation can be found [here](https://github.com/bowhan/piPipes/wiki/smallRNA-seq).
 
 ###*rnaseq* : RNASeq pipeline
 RNASeq pipeline can be used for both dUTR or ligation based RNASeq. 
@@ -145,7 +147,7 @@ also use HTSeq-count to quantify genomic features using coordinates. It also dir
 transcriptome, repbase annotated transposon, piRNA clusters using Bowtie2. Quantification 
 was done using eXpress. Library is normalized by gene transcriptome compatible reads, given by Cufflinks. Basic statistics and graphs will be given. 
 
-A more detailed explanation can be found [here](https://github.com/bowhan/piPipes/wiki/RNASeq).  
+A more detailed explanation can be found [here](https://github.com/bowhan/piPipes/wiki/RNA-seq).  
 
 ###*cage/deg* : CAGE & Degradome pipeline
 Both types of libraries are designed to gather the information of the 5' end of RNAs 
@@ -154,24 +156,25 @@ The pipeline will align reads to rRNA with bowtie2, genome using STAR.
 Different from RNASeq, this pipeline emphasizes the accuracy of the 5' ends. Nucleotide
 composition surrounding the 5' end of the reads are given, like in small RNA library.
 
-A more detailed explanation can be found [here](https://github.com/bowhan/piPipes/wiki/DegradomeSeq).
+A more detailed explanation can be found [here](https://github.com/bowhan/piPipes/wiki/Degradome-seq).
 
 ###*chip* : ChIP-Seq pipeline
 ChIP Seq pipeline aligns both input and ChIP data to genome with Bowtie2. Peak calling was done
 using MASC2. Signal is normalized in three different methods (ppois, FE and logLR). TSS/TES/meta plots are drawn using bwtool. In the dual-sample mode, peak calling is redone for each sample without inter-library normalization, by differential peak calling algorithm of MACS2 directly. TSS/TES/meta plots are drawn for those loci using the normalized signal. 
 
-A more detailed explanation can be found [here](https://github.com/bowhan/piPipes/wiki/ChIPSeq). 
+A more detailed explanation can be found [here](https://github.com/bowhan/piPipes/wiki/ChIP-seq). 
 
 ###*dna* : Genomic Seq pipeline
 Genomic Seq pipelines aligns the paired-end reads to genome with Bowtie2, BWA-MEM and mrFast. Variations
 were called using different algorithms. 
 
-A more detailed explanation can be found [here](https://github.com/bowhan/piPipes/wiki/GenomeSeq).
+A more detailed explanation can be found [here](https://github.com/bowhan/piPipes/wiki/Genome-seq).
 
 ##CITATION
 * in preparation
 
 ##CONTACT
+	
     Wei Wang (wei.wang2 `at` umassmed.edu)
     Bo W Han (bo.han `at` umassmed.edu, bowhan `at` me.com)
     
