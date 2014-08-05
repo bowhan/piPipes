@@ -38,7 +38,9 @@
 
 <p>In order to achieve a generic interface in terms of the genome assembles it supports, <strong>piPipes</strong> provides a installation pipeline to download ready-to-use genome annotation packages from <a href="https://support.illumina.com/sequencing/sequencing_software/igenome.ilmn">Illumina iGenome</a> as well as <a href="http://genome.ucsc.edu/">UCSC Genome Browser</a>.         </p>
 
-<p>For <em>small RNA-Seq</em>, <em>RNA-Seq</em> and <em>ChIP-Seq</em> pipelines, <strong>piPipes</strong> provides two modes: <code>a single sample mode</code> and <code>dual sample mode</code>, to analyze single library and pair-wise comparison between two samples respectively. For <em>degradome-seq</em>, <strong>piPipes</strong> provide options to perform Ping-Pong analysis between degradome reads and small RNA reads.                </p>
+<p>For <em>small RNA-Seq</em>, <em>RNA-Seq</em> and <em>ChIP-Seq</em> pipelines, <strong>piPipes</strong> provides two modes: <code>single-sample mode</code> and <code>dual-sample mode</code>, to analyze single library and pair-wise comparison between two samples respectively. For <em>degradome-seq</em>, <strong>piPipes</strong> provide options to perform Ping-Pong analysis between degradome reads and small RNA reads.              </p>
+
+<p>Visit our <a href="https://github.com/bowhan/piPipes/wiki">Wiki Page</a> for more details.</p>
 
 <h2>
 <a name="install" class="anchor" href="#install"><span class="octicon octicon-link"></span></a>INSTALL</h2>
@@ -104,54 +106,55 @@ Most of <strong>piPipes's</strong> C++ code utilizes <em>C++11</em> features and
 <span class="c"># to run small RNA pipeline in dual library mode (need single sample mode output for each sample first)</span>
 <span class="nv">$PATH_TO_piPipes</span>/piPipes    small2 -a directory_A -b directory_B -g dm3 -c 24
 <span class="c"># to run small RNA pipeline in dual library mode, normalized to miRNA </span>
-<span class="nv">$PATH_TO_piPipes</span>/piPipes    small2 -a directory_A -b directory_B -g dm3 -c 24 -N miRNA
+<span class="nv">$PATH_TO_piPipes</span>/piPipes    small2 -a directory_A -b directory_B -g dm3 -c <span class="m">24</span> -N miRNA
 <span class="c"># to run small RNA pipeline in dual library mode, normalized to siRNA (structural loci and cis-NATs), for oxidation sample of -fruitfly only-</span>
-<span class="nv">$PATH_TO_piPipes</span>/piPipes    small2 -a directory_A -b directory_B -g dm3 -c 24 -N siRNA
+<span class="nv">$PATH_TO_piPipes</span>/piPipes    small2 -a directory_A -b directory_B -g dm3 -c <span class="m">24</span> -N siRNA
 
 <span class="c"># to run RNASeq pipeline in single sample mode, dUTP based method</span>
-<span class="nv">$PATH_TO_piPipes</span>/piPipes    rnaseq -l left.fq -r right.fq -g mm9 -c 8 -o output_dir
+<span class="nv">$PATH_TO_piPipes</span>/piPipes    rnaseq -l left.fq -r right.fq -g mm9 -c <span class="m">8</span> -o output_dir
 
 <span class="c"># to run RNASeq pipeline in single sample mode, ligation based method</span>
-<span class="nv">$PATH_TO_piPipes</span>/piPipes    rnaseq -l left.fq -r right.fq -g mm9 -c 8 -o output_dir -L
+<span class="nv">$PATH_TO_piPipes</span>/piPipes    rnaseq -l left.fq -r right.fq -g mm9 -c <span class="m">8</span> -o output_dir -L
 
 <span class="c"># to run RNASeq pipeline in dual library mode (need single sample mode been ran for each sample first)</span>
-<span class="nv">$PATH_TO_piPipes</span>/piPipes    rnaseq2 -a directory_A -b directory_B -g mm9 -c 8 -o output_dir -A w1 -B piwi
+<span class="nv">$PATH_TO_piPipes</span>/piPipes    rnaseq2 -a directory_A -b directory_B -g mm9 -c <span class="m">8</span> -o output_dir -A w1 -B piwi
 
 <span class="c"># to run RNASeq pipeline in dual library mode with replicates</span>
-<span class="nv">$PATH_TO_piPipes</span>/piPipes    rnaseq2 -a directory_A_rep1,directory_A_rep2,directory_A_rep3 -b directory_B_rep1,directory_B_rep2 -g mm9 -c 8 -o output_dir -A w1 -B piwi
+<span class="nv">$PATH_TO_piPipes</span>/piPipes    rnaseq2 -a directory_A_rep1,directory_A_rep2,directory_A_rep3 -b directory_B_rep1,directory_B_rep2 -g mm9 -c <span class="m">8</span> -o output_dir -A w1 -B piwi
 
 <span class="c"># to run Degradome/RACE/CAGE-Seq library </span>
-<span class="nv">$PATH_TO_piPipes</span>/piPipes    deg -l left.fq -r right.fq -g dm3 -c 12 -o output_dir
+<span class="nv">$PATH_TO_piPipes</span>/piPipes    deg -l left.fq -r right.fq -g dm3 -c <span class="m">12</span> -o output_dir
 
 <span class="c"># to run Degradome library to check ping-pong signature with a small RNA library (need the small RNA library ran first)</span>
-<span class="nv">$PATH_TO_piPipes</span>/piPipes    deg -l left.fq -r right.fq -g dm3 -c 12 -o output_dir -s /path/to/small_RNA_library_output
+<span class="nv">$PATH_TO_piPipes</span>/piPipes    deg -l left.fq -r right.fq -g dm3 -c <span class="m">12</span> -o output_dir -s /path/to/small_RNA_library_output
 
 <span class="c"># to run ChIP Seq library in single sample mode, for narrow peak, like transcriptional factor</span>
-<span class="nv">$PATH_TO_piPipes</span>/piPipes    chip -l left.IP.fq -r right.IP.fq -L left.INPUT.fq -R right.INPUT.fq -g mm9 -c 8 -o output_dir
+<span class="nv">$PATH_TO_piPipes</span>/piPipes    chip -l left.IP.fq -r right.IP.fq -L left.INPUT.fq -R right.INPUT.fq -g mm9 -c <span class="m">8</span> -o output_dir
 
 <span class="c"># to run ChIP Seq library in single sample mode, for broad peak, like H3K9me3</span>
-<span class="nv">$PATH_TO_piPipes</span>/piPipes    chip -l left.IP.fq -r right.IP.fq -L left.INPUT.fq -R right.INPUT.fq -g mm9 -c 8 -o output_dir -B
+<span class="nv">$PATH_TO_piPipes</span>/piPipes    chip -l left.IP.fq -r right.IP.fq -L left.INPUT.fq -R right.INPUT.fq -g mm9 -c <span class="m">8</span> -o output_dir -B
 
 <span class="c"># to run ChIP Seq library in single sample mode, only use unique mappers (otherwise Bowtie2 randomly choose one best alignment for each read)</span>
-<span class="nv">$PATH_TO_piPipes</span>/piPipes    chip -l left.IP.fq -r right.IP.fq -L left.INPUT.fq -R right.INPUT.fq -g mm9 -c 8 -o output_dir -Q 10
+<span class="nv">$PATH_TO_piPipes</span>/piPipes    chip -l left.IP.fq -r right.IP.fq -L left.INPUT.fq -R right.INPUT.fq -g mm9 -c <span class="m">8</span> -o output_dir -Q 10
 
 <span class="c"># to run ChIP Seq library in single sample mode with Single-End library</span>
 <span class="nv">$PATH_TO_piPipes</span>/piPipes    chip -i IP.fq  -I input.fq  -g dm3
 
 <span class="c"># to run ChIP Seq library in dual library mode (need single sample mode been ran for each sample first)</span>
-<span class="nv">$PATH_TO_piPipes</span>/piPipes    chip2 -a directory_A -b directory_B -g mm9 -c 8 -o output_dir
+<span class="nv">$PATH_TO_piPipes</span>/piPipes    chip2 -a directory_A -b directory_B -g mm9 -c <span class="m">8</span> -o output_dir
 
 <span class="c"># to run ChIP Seq library in dual sample mode, extend up/down stream 5000 bp for TSS/TES/meta analysis (for bwtool)</span>
-<span class="nv">$PATH_TO_piPipes</span>/piPipes    chip2 -a directory_A -b directory_B -g mm9 -c 8 -o output_dir -x 5000
+<span class="nv">$PATH_TO_piPipes</span>/piPipes    chip2 -a directory_A -b directory_B -g mm9 -c <span class="m">8</span> -o output_dir -x 5000
 
 <span class="c"># to run Genome Seq library</span>
-<span class="nv">$PATH_TO_piPipes</span>/piPipes    dna -l left.fq -r right.fq -g dm3 -c 24 -D 100
+<span class="nv">$PATH_TO_piPipes</span>/piPipes    dna -l left.fq -r right.fq -g dm3 -c <span class="m">24</span> -D 100
 </pre></div>
 
 <p>Find more detailed information on <a href="https://github.com/bowhan/piPipes/wiki">Wiki</a></p>
 
 <h3>
-<a name="install--to-install-genome-assembly" class="anchor" href="#install--to-install-genome-assembly"><span class="octicon octicon-link"></span></a><em>install</em> : to install genome assembly</h3>
+<a name="install--to-install-genome-assembly" class="anchor" href="#install--to-install-genome-assembly"><span class="octicon octicon-link"></span></a>
+<em>install</em> : to install genome assembly</h3>
 
 <p>Due to the limitation on the size of file by github, piPipes doesn't ship with the genome sequences and annotation. Alternatively, we provide scrips to download genome assemly files from iGenome project of illumina. Please make sure internet is available during this process.  <strong>piPipes</strong> provides an option to separate downloading from other processes, in case the machine/node with internet access is not appropriate for building index and other works.<br>
 Except for the genome, this pipeline will also install unavailable R packages under the pipeline directory. The downloading and installation can be separated using -D option, in case the head node is not supposed to be used for heavy computational work, like building indexes.<br>
@@ -160,7 +163,8 @@ Currently, <strong>piPipes</strong> comes with annotation files for <em>Drosophi
 <p>A more detailed explanation can be found <a href="https://github.com/bowhan/piPipes/wiki/installation">here</a>.  </p>
 
 <h3>
-<a name="small--small-rna-pipeline" class="anchor" href="#small--small-rna-pipeline"><span class="octicon octicon-link"></span></a><em>small</em> : small RNA pipeline</h3>
+<a name="small--small-rna-pipeline" class="anchor" href="#small--small-rna-pipeline"><span class="octicon octicon-link"></span></a>
+<em>small</em> : small RNA pipeline</h3>
 
 <p>small RNA library typically clones 18–40nt small RNAs, including miRNA, siRNA and 
 piRNA. This pipeline maps those reads to rRNA, microRNA hairpin, genome, repbase 
@@ -168,12 +172,13 @@ annotated  transposons, piRNA clusters with bowtie and uses bedtools to assign
 them to different annotations. For each feature, length distribution, nucleotide percentage, 
 ping-pong score, et al.,  are calculated and graphed. Some microRNA analysis is also included. 
 In the dual sample mode, pair-wise comparison of miRNA and piRNAs will be done. We invented this balloon-plot to efficiently compare the heterogeneity of miRNA between two samples. piRNA for different transposon family is also compared. 
-For small RNA tailing analysis, please use <a href="http://jhhung.github.io/Tailor/">Tailor</a> and its associated pipeline. It is current not included in <strong>piPipes</strong>.            </p>
+For small RNA tailing analysis, please use <a href="http://jhhung.github.io/Tailor/">Tailor</a> and its associated pipeline. It is currently not included in <strong>piPipes</strong>.          </p>
 
-<p>A more detailed explanation can be found <a href="https://github.com/bowhan/piPipes/wiki/smallRNA">here</a>.</p>
+<p>A more detailed explanation can be found <a href="https://github.com/bowhan/piPipes/wiki/smallRNA-seq">here</a>.</p>
 
 <h3>
-<a name="rnaseq--rnaseq-pipeline" class="anchor" href="#rnaseq--rnaseq-pipeline"><span class="octicon octicon-link"></span></a><em>rnaseq</em> : RNASeq pipeline</h3>
+<a name="rnaseq--rnaseq-pipeline" class="anchor" href="#rnaseq--rnaseq-pipeline"><span class="octicon octicon-link"></span></a>
+<em>rnaseq</em> : RNASeq pipeline</h3>
 
 <p>RNASeq pipeline can be used for both dUTR or ligation based RNASeq. 
 It uses bowtie2 to aligns paired-end reads to rRNA and STAR[4] to align the unmapped reads 
@@ -182,10 +187,11 @@ also use HTSeq-count to quantify genomic features using coordinates. It also dir
 transcriptome, repbase annotated transposon, piRNA clusters using Bowtie2. Quantification 
 was done using eXpress. Library is normalized by gene transcriptome compatible reads, given by Cufflinks. Basic statistics and graphs will be given. </p>
 
-<p>A more detailed explanation can be found <a href="https://github.com/bowhan/piPipes/wiki/RNASeq">here</a>.  </p>
+<p>A more detailed explanation can be found <a href="https://github.com/bowhan/piPipes/wiki/RNA-seq">here</a>.  </p>
 
 <h3>
-<a name="cagedeg--cage--degradome-pipeline" class="anchor" href="#cagedeg--cage--degradome-pipeline"><span class="octicon octicon-link"></span></a><em>cage/deg</em> : CAGE &amp; Degradome pipeline</h3>
+<a name="cagedeg--cage--degradome-pipeline" class="anchor" href="#cagedeg--cage--degradome-pipeline"><span class="octicon octicon-link"></span></a>
+<em>cage/deg</em> : CAGE &amp; Degradome pipeline</h3>
 
 <p>Both types of libraries are designed to gather the information of the 5' end of RNAs 
 CAGE clones RNAs with Cap and Degradome clones RNAs with 5' monophosphate. 
@@ -193,23 +199,25 @@ The pipeline will align reads to rRNA with bowtie2, genome using STAR.
 Different from RNASeq, this pipeline emphasizes the accuracy of the 5' ends. Nucleotide
 composition surrounding the 5' end of the reads are given, like in small RNA library.</p>
 
-<p>A more detailed explanation can be found <a href="https://github.com/bowhan/piPipes/wiki/DegradomeSeq">here</a>.</p>
+<p>A more detailed explanation can be found <a href="https://github.com/bowhan/piPipes/wiki/Degradome-seq">here</a>.</p>
 
 <h3>
-<a name="chip--chip-seq-pipeline" class="anchor" href="#chip--chip-seq-pipeline"><span class="octicon octicon-link"></span></a><em>chip</em> : ChIP-Seq pipeline</h3>
+<a name="chip--chip-seq-pipeline" class="anchor" href="#chip--chip-seq-pipeline"><span class="octicon octicon-link"></span></a>
+<em>chip</em> : ChIP-Seq pipeline</h3>
 
 <p>ChIP Seq pipeline aligns both input and ChIP data to genome with Bowtie2. Peak calling was done
 using MASC2. Signal is normalized in three different methods (ppois, FE and logLR). TSS/TES/meta plots are drawn using bwtool. In the dual-sample mode, peak calling is redone for each sample without inter-library normalization, by differential peak calling algorithm of MACS2 directly. TSS/TES/meta plots are drawn for those loci using the normalized signal. </p>
 
-<p>A more detailed explanation can be found <a href="https://github.com/bowhan/piPipes/wiki/ChIPSeq">here</a>. </p>
+<p>A more detailed explanation can be found <a href="https://github.com/bowhan/piPipes/wiki/ChIP-seq">here</a>. </p>
 
 <h3>
-<a name="dna--genomic-seq-pipeline" class="anchor" href="#dna--genomic-seq-pipeline"><span class="octicon octicon-link"></span></a><em>dna</em> : Genomic Seq pipeline</h3>
+<a name="dna--genomic-seq-pipeline" class="anchor" href="#dna--genomic-seq-pipeline"><span class="octicon octicon-link"></span></a>
+<em>dna</em> : Genomic Seq pipeline</h3>
 
 <p>Genomic Seq pipelines aligns the paired-end reads to genome with Bowtie2, BWA-MEM and mrFast. Variations
 were called using different algorithms. </p>
 
-<p>A more detailed explanation can be found <a href="https://github.com/bowhan/piPipes/wiki/GenomeSeq">here</a>.</p>
+<p>A more detailed explanation can be found <a href="https://github.com/bowhan/piPipes/wiki/Genome-seq">here</a>.</p>
 
 <h2>
 <a name="citation" class="anchor" href="#citation"><span class="octicon octicon-link"></span></a>CITATION</h2>
@@ -256,6 +264,16 @@ Bo W Han (bo.han `at` umassmed.edu, bowhan `at` me.com)
       <p>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></p>
     </footer>
     <!--[if !IE]><script>fixScale(document);</script><![endif]-->
-    
+              <script type="text/javascript">
+            var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+            document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+          </script>
+          <script type="text/javascript">
+            try {
+              var pageTracker = _gat._getTracker("UA-53524033-1");
+            pageTracker._trackPageview();
+            } catch(err) {}
+          </script>
+
   </body>
 </html>
