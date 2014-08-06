@@ -30,30 +30,30 @@ cat << EOF
 
 Degradome Seq pipeline single library mode v$DEG_VERSION from the $BOLD$PACKAGE_NAME$RESET
 $CAGE_DEG_INTRO${RESET}
-Please email $CONTACT_EMAILS for any questions or bugs. 
-Thank you for using it. 
+Please email $CONTACT_EMAILS for any questions or bugs.
+Thank you for using it.
 
 ==================< paired-end >==================
 	${UNDERLINE}usage${RESET}:
-		piPipes deg \ 
-			-l left.fq \ 
-			-r right.fq \ 
-			-g dm3 \ 
-			-s small_RNA_pipeline_output \ 
-			-o output_directory [current directory] \ 
-			-c cpu [8] 
-In paired-end mode, \1 should be in the same direction as the transcripts, opposite to dUTR based RNASeq. 
+		piPipes deg \
+			-l left.fq \
+			-r right.fq \
+			-g dm3 \
+			-s small_RNA_pipeline_output \
+			-o output_directory [current directory] \
+			-c cpu [8]
+In paired-end mode, \1 should be in the same direction as the transcripts, opposite to dUTR based RNASeq.
 
 ==================< single-end >==================
 	${UNDERLINE}usage${RESET}:
-		piPipes deg \ 
-			-i input.fq \ 
-			-g dm3 \ 
-			-s small_RNA_pipeline_output \ 
-			-o output_directory [current directory] \ 
-			-c cpu [8] 
+		piPipes deg \
+			-i input.fq \
+			-g dm3 \
+			-s small_RNA_pipeline_output \
+			-o output_directory [current directory] \
+			-c cpu [8]
 
-In single-end mode, the sequence should be in the same direction as the RNA. 
+In single-end mode, the sequence should be in the same direction as the RNA.
 
 OPTIONS:
 	-h      Show this message
@@ -64,15 +64,15 @@ ${REQUIRED}[ required ]
 	-r      Right reads from Paired-End sequencing
 ========================< single-end >========================
 	-i      Input reads, Single-End sequencing
-	
+
 	-g      Genome assembly name, like mm9 or dm3. required
-		 Check $PIPELINE_DIRECTORY/common/genome_supported.txt for genome assemblies currently installed; 
+		 Check $PIPELINE_DIRECTORY/common/genome_supported.txt for genome assemblies currently installed;
 		 Use "install" to install new genome
 ${OPTIONAL}[ optional ]
 	-s      small RNA pipeline output; if this option is provided, the pipeline check the Ping-Pong signiture between the two libraries.
 	-o      Output directory, default: current directory $PWD
 	-c      Number of CPUs to use, default: 8
-	
+
 
 EOF
 echo -e "${COLOR_END}"
@@ -101,16 +101,16 @@ if [[ -n $PE_MODE && -n $SE_MODE ]]; then usage ; echo2 "Please only choose sing
 
 # if INPUT_FASTQ or GENOME is undefined, print out usage and exit
 if [[ -n $PE_MODE ]]; then
-	[[ -z $LEFT_FASTQ ]] && usage && echo2 "Missing option -l for input fastq of left file, or file does not exist " "error" 
-	[[ -z $RIGHT_FASTQ ]] && usage && echo2 "Missing option -r for input fastq of right file, or file does not exist " "error" 
+	[[ -z $LEFT_FASTQ ]] && usage && echo2 "Missing option -l for input fastq of left file, or file does not exist " "error"
+	[[ -z $RIGHT_FASTQ ]] && usage && echo2 "Missing option -r for input fastq of right file, or file does not exist " "error"
 	[ ! -f $LEFT_FASTQ ] && echo2 "Cannot find input file $LEFT_FASTQ" "error"
 	[ ! -f $RIGHT_FASTQ ] && echo2 "Cannot find input file $RIGHT_FASTQ" "error"
 fi
 if [[ -n $SE_MODE ]]; then
-	[[ -z $INPUT_FASTQ ]] && usage && echo2 "Missing option -i for input fastq, or file does not exist " "error" 
+	[[ -z $INPUT_FASTQ ]] && usage && echo2 "Missing option -i for input fastq, or file does not exist " "error"
 	[ ! -f $INPUT_FASTQ ] && echo2 "Cannot find input file $INPUT_FASTQ" "error"
 fi
-[[ -z $GENOME ]]  && usage && echo2 "Missing option -g for specifying which genome assembly to use" "error" 
+[[ -z $GENOME ]]  && usage && echo2 "Missing option -g for specifying which genome assembly to use" "error"
 
 # check whether the this genome is supported or not
 check_genome $GENOME
@@ -130,14 +130,14 @@ if [ ! -z "$SRA_LIB_DIR" ]; then
 fi
 
 # degradome options
-SENSE_HTSEQ_OPT="yes"; 
-ANTISENSE_HTSEQ_OPT="reverse"; 
-	
+SENSE_HTSEQ_OPT="yes";
+ANTISENSE_HTSEQ_OPT="reverse";
+
 #################################
 # creating output files/folders #
 #################################
 export PDF_DIR=$OUTDIR/pdfs && mkdir -p $PDF_DIR
-READS_DIR=input_read_files && mkdir -p $READS_DIR 
+READS_DIR=input_read_files && mkdir -p $READS_DIR
 rRNA_DIR=rRNA_mapping && mkdir -p $rRNA_DIR
 GENOMIC_MAPPING_DIR=genome_mapping && mkdir -p $GENOMIC_MAPPING_DIR
 # CUFFLINKS_DIR=cufflinks_output && mkdir -p $CUFFLINKS_DIR
@@ -206,12 +206,12 @@ export BOWTIE2_INDEXES=$COMMON_FOLDER/Bowtie2Index
 # STAR index for the genome
 STARINDEX=$COMMON_FOLDER/STARIndex
 # number of nucleotide to extend for small RNA mapping to degradome
-RC_EXT=200 
+RC_EXT=200
 ##############################
 # beginning running pipeline #
 ##############################
 echo2 "---------------------------------------------------------------------------------"
-echo2 "Beginning running [${PACKAGE_NAME}] Degradome-Seq pipeline version $DEG_VERSION" 
+echo2 "Beginning running [${PACKAGE_NAME}] Degradome-Seq pipeline version $DEG_VERSION"
 
 ###########################
 # determine fastQ version #
@@ -342,10 +342,10 @@ UniquReads=`grep 'Uniquely mapped reads number' $GENOMIC_MAPPING_DIR/${PREFIX}.x
 MultiReads=`grep 'Number of reads mapped to multiple loci' $GENOMIC_MAPPING_DIR/${PREFIX}.x_rRNA.${GENOME}.Log.final.out | awk '{print $NF}'`
 AllMapReads=$((UniquReads+MultiReads))
 UnMapReads=$((InputReads-UniquReads-MultiReads))
-echo -e "genomie_mapper_reads:\t${AllMapReads}" >> $TABLE
-echo -e "genomie_unique_mapper_reads:\t${UniquReads}" >> $TABLE
-echo -e "genomie_multiple_mapper_reads:\t${MultiReads}" >> $TABLE
-echo -e "genomie_unmappable_reads:\t${UnMapReads}" >> $TABLE
+echo -e "genome_mapper_reads:\t${AllMapReads}" >> $TABLE
+echo -e "genome_unique_mapper_reads:\t${UniquReads}" >> $TABLE
+echo -e "genome_multiple_mapper_reads:\t${MultiReads}" >> $TABLE
+echo -e "genome_unmappable_reads:\t${UnMapReads}" >> $TABLE
 NormScale=`echo ${UniquReads} | awk '{printf "%f",1000000.0/$1}'`
 
 #######################
@@ -374,7 +374,7 @@ STEP=$((STEP+1))
 # Making bigWig for Genome Browser #
 ####################################
 # in order to make bigWig for unique mappers, we need to reverse the strand of one of the end
-# we only takes the \1 from the bam 
+# we only takes the \1 from the bam
 echo2 "Making bigWig from sorted bam \1 reads without 5' soft-clipping"
 if [[ -n $PE_MODE ]]; then
 	[ ! -f .${JOBUID}.status.${STEP}.make_bigWig ] && \
@@ -491,7 +491,7 @@ if [[ -n $PE_MODE ]]; then
 		1>&2 2> $DIRECTMAPPING_DIR/${PREFIX}.gene+cluster+repBase.eXpress.log && \
 	touch .${JOBUID}.status.${STEP}.eXpress_quantification
 	STEP=$((STEP+1))
-else 
+else
 	[ ! -f .${JOBUID}.status.${STEP}.direct_mapping ] && \
 	bowtie2 -x gene+cluster+repBase \
 		-U $xrRNA_FQ \
@@ -557,7 +557,7 @@ if [[ -n $PE_MODE ]]; then
 			rm -rf $INDEX_OUTDIR/${PREFIX}.${t}.r1.RC.ext${RC_EXT}.unique.fa
 		done && \
 	touch .${JOBUID}.status.${STEP}.generate_cleavage_strand_bowtie_index
-	
+
 else
 	if [ ! -f .${JOBUID}.status.${STEP}.generate_cleavage_strand_bowtie_index ]; then
 		for t in ${TARGETS_SHORT[@]}; do \
@@ -575,7 +575,7 @@ else
 fi
 STEP=$((STEP+1))
 
-if [ -n $SRA_ALL_BED2 ]; then 
+if [ -n $SRA_ALL_BED2 ]; then
 	if [[ -n $PE_MODE ]]; then
 		SMRNA_ID=`echo $SRA_ALL_BED2 | md5sum | cut -d" " -f1`
 		echo2 "Map corresponding small RNA to the degradome index"
@@ -597,7 +597,7 @@ if [ -n $SRA_ALL_BED2 ]; then
 				$SMRNA_MAP_DIR/`basename $SRA_ALL_BED2`.map_to.${PREFIX}.reads.5end && \
 			touch .${JOBUID}.status.${STEP}.map_smRNA_to_deg_index_$SMRNA_ID
 		STEP=$((STEP+1))
-		
+
 		echo2 "Map corresponding small RNA to the the extended degradome index"
 		[ ! -f .${JOBUID}.status.${STEP}.map_smRNA_to_degRC_index_$SMRNA_ID ] && \
 			for t in ${TARGETS_SHORT[@]}; do \
@@ -642,7 +642,7 @@ if [ -n $SRA_ALL_BED2 ]; then
 				$SMRNA_MAP_DIR/`basename $SRA_ALL_BED2`.map_to.${PREFIX}.reads.5end && \
 			touch .${JOBUID}.status.${STEP}.map_smRNA_to_deg_index_$SMRNA_ID
 		STEP=$((STEP+1))
-		
+
 		echo2 "Map corresponding small RNA to the the extended degradome index"
 		[ ! -f .${JOBUID}.status.${STEP}.map_smRNA_to_degRC_index_$SMRNA_ID ] && \
 			for t in ${TARGETS_SHORT[@]}; do \

@@ -30,19 +30,19 @@ cat << EOF
 
 small RNA Seq pipeline single library mode v$SMALLRNA_VERSION from the $BOLD$PACKAGE_NAME$RESET
 $SMALLRNA_INTRO${RESET}
-Please email $CONTACT_EMAILS for any questions or bugs. 
-Thank you for using it. 
+Please email $CONTACT_EMAILS for any questions or bugs.
+Thank you for using it.
 
 ${UNDERLINE}usage${RESET}:
-	piPipes small \ 
-		-i input.fq[.gz] \ 
-		-g dm3 \ 
-		-N uniqueXmiRNA [unique] \ 
-		-o output_directory [current working directory] \ 
-		-c cpu [8] \ 
-		-P miniwhite.fa \ 
+	piPipes small \
+		-i input.fq[.gz] \
+		-g dm3 \
+		-N uniqueXmiRNA [unique] \
+		-o output_directory [current working directory] \
+		-c cpu [8] \
+		-P miniwhite.fa \
 		-O gfp.fa,luciferase.fa
-			
+
 OPTIONS:
 	-h      Show this message
 	-v      Print out the version
@@ -50,7 +50,7 @@ ${REQUIRED}[ required ]
 	-i      Input file in fastq or gzipped fastq format; Needs adaptor and barcode removed
 		 Since this small RNA pipeline does not consider quality, we strongly recommend a quality filtering step.
 	-g      Genome assembly name, like mm9 or dm3
-		 Check "$PIPELINE_DIRECTORY/common/genome_supported.txt" for genome assemblies currently installed; 
+		 Check "$PIPELINE_DIRECTORY/common/genome_supported.txt" for genome assemblies currently installed;
 		 Use "install" to install new genome
 ${OPTIONAL}[ optional ]
 	-N      Normalization method, choose from " input | rRNA | unique | uniqueXmiRNA | all | allXmiRNA | miRNA "
@@ -59,7 +59,7 @@ ${OPTIONAL}[ optional ]
 	 	 rRNA:	use the number of reads mapped to rRNA.
 	 	 uniqueXmiRNA:	use non-rRNA genomic unique mappers excluding microRNAs <for oxidized library for piRNA mutant>.
 	 	 all:	use non-rRNA genomic all mappers including microRNAs.
-	 	 allXmiRNA:	use non-rRNA genomic all mappers excluding microRNAs. 
+	 	 allXmiRNA:	use non-rRNA genomic all mappers excluding microRNAs.
 	 	 miRNA:	use microRNAs. normalized to: reads per millions of miRNA <for unoxidized library for piRNA mutant>.
 		 *Different normalization methods, including "siRNA", are available in the dual sample mode.
 		 *You are able to run the same library multiple times with different normalization method. They will not collapse.
@@ -89,8 +89,8 @@ while getopts "hi:c:o:g:vN:P:O:" OPTION; do
 	esac
 done
 # if INPUT_FASTQ or GENOME is undefined, print out usage and exit
-[[ -z "$INPUT_FASTQ" ]] && usage && echo2 "Missing option -i for input fastq file or file does not exist" "error" 
-[[ -z "$GENOME" ]]  && usage && echo2 "Missing option -g for specifying which genome assembly to use" "error" 
+[[ -z "$INPUT_FASTQ" ]] && usage && echo2 "Missing option -i for input fastq file or file does not exist" "error"
+[[ -z "$GENOME" ]]  && usage && echo2 "Missing option -g for specifying which genome assembly to use" "error"
 # check whether the this genome is supported or not
 check_genome $GENOME
 [ ! -f $INPUT_FASTQ ] && echo2 "Cannot find input file $INPUT_FASTQ" "error"
@@ -108,7 +108,7 @@ touch .writting_permission && rm -rf .writting_permission || (echo2 "Cannot writ
 #################################
 TABLE=${PREFIX}.basic_stats
 export PDF_DIR=$OUTDIR/pdfs && mkdir -p $PDF_DIR
-READS_DIR=input_read_files && mkdir -p $READS_DIR 
+READS_DIR=input_read_files && mkdir -p $READS_DIR
 rRNA_DIR=rRNA_mapping && mkdir -p $rRNA_DIR
 MIRNA_DIR=hairpins_mapping && mkdir -p $MIRNA_DIR
 PRE_GENOME_MAPPING_DIR=pre_genome_mapping && mkdir -p $PRE_GENOME_MAPPING_DIR
@@ -123,11 +123,11 @@ TRN_OUTDIR=transposon_piRNAcluster_mapping_normalized_by_$NORMMETHOD && mkdir -p
 ########################
 # running binary check #
 ########################
-checkBin "sort" 
+checkBin "sort"
 checkBin "md5sum"
 checkBin "awk"
 checkBin "grep"
-checkBin "python" 
+checkBin "python"
 checkBin "samtools"
 checkBin "gs"
 checkBin "Rscript"
@@ -160,13 +160,13 @@ export BOWTIE_INDEXES=$COMMON_FOLDER/BowtieIndex
 # beginning running pipeline #
 ##############################
 echo2 "---------------------------------------------------------------------------------"
-echo2 "Beginning running [${PACKAGE_NAME}] small RNA pipeline single library mode version $SMALLRNA_VERSION" 
+echo2 "Beginning running [${PACKAGE_NAME}] small RNA pipeline single library mode version $SMALLRNA_VERSION"
 
 ########################################
 ## Pre Processing before any Mapping ###
 ########################################
 # convering fastq to insert; quality information will be lost
-echo2 "Converting fastq format into insert format" 
+echo2 "Converting fastq format into insert format"
 INSERT=$READS_DIR/${PREFIX}.insert # insert file, a format with two fields delimited by a tab. Sequence and number of times it was read, used to save time/space; quality information is lost
 [ ! -f .${JOBUID}.status.${STEP}.fq2insert ] && \
 	piPipes_fastq_to_insert ${INPUT_FASTQ} ${INSERT} && \
@@ -199,7 +199,7 @@ STEP=$((STEP+1))
 totalReads=`cat .${JOBUID}.totalReads`
 rRNAReads=`cat .${JOBUID}.rRNAReads`
 nonrRNAReads=`cat .${JOBUID}.nonrRNAReads`
- 
+
 #########################
 # miRNA hairpin Mapping #
 #########################
@@ -257,24 +257,106 @@ MM=0 # haven't implement method to take mismatch # from user
 		TARGET_NAME=${TARGET_NAME1%.fa}
 		TARGET_FA=`readlink -f $TARGET`
 		[[ ! -f $TARGET_FA ]] && echo2 "File $TARGET specified by -P do not exist" "error"
-		OUTDIR1=$PRE_GENOME_MAPPING_DIR/${TARGET_NAME} && mkdir -p $OUTDIR1 || echo2 "Cannot create directory $OUTDIR1, please check the permission. And try to only use letter and number to name the Fasta file" "error"
-		bowtie-build $TARGET_FA $OUTDIR1/$TARGET_NAME || echo2 "Failed to build the bowtie index for $TARGET_FA" "error"
-		faSize -tab -detailed $TARGET_FA > $OUTDIR1/${TARGET_NAME}.sizes
-		PREFIX1=`basename $INPUT` && PREFIX1=${OUTDIR1}/${PREFIX1%.insert} && \
-		echo2 "Mapping to ${TARGET_NAME}" && \
-		bowtie -r -v 0 -a --best --strata -p $CPU -S \
-			--un ${INPUT%.insert}.x_${TARGET_NAME}.insert \
-			$OUTDIR1/$TARGET_NAME \
-			$INPUT \
-			2> ${PREFIX1}.log | \
-		samtools view -bSF 0x4 - 2>/dev/null | bedtools_piPipes bamtobed -i - > ${PREFIX1}.${TARGET_NAME}.v${MM}a.bed && \
-		piPipes_insertBed_to_bed2 $INPUT ${PREFIX1}.${TARGET_NAME}.v${MM}a.bed > ${PREFIX1}.${TARGET_NAME}.v${MM}a.bed2 && \
-		rm -rf ${PREFIX1}.${TARGET_NAME}.v${MM}a.bed && \
-		piPipes_bed2Summary -5 -i ${PREFIX1}.${TARGET_NAME}.v${MM}a.bed2 -c $OUTDIR1/${TARGET_NAME}.sizes -o $OUTDIR1/${TARGET_NAME}.summary && \
-		Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_summary.R $OUTDIR1/${TARGET_NAME}.summary $OUTDIR1/ $CPU 1 1>&2 && \
-		PDFs=$OUTDIR1/*pdf && \
-		gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=$PDF_DIR/`basename ${PREFIX1}`.pre-genome.${TARGET_NAME}.pdf ${PDFs} && \
-		touch .${JOBUID}.status.${STEP}.${TARGET_NAME}_mapping
+		if [[ ! -f .${JOBUID}.status.${STEP}.${TARGET_NAME}_mapping ]]; then
+			OUTDIR1=$PRE_GENOME_MAPPING_DIR/${TARGET_NAME} && mkdir -p $OUTDIR1 || echo2 "Cannot create directory $OUTDIR1, please check the permission. And try to only use letter and number to name the Fasta file" "error"
+			bowtie-build $TARGET_FA $OUTDIR1/$TARGET_NAME 1>&2 2>/dev/null || echo2 "Failed to build the bowtie index for $TARGET_FA" "error"
+			faSize -tab -detailed $TARGET_FA > $OUTDIR1/${TARGET_NAME}.sizes
+			PREFIX1=`basename $INPUT` && PREFIX1=${OUTDIR1}/${PREFIX1%.insert} && \
+			echo2 "Mapping to ${TARGET_NAME}" && \
+			bowtie -r -v 0 -a --best --strata -p $CPU -S \
+				--un ${INPUT%.insert}.x_${TARGET_NAME}.insert \
+				$OUTDIR1/$TARGET_NAME \
+				$INPUT \
+				2> ${PREFIX1}.log | \
+			samtools view -bSF 0x4 - 2>/dev/null | bedtools_piPipes bamtobed -i - > ${PREFIX1}.${TARGET_NAME}.v${MM}a.bed && \
+			piPipes_insertBed_to_bed2 $INPUT ${PREFIX1}.${TARGET_NAME}.v${MM}a.bed > ${PREFIX1}.${TARGET_NAME}.v${MM}a.bed2 && \
+			rm -rf ${PREFIX1}.${TARGET_NAME}.v${MM}a.bed && \
+			piPipes_bed2Summary -5 -i ${PREFIX1}.${TARGET_NAME}.v${MM}a.bed2 -c $OUTDIR1/${TARGET_NAME}.sizes -o $OUTDIR1/${TARGET_NAME}.summary && \
+			Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_summary.R $OUTDIR1/${TARGET_NAME}.summary $OUTDIR1/ $CPU 1 1>&2 && \
+			bash $DEBUG piPipes_smallRNA_bed2_to_bw.sh \
+				${PREFIX1}.${TARGET_NAME}.v${MM}a.bed2 \
+				$OUTDIR1/${TARGET_NAME}.sizes \
+				1 \
+				$CPU \
+				$OUTDIR1 && \
+			para_file=$OUTDIR1/${RANDOM}${RANDOM}.para && \
+			echo "awk '\$3-\$2>=$siRNA_bot && \$3-\$2<$siRNA_top' ${PREFIX1}.${TARGET_NAME}.v${MM}a.bed2 > ${PREFIX1}.${TARGET_NAME}.v${MM}a.siRNA.bed2" >  $para_file && \
+			echo "awk '\$3-\$2>=$piRNA_bot && \$3-\$2<$piRNA_top' ${PREFIX1}.${TARGET_NAME}.v${MM}a.bed2 > ${PREFIX1}.${TARGET_NAME}.v${MM}a.piRNA.bed2" >> $para_file && \
+			ParaFly -c $para_file -CPU $CPU -failed_cmds ${para_file}.failedCommands 1>&2 && \
+			rm -rf ${para_file}* && \
+			awk 'BEGIN{FS=OFS="\t"}\
+			{ \
+				if ($5==1) \
+				{ \
+					l=$3-$2; \
+					if (l>m) m=l; \
+					if ($6=="+") s[l]+=$4;\
+					else as[l]+=$4; \
+				} \
+			}END\
+			{\
+				for (d=1;d<=m;++d) \
+				{\
+					printf "%d\t%.0f\t%.0f\n", d, (s[d]?s[d]:0), (as[d]?as[d]:0); \
+				}\
+			}' ${PREFIX1}.${TARGET_NAME}.v${MM}a.bed2 | sort -k1,1n > ${PREFIX1}.${TARGET_NAME}.v${MM}a.lendis && \
+			awk 'BEGIN{FS=OFS="\t"}\
+			{ \
+				if ($5==1) \
+				{ \
+					l=$3-$2; \
+					if (l>m) m=l; \
+					if ($6=="+") s[l]+=$4;\
+					else as[l]+=$4; \
+				} \
+			}END\
+			{\
+				for (d=1;d<=m;++d) \
+				{\
+					printf "%d\t%.0f\t%.0f\n", d, (s[d]?s[d]:0), (as[d]?as[d]:0); \
+				}\
+			}'  ${PREFIX1}.${TARGET_NAME}.v${MM}a.piRNA.bed2 | sort -k1,1n > ${PREFIX1}.${TARGET_NAME}.v${MM}a.piRNA.lendis && \
+				awk 'BEGIN{FS=OFS="\t"}\
+				{ \
+					if ($5==1) \
+					{ \
+						l=$3-$2; \
+						if (l>m) m=l; \
+						if ($6=="+") s[l]+=$4;\
+						else as[l]+=$4; \
+					} \
+				}END\
+				{\
+					for (d=1;d<=m;++d) \
+					{\
+						printf "%d\t%.0f\t%.0f\n", d, (s[d]?s[d]:0), (as[d]?as[d]:0); \
+					}\
+				}'  ${PREFIX1}.${TARGET_NAME}.v${MM}a.siRNA.bed2 | sort -k1,1n > ${PREFIX1}.${TARGET_NAME}.v${MM}a.siRNA.lendis && \
+			piPipes_local_ping_pong -a ${PREFIX1}.${TARGET_NAME}.v${MM}a.piRNA.bed2 -b ${PREFIX1}.${TARGET_NAME}.v${MM}a.piRNA.bed2 -p $CPU > ${PREFIX1}.${TARGET_NAME}.v${MM}a.piRNA.pp && \
+			ext_len=30 && \
+			awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$7])) {printed[$7]=1; if ($2>=ext_len) { for (i=1;i<=1;++i) { if ($6=="+") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}' ${PREFIX1}.${TARGET_NAME}.v${MM}a.bed2       | bedtools_piPipes getfasta -fi $TARGET_FA -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${PREFIX1}.${TARGET_NAME}.v${MM}a.5end_60.percentage && \
+			awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$7])) {printed[$7]=1; if ($2>=ext_len) { for (i=1;i<=1;++i) { if ($6=="+") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}' ${PREFIX1}.${TARGET_NAME}.v${MM}a.piRNA.bed2 | bedtools_piPipes getfasta -fi $TARGET_FA -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${PREFIX1}.${TARGET_NAME}.v${MM}a.piRNA.5end_60.percentage && \
+			awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$7])) {printed[$7]=1; if ($2>=ext_len) { for (i=1;i<=1;++i) { if ($6=="+") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}' ${PREFIX1}.${TARGET_NAME}.v${MM}a.siRNA.bed2 | bedtools_piPipes getfasta -fi $TARGET_FA -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${PREFIX1}.${TARGET_NAME}.v${MM}a.siRNA.5end_60.percentage && \
+			awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$7])) {printed[$7]=1; if ($2>=ext_len) { for (i=1;i<=1;++i) { if ($6=="-") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}' ${PREFIX1}.${TARGET_NAME}.v${MM}a.bed2       | bedtools_piPipes getfasta -fi $TARGET_FA -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${PREFIX1}.${TARGET_NAME}.v${MM}a.3end_60.percentage && \
+			awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$7])) {printed[$7]=1; if ($2>=ext_len) { for (i=1;i<=1;++i) { if ($6=="-") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}' ${PREFIX1}.${TARGET_NAME}.v${MM}a.piRNA.bed2 | bedtools_piPipes getfasta -fi $TARGET_FA -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${PREFIX1}.${TARGET_NAME}.v${MM}a.piRNA.3end_60.percentage && \
+			awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$7])) {printed[$7]=1; if ($2>=ext_len) { for (i=1;i<=1;++i) { if ($6=="-") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}' ${PREFIX1}.${TARGET_NAME}.v${MM}a.siRNA.bed2 | bedtools_piPipes getfasta -fi $TARGET_FA -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${PREFIX1}.${TARGET_NAME}.v${MM}a.siRNA.3end_60.percentage && \
+			Rscript $PIPELINE_DIRECTORY/bin/piPipes_draw_smallRNA_features2.R \
+				$OUTDIR1/${PREFIX}".pre-genome."${TARGET_NAME} \
+				${PREFIX1}.${TARGET_NAME}.v${MM}a.lendis \
+				${PREFIX1}.${TARGET_NAME}.v${MM}a.siRNA.lendis \
+				${PREFIX1}.${TARGET_NAME}.v${MM}a.piRNA.lendis \
+				${ext_len} \
+				${PREFIX1}.${TARGET_NAME}.v${MM}a.5end_60.percentage \
+				${PREFIX1}.${TARGET_NAME}.v${MM}a.3end_60.percentage \
+				${PREFIX1}.${TARGET_NAME}.v${MM}a.siRNA.5end_60.percentage \
+				${PREFIX1}.${TARGET_NAME}.v${MM}a.siRNA.3end_60.percentage \
+				${PREFIX1}.${TARGET_NAME}.v${MM}a.piRNA.5end_60.percentage \
+				${PREFIX1}.${TARGET_NAME}.v${MM}a.piRNA.3end_60.percentage 1>&2 && \
+			PDFs=$OUTDIR1/*pdf && \
+			gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=$PDF_DIR/`basename ${PREFIX1}`.pre-genome.${TARGET_NAME}.pdf ${PDFs} && \
+			rm -rf $PDFs && \
+			touch .${JOBUID}.status.${STEP}.${TARGET_NAME}_mapping
+		fi
 		INPUT=${INPUT%.insert}.x_${TARGET_NAME}.insert
 		rm -f $OUTDIR1/${TARGET_NAME}.1.ebwt $OUTDIR1/${TARGET_NAME}.2.ebwt $OUTDIR1/${TARGET_NAME}.3.ebwt $OUTDIR1/${TARGET_NAME}.4.ebwt $OUTDIR1/${TARGET_NAME}.rev.1.ebwt $OUTDIR1/${TARGET_NAME}.rev.2.ebwt $OUTDIR1/${TARGET_NAME}.sizes
 	done
@@ -329,33 +411,115 @@ multipMapCount=`cat .${JOBUID}.multipMapCount`
 #############################
 INPUT=${INPUT%.insert}.${GENOME}v${genome_MM}a.un.insert
 # parsing customer defined post-genomic mapping variables
-[[ ! -z $post_GENOME_MAPPING_FILE_LIST ]] && \
+[[ ! -z $POST_GENOME_MAPPING_FILE_LIST ]] && \
 	echo2 "Mapping to customer defined post-genome mapping indexes"
 	eval `echo $POST_GENOME_MAPPING_FILE_LIST | awk 'BEGIN{FS=","}{printf "export POST_GENOME_MAPPING_FILES=(" ; ;for (i=1;i<=NF;++i) printf "\"%s\" ", $i; printf ")\n";}'`
 	for TARGET in "${POST_GENOME_MAPPING_FILES[@]}"; do
 		TARGET_NAME1=`basename $TARGET`
 		TARGET_NAME=${TARGET_NAME1%.fa}
 		TARGET_FA=`readlink -f $TARGET`
-		[[ ! -f $TARGET_FA ]] && echo2 "File $TARGET specified by -P do not exist" "error"
-		OUTDIR1=$POST_GENOME_MAPPING_DIR/${TARGET_NAME} && mkdir -p $OUTDIR1 || echo2 "Cannot create directory $OUTDIR1, please check the permission. And try to only use letter and number to name the Fasta file" "error"
-		bowtie-build $TARGET_FA $OUTDIR1/$TARGET_NAME || echo2 "Failed to build the bowtie index for $TARGET_FA" "error"
-		faSize -tab -detailed $TARGET_FA > $OUTDIR1/${TARGET_NAME}.sizes
-		PREFIX1=`basename $INPUT` && PREFIX1=${OUTDIR1}/${PREFIX1%.insert} && \
-		echo2 "Mapping to ${TARGET_NAME}" && \
-		bowtie -r -v 0 -a --best --strata -p $CPU -S \
-			--un ${INPUT%.insert}.${GENOME}v${genome_MM}a.un.x_${TARGET_NAME}.insert \
-			$OUTDIR1/$TARGET_NAME \
-			$INPUT \
-			2> ${PREFIX1}.log | \
-		samtools view -bSF 0x4 - 2>/dev/null | bedtools_piPipes bamtobed -i - > ${PREFIX1}.${TARGET_NAME}.v${MM}a.bed && \
-		piPipes_insertBed_to_bed2 $INPUT ${PREFIX1}.${TARGET_NAME}.v${MM}a.bed > ${PREFIX1}.${TARGET_NAME}.v${MM}a.bed2 && \
-		rm -rf ${PREFIX1}.${TARGET_NAME}.v${MM}a.bed && \
-		piPipes_bed2Summary -5 -i ${PREFIX1}.${TARGET_NAME}.v${MM}a.bed2 -c $OUTDIR1/${TARGET_NAME}.sizes -o $OUTDIR1/${TARGET_NAME}.summary && \
-		Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_summary.R $OUTDIR1/${TARGET_NAME}.summary $OUTDIR1/ $CPU 1 1>&2 && \
-		PDFs=$OUTDIR1/*pdf && \
-		gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=$PDF_DIR/`basename ${PREFIX1}`.post-genome.${TARGET_NAME}.pdf ${PDFs} && \
-		touch .${JOBUID}.status.${STEP}.${TARGET_NAME}_mapping
-		INPUT=${INPUT%.insert}.${GENOME}v${genome_MM}a.un.x_${TARGET_NAME}.insert
+		if [[ ! -f .${JOBUID}.status.${STEP}.${TARGET_NAME}_mapping ]]; then
+			[[ ! -f $TARGET_FA ]] && echo2 "File $TARGET specified by -P do not exist" "error"
+			OUTDIR1=$POST_GENOME_MAPPING_DIR/${TARGET_NAME} && mkdir -p $OUTDIR1 || echo2 "Cannot create directory $OUTDIR1, please check the permission. And try to only use letter and number to name the Fasta file" "error"
+			bowtie-build $TARGET_FA $OUTDIR1/$TARGET_NAME 1>&2 2>/dev/null || echo2 "Failed to build the bowtie index for $TARGET_FA" "error"
+			faSize -tab -detailed $TARGET_FA > $OUTDIR1/${TARGET_NAME}.sizes
+			PREFIX1=`basename $INPUT` && PREFIX1=${OUTDIR1}/${PREFIX1%.insert} && \
+			echo2 "Mapping to ${TARGET_NAME}" && \
+			bowtie -r -v 0 -a --best --strata -p $CPU -S \
+				--un ${INPUT%.insert}.x_${TARGET_NAME}.insert \
+				$OUTDIR1/$TARGET_NAME \
+				$INPUT \
+				2> ${PREFIX1}.log | \
+			samtools view -bSF 0x4 - 2>/dev/null | bedtools_piPipes bamtobed -i - > ${PREFIX1}.${TARGET_NAME}.v${MM}a.bed && \
+			piPipes_insertBed_to_bed2 $INPUT ${PREFIX1}.${TARGET_NAME}.v${MM}a.bed > ${PREFIX1}.${TARGET_NAME}.v${MM}a.bed2 && \
+			rm -rf ${PREFIX1}.${TARGET_NAME}.v${MM}a.bed && \
+			piPipes_bed2Summary -5 -i ${PREFIX1}.${TARGET_NAME}.v${MM}a.bed2 -c $OUTDIR1/${TARGET_NAME}.sizes -o $OUTDIR1/${TARGET_NAME}.summary && \
+			Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_summary.R $OUTDIR1/${TARGET_NAME}.summary $OUTDIR1/ $CPU 1 1>&2 && \
+			bash $DEBUG piPipes_smallRNA_bed2_to_bw.sh \
+				${PREFIX1}.${TARGET_NAME}.v${MM}a.bed2 \
+				$OUTDIR1/${TARGET_NAME}.sizes \
+				1 \
+				$CPU \
+				$OUTDIR1 && \
+			para_file=$OUTDIR1/${RANDOM}${RANDOM}.para && \
+			echo "awk '\$3-\$2>=$siRNA_bot && \$3-\$2<$siRNA_top' ${PREFIX1}.${TARGET_NAME}.v${MM}a.bed2 > ${PREFIX1}.${TARGET_NAME}.v${MM}a.siRNA.bed2" >  $para_file && \
+			echo "awk '\$3-\$2>=$piRNA_bot && \$3-\$2<$piRNA_top' ${PREFIX1}.${TARGET_NAME}.v${MM}a.bed2 > ${PREFIX1}.${TARGET_NAME}.v${MM}a.piRNA.bed2" >> $para_file && \
+			ParaFly -c $para_file -CPU $CPU -failed_cmds ${para_file}.failedCommands 1>&2 && \
+			rm -rf ${para_file}* && \
+			awk 'BEGIN{FS=OFS="\t"}\
+			{ \
+				if ($5==1) \
+				{ \
+					l=$3-$2; \
+					if (l>m) m=l; \
+					if ($6=="+") s[l]+=$4;\
+					else as[l]+=$4; \
+				} \
+			}END\
+			{\
+				for (d=1;d<=m;++d) \
+				{\
+					printf "%d\t%.0f\t%.0f\n", d, (s[d]?s[d]:0), (as[d]?as[d]:0); \
+				}\
+			}' ${PREFIX1}.${TARGET_NAME}.v${MM}a.bed2 | sort -k1,1n > ${PREFIX1}.${TARGET_NAME}.v${MM}a.lendis && \
+			awk 'BEGIN{FS=OFS="\t"}\
+			{ \
+				if ($5==1) \
+				{ \
+					l=$3-$2; \
+					if (l>m) m=l; \
+					if ($6=="+") s[l]+=$4;\
+					else as[l]+=$4; \
+				} \
+			}END\
+			{\
+				for (d=1;d<=m;++d) \
+				{\
+					printf "%d\t%.0f\t%.0f\n", d, (s[d]?s[d]:0), (as[d]?as[d]:0); \
+				}\
+			}'  ${PREFIX1}.${TARGET_NAME}.v${MM}a.piRNA.bed2 | sort -k1,1n > ${PREFIX1}.${TARGET_NAME}.v${MM}a.piRNA.lendis && \
+				awk 'BEGIN{FS=OFS="\t"}\
+				{ \
+					if ($5==1) \
+					{ \
+						l=$3-$2; \
+						if (l>m) m=l; \
+						if ($6=="+") s[l]+=$4;\
+						else as[l]+=$4; \
+					} \
+				}END\
+				{\
+					for (d=1;d<=m;++d) \
+					{\
+						printf "%d\t%.0f\t%.0f\n", d, (s[d]?s[d]:0), (as[d]?as[d]:0); \
+					}\
+				}'  ${PREFIX1}.${TARGET_NAME}.v${MM}a.siRNA.bed2 | sort -k1,1n > ${PREFIX1}.${TARGET_NAME}.v${MM}a.siRNA.lendis && \
+			piPipes_local_ping_pong -a ${PREFIX1}.${TARGET_NAME}.v${MM}a.piRNA.bed2 -b ${PREFIX1}.${TARGET_NAME}.v${MM}a.piRNA.bed2 -p $CPU > ${PREFIX1}.${TARGET_NAME}.v${MM}a.piRNA.pp && \
+			ext_len=30 && \
+			awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$7])) {printed[$7]=1; if ($2>=ext_len) { for (i=1;i<=1;++i) { if ($6=="+") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}' ${PREFIX1}.${TARGET_NAME}.v${MM}a.bed2       | bedtools_piPipes getfasta -fi $TARGET_FA -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${PREFIX1}.${TARGET_NAME}.v${MM}a.5end_60.percentage && \
+			awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$7])) {printed[$7]=1; if ($2>=ext_len) { for (i=1;i<=1;++i) { if ($6=="+") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}' ${PREFIX1}.${TARGET_NAME}.v${MM}a.piRNA.bed2 | bedtools_piPipes getfasta -fi $TARGET_FA -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${PREFIX1}.${TARGET_NAME}.v${MM}a.piRNA.5end_60.percentage && \
+			awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$7])) {printed[$7]=1; if ($2>=ext_len) { for (i=1;i<=1;++i) { if ($6=="+") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}' ${PREFIX1}.${TARGET_NAME}.v${MM}a.siRNA.bed2 | bedtools_piPipes getfasta -fi $TARGET_FA -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${PREFIX1}.${TARGET_NAME}.v${MM}a.siRNA.5end_60.percentage && \
+			awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$7])) {printed[$7]=1; if ($2>=ext_len) { for (i=1;i<=1;++i) { if ($6=="-") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}' ${PREFIX1}.${TARGET_NAME}.v${MM}a.bed2       | bedtools_piPipes getfasta -fi $TARGET_FA -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${PREFIX1}.${TARGET_NAME}.v${MM}a.3end_60.percentage && \
+			awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$7])) {printed[$7]=1; if ($2>=ext_len) { for (i=1;i<=1;++i) { if ($6=="-") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}' ${PREFIX1}.${TARGET_NAME}.v${MM}a.piRNA.bed2 | bedtools_piPipes getfasta -fi $TARGET_FA -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${PREFIX1}.${TARGET_NAME}.v${MM}a.piRNA.3end_60.percentage && \
+			awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$7])) {printed[$7]=1; if ($2>=ext_len) { for (i=1;i<=1;++i) { if ($6=="-") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}' ${PREFIX1}.${TARGET_NAME}.v${MM}a.siRNA.bed2 | bedtools_piPipes getfasta -fi $TARGET_FA -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${PREFIX1}.${TARGET_NAME}.v${MM}a.siRNA.3end_60.percentage && \
+			Rscript $PIPELINE_DIRECTORY/bin/piPipes_draw_smallRNA_features2.R \
+				$OUTDIR1/${PREFIX}".post-genome."${TARGET_NAME} \
+				${PREFIX1}.${TARGET_NAME}.v${MM}a.lendis \
+				${PREFIX1}.${TARGET_NAME}.v${MM}a.siRNA.lendis \
+				${PREFIX1}.${TARGET_NAME}.v${MM}a.piRNA.lendis \
+				${ext_len} \
+				${PREFIX1}.${TARGET_NAME}.v${MM}a.5end_60.percentage \
+				${PREFIX1}.${TARGET_NAME}.v${MM}a.3end_60.percentage \
+				${PREFIX1}.${TARGET_NAME}.v${MM}a.siRNA.5end_60.percentage \
+				${PREFIX1}.${TARGET_NAME}.v${MM}a.siRNA.3end_60.percentage \
+				${PREFIX1}.${TARGET_NAME}.v${MM}a.piRNA.5end_60.percentage \
+				${PREFIX1}.${TARGET_NAME}.v${MM}a.piRNA.3end_60.percentage 1>&2 && \
+			PDFs=$OUTDIR1/*pdf && \
+			gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=$PDF_DIR/`basename ${PREFIX1}`.post-genome.${TARGET_NAME}.pdf ${PDFs} && \
+			rm -rf $PDFs && \
+			touch .${JOBUID}.status.${STEP}.${TARGET_NAME}_mapping
+		fi
+		INPUT=${INPUT%.insert}.x_${TARGET_NAME}.insert
 		rm -f $OUTDIR1/${TARGET_NAME}.1.ebwt $OUTDIR1/${TARGET_NAME}.2.ebwt $OUTDIR1/${TARGET_NAME}.3.ebwt $OUTDIR1/${TARGET_NAME}.4.ebwt $OUTDIR1/${TARGET_NAME}.rev.1.ebwt $OUTDIR1/${TARGET_NAME}.rev.2.ebwt $OUTDIR1/${TARGET_NAME}.sizes
 	done
 
@@ -498,7 +662,7 @@ STEP=$((STEP+1))
 #####################################################
 # Direct mapping to and quantification with eXpress #
 #####################################################
-# for accurate quantification, we map to the index of gene+cluster+repBase. 
+# for accurate quantification, we map to the index of gene+cluster+repBase.
 # echo2 "Quantification by direct mapping and eXpress"
 # [ ! -f .${JOBUID}.status.${STEP}.direct_mapping_no_normalization ] && \
 # awk '{for (j=0;j<$2;++j) print $1}' $x_rRNA_x_hairpin_INSERT | \
@@ -541,6 +705,11 @@ echo2 "Merging pdfs"
 		$PDF_DIR/`basename ${GENOME_UNIQUEMAP_BED2}`.x_hairpin.lendis.pdf \
 		$PDF_DIR/`basename ${GENOME_ALLMAP_BED2}`.x_hairpin.lendis.pdf  \
 		$PDF_DIR/${PREFIX}.features.pdf  && \
+	rm -rf $PDF_DIR/`basename ${GENOME_UNIQUEMAP_BED2}`.+hairpin.lendis.pdf \
+		$PDF_DIR/`basename ${GENOME_ALLMAP_BED2}`.+hairpin.lendis.pdf \
+		$PDF_DIR/`basename ${GENOME_UNIQUEMAP_BED2}`.x_hairpin.lendis.pdf \
+		$PDF_DIR/`basename ${GENOME_ALLMAP_BED2}`.x_hairpin.lendis.pdf  \
+		$PDF_DIR/${PREFIX}.features.pdf && \
 	touch  .${JOBUID}.status.${STEP}.merge_pdfs
 STEP=$((STEP+1))
 
@@ -550,8 +719,3 @@ STEP=$((STEP+1))
 echo2 "Finished running ${PACKAGE_NAME} small RNA pipeline version $SMALLRNA_VERSION"
 echo2 "---------------------------------------------------------------------------------"
 touch .${GENOME}.SMALLRNA_VERSION.${SMALLRNA_VERSION}
-
-
-
-
-

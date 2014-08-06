@@ -28,6 +28,7 @@ pkgTest ("reshape")
 pkgTest ("gridExtra")
 pkgTest ("RColorBrewer")
 pkgTest ("gdata")
+pkgTest ("labeling")
 pkgTest ("RCircos")
 
 bioConductorTest ("cummeRbund")
