@@ -1,5 +1,6 @@
 # variables for small RNA pipeline intersecting
 	MASK=$COMMON_FOLDER/UCSC.tRNA.bed.gz
+	tRNA=$COMMON_FOLDER/UCSC.tRNA.bed.gz
 	# piRNA clusters annoated in Rosenkranz and Zischler, 2012, BMC Bioinformatics
 	piRNA_Cluster=$COMMON_FOLDER/hg19.piRNAcluster.bed.gz
 	refSeq_GENE=$COMMON_FOLDER/UCSC.refSeq.Genes.bed6.gz
@@ -22,7 +23,18 @@
 	"lincRNA" \
 	"snoRNA" \
 	)
-
+	
+	declare -a TARGETS_EXCLUSIVE=( \
+	"tRNA" \
+	"snoRNA" \
+	"piRNA_Cluster" \
+	"refSeq_5UTR" \
+	"refSeq_3UTR" \
+	"refSeq_INTRON" \
+	"lincRNA" \
+	"repeatMasker" \
+	)
+		
 # variables for small RNA direct mapping
 	declare -a DIRECT_MAPPING=( "repBase" "piRNAcluster" )
 # gtf files for rnaseq/deg/cage htseq-count

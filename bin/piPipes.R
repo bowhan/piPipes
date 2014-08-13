@@ -50,27 +50,27 @@ draw_smRNA_lendis = function (file, main) {
 	maxRow = max ( max(lendis[lendis[,2]!=0,1]), max(lendis[lendis[,3]!=0,1]) )
 	lendis = lendis[seq(minRow, maxRow),]
 	lendis[,3]=lendis[,3]*-1
-	ru=roundUp( (max(lendis$V2)-min(lendis$V3) )/20 ) 
-	gg = ggplot (lendis, aes (V1,V2)) + 
-	    theme_minimal() + 
-	    theme( panel.grid.major=element_blank(), 
+	ru=roundUp( (max(lendis$V2)-min(lendis$V3) )/20 )
+	gg = ggplot (lendis, aes (V1,V2)) +
+	    theme_minimal() +
+	    theme( panel.grid.major=element_blank(),
 	           panel.grid.minor=element_blank(),
 	           axis.ticks.x=element_blank(),
 	           title=element_text(size=6, colour='black'),
-	           plot.margin=unit(c(1,1,0,0),"lines"), 
-	           legend.margin=unit(0,"lines"), 
-	           panel.margin=unit(0, "lines"), 
-	           axis.ticks.margin=unit(0,"lines"), 
-	           axis.text=element_text (size=4), 
-	           axis.title=element_text(size=6), 
-	           axis.ticks = element_line(size = 0.5) ) + 
+	           plot.margin=unit(c(1,1,0,0),"lines"),
+	           legend.margin=unit(0,"lines"),
+	           panel.margin=unit(0, "lines"),
+	           axis.ticks.margin=unit(0,"lines"),
+	           axis.text=element_text (size=4),
+	           axis.title=element_text(size=6),
+	           axis.ticks = element_line(size = 0.5) ) +
 	    geom_bar (stat="identity", colour="blue", fill="blue") +
 	    geom_bar (aes(V1,V3), stat="identity", colour="red", fill="red") +
-	    scale_x_discrete (breaks=c(minRow:maxRow)) + 
-	    coord_cartesian(xlim = c(minRow, maxRow)) + 
+	    scale_x_discrete (breaks=c(minRow:maxRow)) +
+	    coord_cartesian(xlim = c(minRow, maxRow)) +
 	    scale_y_continuous(labels = comma, breaks=seq(ru*-20, ru*20, 2*ru)) +
-	    labs(title=paste("Length distribution", main, sep="\t")) + 
-	    xlab("Length, nt") + 
+	    labs(title=paste("Length distribution", main, sep="\t")) +
+	    xlab("Length, nt") +
 	    ylab("Reads")
 	return (gg)
 }
@@ -81,8 +81,8 @@ draw_ping_pong = function (ppbedfile, main) {
 	minRow = min(ppbed$V1)
 	maxRow = max(ppbed$V1)
 	zScore=(ppbed[10,2]-mean(ppbed[-10,2]))/sd(ppbed[-10,2])
-	gg = ggplot (ppbed, aes (V1,V2)) + 
-	    theme_tufte () + 
+	gg = ggplot (ppbed, aes (V1,V2)) +
+	    theme_tufte () +
 	    theme( panel.grid.major=element_blank(),
 	           panel.grid.minor=element_blank(),
 	           axis.ticks.x=element_blank(),
@@ -99,11 +99,11 @@ draw_ping_pong = function (ppbedfile, main) {
 	           legend.text=element_text(size=5,family="Helvetica"),
 	           axis.title=element_text(size=6),
 	           axis.ticks=element_line(size = 0.5) ) +
-	    geom_bar (stat="identity") + 
-	    scale_x_discrete (breaks=c(1,5,10,15,20,25)) + 
+	    geom_bar (stat="identity") +
+	    scale_x_discrete (breaks=c(1,5,10,15,20,25)) +
 	    scale_y_continuous(labels = comma, breaks=seq(0,max(ppbed$V2),roundUp(max(ppbed$V2)/10))) +
-	    labs(title=paste("5' to 5' overlap,", main, paste("Z = ", signif (zScore,3),sep=""), sep="\t")) + 
-	    xlab("Length(nt)") + 
+	    labs(title=paste("5' to 5' overlap,", main, paste("Z = ", signif (zScore,3),sep=""), sep="\t")) +
+	    xlab("Length(nt)") +
 	    ylab("Pairs");
 	return (gg)
 }
@@ -119,30 +119,30 @@ draw_smRNA_percentage = function (file, ext, main) {
 	tm$variable = factor(tm$variable, levels=levs)
 	tm2 = tm[with (tm, order (tm$variable)),]
 	tm2$pos = factor (tm2$pos, levels=seq (-1*ext,ext,1))
-	gg = ggplot(tm2,aes(x = pos, y = value, fill=variable)) + 
-	    theme_tufte () + 
+	gg = ggplot(tm2,aes(x = pos, y = value, fill=variable)) +
+	    theme_tufte () +
 	    theme(
 	        panel.grid.major=element_blank(),
 	        panel.grid.minor=element_blank(),
 	        axis.ticks.x=element_blank(),
-	        title=element_text(size=6, colour='black',family="Helvetica"), 
-	        plot.margin=unit(c(1,1,0,0),"lines"), 
-	        legend.margin=unit(0,"lines"), 
-	        panel.margin=unit(0, "lines"), 
-	        axis.ticks.margin=unit(0,"lines"), 
-	        legend.key.size=unit(0.5,"lines"), 
-	        legend.title=element_blank(), 
-	        legend.position = "bottom", 
-	        axis.text=element_text (size=4,family="Helvetica"), 
-	        axis.text.x=element_text (size=5,family="Helvetica"), 
-	        legend.text=element_text(size=5,family="Helvetica"), 
-	        axis.title=element_text(size=6), 
+	        title=element_text(size=6, colour='black',family="Helvetica"),
+	        plot.margin=unit(c(1,1,0,0),"lines"),
+	        legend.margin=unit(0,"lines"),
+	        panel.margin=unit(0, "lines"),
+	        axis.ticks.margin=unit(0,"lines"),
+	        legend.key.size=unit(0.5,"lines"),
+	        legend.title=element_blank(),
+	        legend.position = "bottom",
+	        axis.text=element_text (size=4,family="Helvetica"),
+	        axis.text.x=element_text (size=5,family="Helvetica"),
+	        legend.text=element_text(size=5,family="Helvetica"),
+	        axis.title=element_text(size=6),
 	        axis.ticks=element_line(size = 0.5)) +
-	    geom_bar(position = "fill", stat="identity") + 
-	    scale_x_discrete (breaks=c(-30,-25,-20,-15,-10,-5,0,4,9,14,19,24,29)) + 
-	    scale_y_continuous(labels = percent_format()) + 
-	    labs(title=main) + 
-	    xlab("Relative position (bp)") + 
+	    geom_bar(position = "fill", stat="identity") +
+	    scale_x_discrete (breaks=c(-30,-25,-20,-15,-10,-5,0,4,9,14,19,24,29)) +
+	    scale_y_continuous(labels = percent_format()) +
+	    labs(title=main) +
+	    xlab("Relative position (bp)") +
 	    ylab("Nucleotide percentage") +
 	    scale_fill_manual(values=c("red","darkgreen", "black","blue"))
 	return (gg)
@@ -183,21 +183,21 @@ draw_microRNA_balloon = function (t1, hetName, mutName, outDir) {
 	par (mfrow=c(2,2),mar=c(5,2,2,1))
 
 	main = paste (t1$V1[1], hetName," 5' arm:", sum4th, sep=' ')
-	main = paste (strwrap(main, width = 35), collapse = "\n") 
+	main = paste (strwrap(main, width = 35), collapse = "\n")
 	balloonplot (fivePrimeArm_het,  main=main,xlab="5'",ylab="3'",sorted=T,label.size=.6,text.size=.5,rowmar=1,show.zeros=T)
-	
+
 	main = paste (t1$V1[1], mutName," 5' arm:", sum5th, sep=' ')
-	main = paste (strwrap(main, width = 35), collapse = "\n") 
+	main = paste (strwrap(main, width = 35), collapse = "\n")
 	balloonplot (fivePrimeArm_mut,  main=main,xlab="5'",ylab="3'",sorted=T,label.size=.6,text.size=.5,rowmar=1,show.zeros=T, dotcolor="lightgreen")
-	
+
 	main = paste (t1$V1[1], hetName," 3' arm:", sum6th, sep=' ')
-	main = paste (strwrap(main, width = 35), collapse = "\n") 
+	main = paste (strwrap(main, width = 35), collapse = "\n")
 	balloonplot (threePrimeArm_het, main=main,xlab="5'",ylab="3'",sorted=T,label.size=.6,text.size=.5,rowmar=1,show.zeros=T)
-	
+
 	main = paste (t1$V1[1], mutName," 3' arm:", sum7th, sep=' ')
-	main = paste (strwrap(main, width = 35), collapse = "\n") 
+	main = paste (strwrap(main, width = 35), collapse = "\n")
 	balloonplot (threePrimeArm_mut, main=main,xlab="5'",ylab="3'",sorted=T,label.size=.6,text.size=.5,rowmar=1,show.zeros=T, dotcolor="lightgreen")
-	
+
 	invisible(dev.off())
 }
 
@@ -205,18 +205,15 @@ draw_microRNA_balloon = function (t1, hetName, mutName, outDir) {
 draw_agg = function (t1, name) {
 	plots = read.table(t1, F, sep="\t")
 	colnames(plots) = c('Feature','ChIP','Position','Signal')
-	ggplot(plots, aes(x=Position,y=Signal,color=ChIP)) + 
-	theme_few () + 
-	scale_colour_few() + 
+	ggplot(plots, aes(x=Position,y=Signal,color=ChIP)) +
+	theme_few () +
+	scale_colour_few() +
 	theme( panel.border = element_blank () ,
 		panel.grid.major=element_blank(),
 		panel.grid.minor=element_blank(),
-		plot.title=element_text(family="Helvetica", lineheight=.8) ) + 
-	ggtitle(name) + 
-	geom_line( size=1, alpha=0.75 ) + 
+		plot.title=element_text(family="Helvetica", lineheight=.8) ) +
+	ggtitle(name) +
+	geom_line( size=1, alpha=0.75 ) +
 	xlab ("Position (bp)") +
 	ylab("ChIP-seq enriched signal")
 }
-
-
-

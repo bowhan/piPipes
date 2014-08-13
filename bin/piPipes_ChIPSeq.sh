@@ -29,31 +29,31 @@ cat << EOF
 
 ChIP Seq pipeline single library mode v$CHIPSEQ_VERSION from the $BOLD$PACKAGE_NAME$RESET
 $CHIP_INTRO${RESET}
-Please email $CONTACT_EMAILS for any questions or bugs. 
-Thank you for using it. 
+Please email $CONTACT_EMAILS for any questions or bugs.
+Thank you for using it.
 
 ==================< paired-end >==================
 	${UNDERLINE}usage${RESET}:
-		pipile	chip \ 
-			-l left.IP.fq \ 
-			-r right.IP.fq \ 
-			-L left.INPUT.fq \ 
-			-R right.INPUT.fq \ 
-			-g mm9 \ 
-			-c cpu[8] \ 
-			-o output_dir[cwd] \ 
-			-x 500 [1000] \ 
+		pipile	chip \
+			-l left.IP.fq \
+			-r right.IP.fq \
+			-L left.INPUT.fq \
+			-R right.INPUT.fq \
+			-g mm9 \
+			-c cpu[8] \
+			-o output_dir[cwd] \
+			-x 500 [1000] \
 			-M /path/to/user/defined/region.bed1,/path/to/user/defined/region2.bed,/path/to/user/defined/region3.bed...
-			
+
 ==================< single-end >==================
 	${UNDERLINE}usage${RESET}:
-		pipile	chip \ 
-			-i IP.fq \ 
-			-I INPUT.fq \ 
-			-g mm9 \ 
-			-c cpu[8] \ 
-			-o output_dir[cwd] \ 
-			-x 500 [1000] \ 
+		pipile	chip \
+			-i IP.fq \
+			-I INPUT.fq \
+			-g mm9 \
+			-c cpu[8] \
+			-o output_dir[cwd] \
+			-x 500 [1000] \
 			-M /path/to/user/defined/region.bed1,/path/to/user/defined/region2.bed,/path/to/user/defined/region3.bed...
 
 OPTIONS:
@@ -69,20 +69,22 @@ ${REQUIRED}[ required ]
 	-i      Reads from Single-End sequencing of ChIP-Seq Immunoprecipitation
 	-I      Reads from Single-End sequencing of ChIP-Seq Input
 
-	-g      Genome assembly name, like mm9 or dm3. required 
-		 Check $PIPELINE_DIRECTORY/common/genome_supported.txt for genome assemblies currently installed; 
+	-g      Genome assembly name, like mm9 or dm3. required
+		 Check $PIPELINE_DIRECTORY/common/genome_supported.txt for genome assemblies currently installed;
 		 Use "piPipes install" to install new genome
-${OPTIONAL}[ optional ] 
+${OPTIONAL}[ optional ]
 	-B      Use "Broader" peak calling algorithm in MACS2; should be used for library like H3K9me3. default: off
 	-Q      MAPQ value used as threshold to filter alignments from Bowtie2 SAM/BAM output. The higher the MAPQ, the more unique the alignment. default: 1
 		 NOTE: Bowtie2 is ALWAYS called without -k or -a. Consequently, for each read, there will only be one best alignment given, no matter how many times it maps.
-		 If all the alignments are equally good, Bowtie2 chooses one randomly (see Bowtie2 manual for more details). 
-		 Including multiple mappers ensures repetitive regions are not depleted. Keeping only one alignment avoids false positive signal on repetitive regions. 
+		 If all the alignments are equally good, Bowtie2 chooses one randomly (see Bowtie2 manual for more details).
+		 Including multiple mappers ensures repetitive regions are not depleted. Keeping only one alignment avoids false positive signal on repetitive regions.
 		*If you would like to only consider unique mapper, set this option to more than 1, like 10. This usually removes multiple mappers which have equal good alignments.
 	-x      Length to extend up/downstream of each genomic features to draw the metagene plot. default: 1000
 	-M      Path to BED files for meta-plot analysis on user-defined regions. One plot for each BED file and different BED files should be delimited by comma.
+	     Do not use ~ to represent the home directory as ~ is expanded before passed into piPipes and it will not be expanded correctly unless repsent at the beginning of a string.
+		 Use $HOME instead, like -M $HOME/path/to/gfp,$HOME/path/to/white.fa
 	-o      Output directory, default: current directory: $PWD
-	-c      Number of CPUs to use, default: 8 
+	-c      Number of CPUs to use, default: 8
 EOF
 echo -e "${COLOR_END}"
 }
@@ -115,24 +117,24 @@ if [[ -z $PE_MODE && -z $SE_MODE ]]; then usage ; echo2 "Please specify the inpu
 if [[ -n $PE_MODE && -n $SE_MODE ]]; then usage ; echo2 "Please only choose single-end OR paired-end, but not both" "error"; fi
 
 if [[ -n $PE_MODE ]]; then
-	[[ -z $LEFT_IP_FASTQ ]] && usage && echo2 "Missing option -l for IP fastq of left file, or file does not exist " "error" 
-	[[ -z $RIGHT_IP_FASTQ ]] && usage && echo2 "Missing option -r for IP fastq of right file, or file does not exist " "error" 
-	[[ -z $LEFT_INPUT_FASTQ ]] && usage && echo2 "Missing option -L for INPUT fastq of left file, or file does not exist " "error" 
-	[[ -z $RIGHT_INPUT_FASTQ ]] && usage && echo2 "Missing option -R for INPUT fastq of right file, or file does not exist " "error" 
-	[[ ! -f $LEFT_IP_FASTQ ]] && usage && echo2 "Missing option -l for IP fastq of left file, or file does not exist " "error" 
-	[[ ! -f $RIGHT_IP_FASTQ ]] && usage && echo2 "Missing option -r for IP fastq of right file, or file does not exist " "error" 
-	[[ ! -f $LEFT_INPUT_FASTQ ]] && usage && echo2 "Missing option -L for INPUT fastq of left file, or file does not exist " "error" 
-	[[ ! -f $RIGHT_INPUT_FASTQ ]] && usage && echo2 "Missing option -R for INPUT fastq of right file, or file does not exist " "error" 
+	[[ -z $LEFT_IP_FASTQ ]] && usage && echo2 "Missing option -l for IP fastq of left file, or file does not exist " "error"
+	[[ -z $RIGHT_IP_FASTQ ]] && usage && echo2 "Missing option -r for IP fastq of right file, or file does not exist " "error"
+	[[ -z $LEFT_INPUT_FASTQ ]] && usage && echo2 "Missing option -L for INPUT fastq of left file, or file does not exist " "error"
+	[[ -z $RIGHT_INPUT_FASTQ ]] && usage && echo2 "Missing option -R for INPUT fastq of right file, or file does not exist " "error"
+	[[ ! -f $LEFT_IP_FASTQ ]] && usage && echo2 "Missing option -l for IP fastq of left file, or file does not exist " "error"
+	[[ ! -f $RIGHT_IP_FASTQ ]] && usage && echo2 "Missing option -r for IP fastq of right file, or file does not exist " "error"
+	[[ ! -f $LEFT_INPUT_FASTQ ]] && usage && echo2 "Missing option -L for INPUT fastq of left file, or file does not exist " "error"
+	[[ ! -f $RIGHT_INPUT_FASTQ ]] && usage && echo2 "Missing option -R for INPUT fastq of right file, or file does not exist " "error"
 fi
 
 if [[ -n $SE_MODE ]]; then
-	[[ -z $IP_FASTQ ]] && usage && echo2 "Missing option -i for IP fastq, or file does not exist " "error" 
-	[[ -z $INPUT_FASTQ ]] && usage && echo2 "Missing option -I for IP fastq, or file does not exist " "error" 
-	[[ ! -f $IP_FASTQ ]] && usage && echo2 "Missing option -i for IP fastq, or file does not exist " "error" 
-	[[ ! -f $INPUT_FASTQ ]] && usage && echo2 "Missing option -I for IP fastq, or file does not exist " "error" 
+	[[ -z $IP_FASTQ ]] && usage && echo2 "Missing option -i for IP fastq, or file does not exist " "error"
+	[[ -z $INPUT_FASTQ ]] && usage && echo2 "Missing option -I for IP fastq, or file does not exist " "error"
+	[[ ! -f $IP_FASTQ ]] && usage && echo2 "Missing option -i for IP fastq, or file does not exist " "error"
+	[[ ! -f $INPUT_FASTQ ]] && usage && echo2 "Missing option -I for IP fastq, or file does not exist " "error"
 fi
 
-[[ -z $GENOME ]] && usage && echo2 "Missing option -g for specifying which genome assembly to use" "error" 
+[[ -z $GENOME ]] && usage && echo2 "Missing option -g for specifying which genome assembly to use" "error"
 [ "$OUTDIR" != `readlink -f $PWD` ] && (mkdir -p "${OUTDIR}" || echo2 "Cannot create directory ${OUTDIR}" "warning")
 
 # check whether the this genome is supported or not
@@ -148,7 +150,7 @@ touch .writting_permission && rm -rf .writting_permission || (echo2 "Cannot writ
 # creating output files/folders #
 #################################
 export PDF_DIR=$OUTDIR/pdfs && mkdir -p $PDF_DIR
-# READS_DIR=input_read_files && mkdir -p $READS_DIR 
+# READS_DIR=input_read_files && mkdir -p $READS_DIR
 GENOMIC_MAPPING_DIR=genome_mapping && mkdir -p $GENOMIC_MAPPING_DIR
 PEAKS_CALLING_DIR=macs2_peaks_calling && mkdir -p $PEAKS_CALLING_DIR
 # SUMMARY_DIR=summaries && mkdir -p $SUMMARY_DIR
@@ -176,7 +178,7 @@ checkBin "macs2"
 # Variables #
 #############
 STEP=1
-if [[ -n $SE_MODE ]]; then 
+if [[ -n $SE_MODE ]]; then
 	JOBUID=`echo $IP_FASTQ | md5sum | cut -d" " -f1`
 	IP_FASTQ_NAME=`basename $IP_FASTQ`
 	INPUT_FASTQ_NAME=`basename $INPUT_FASTQ`
@@ -205,7 +207,7 @@ export BOWTIE2_INDEXES=$COMMON_FOLDER/Bowtie2Index
 # beginning running pipeline #
 ##############################
 echo2 "---------------------------------------------------------------------------------"
-echo2 "Beginning running [${PACKAGE_NAME}] ChIP-Seq pipeline version $CHIPSEQ_VERSION" 
+echo2 "Beginning running [${PACKAGE_NAME}] ChIP-Seq pipeline version $CHIPSEQ_VERSION"
 
 ###########################
 # determine fastQ version #
@@ -271,7 +273,7 @@ STEP=$((STEP+1))
 # Align Input reads to genome #
 ###############################
 echo2 "Mapping Input reads to genome ${GENOME} with Bowtie2"
-if [[ -n $SE_MODE ]]; then 
+if [[ -n $SE_MODE ]]; then
 	[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_Input ] && \
 	bowtie2 -x genome \
 		-U $INPUT_FASTQ \
@@ -286,7 +288,7 @@ if [[ -n $SE_MODE ]]; then
 		rm -rf ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.b2.bam && \
 		touch .${JOBUID}.status.${STEP}.genome_mapping_bowtie2Input
 	[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_bowtie2Input ] && echo2 "Failed in mapping Input to genome" "error"
-else	
+else
 	[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_Input ] && \
 	bowtie2 -x genome \
 		-1 ${LEFT_INPUT_FASTQ} \
@@ -303,7 +305,7 @@ else
 		samtools index ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.b2.sorted.bam && \
 		rm -rf ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.b2.bam && \
 		touch .${JOBUID}.status.${STEP}.genome_mapping_Input
-	[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_Input ] && echo2 "Failed in mapping input to genome" "error"	
+	[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_Input ] && echo2 "Failed in mapping input to genome" "error"
 fi
 STEP=$((STEP+1))
 
@@ -377,6 +379,3 @@ else
 	echo "PE" > .SE_OR_PE
 fi
 touch .${GENOME}.CHIPSEQ_VERSION.${CHIPSEQ_VERSION}
-
-
-

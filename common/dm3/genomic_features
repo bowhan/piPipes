@@ -1,5 +1,6 @@
 # variables for small RNA pipeline intersecting
 	MASK=$COMMON_FOLDER/UCSC.rRNA+tRNA+nonCoding.bed6.gz # tRNA, rRNA, nonCoding RNA (flyBase) from UCSC table browser
+	tRNA_and_NonCoding=$COMMON_FOLDER/UCSC.rRNA+tRNA+nonCoding.bed6.gz
 	piRNA_Cluster=$COMMON_FOLDER/Brennecke.piRNAcluster.bed6.gz # piRNA cluster defined in Brennecke, et al,. Cell, 2007; no strand information
 	piRNA_Cluster_42AB=$COMMON_FOLDER/Brennecke.piRNAcluster.42AB.bed6.gz # 42AB
 	piRNA_Cluster_20A=$COMMON_FOLDER/Brennecke.piRNAcluster.20A.bed6.gz # 20A
@@ -69,6 +70,17 @@
 	"flyBase_5UTR" \
 	"flyBase_3UTR" \
 	"lincRNA" )
+	
+	declare -a TARGETS_EXCLUSIVE=(\
+	"tRNA_and_NonCoding" \
+	"piRNA_Cluster" \
+	"repeatMasker" \
+	"flyBase_5UTR" \
+	"flyBase_3UTR" \
+	"flyBase_Intron_xRM" \
+	"flyBase_CDS" \
+	"unannotated" \
+	)
 	
 # variables for small RNA direct mapping
 	declare -a DIRECT_MAPPING=( "transposon" "repBase" "piRNAcluster" )

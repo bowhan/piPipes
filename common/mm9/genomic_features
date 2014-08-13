@@ -1,5 +1,6 @@
 # variables for small RNA pipeline intersecting
 	MASK=$COMMON_FOLDER/UCSC.RepeatMask.bed.rtRNA.gz
+	rRNA_tRNA=$COMMON_FOLDER/UCSC.RepeatMask.bed.rtRNA.gz
 	# piRNA clusters annoated in Li, et al, Mol Cell, 2013
 	piRNA_Cluster=$COMMON_FOLDER/mm9.piRNAcluster.bed.gz
 	piRNA_Cluster_EXON=$COMMON_FOLDER/piRNA.cluster.bed6.gz
@@ -55,6 +56,18 @@
 	"pachytene_piRNA_Cluster_EXON" \
 	"Zamore_NM_EXON" \
 	"Zamore_NR_EXON" \
+	"refSeq_GENE" \
+	"repeatMasker" \
+	)
+	
+	declare -a TARGETS_EXCLUSIVE=(\
+	"rRNA_tRNA" \
+	"prepachytene_piRNA_Cluster" \
+	"hybrid_piRNA_Cluster" \
+	"hybrid_piRNA_Cluster_EXON" \
+	"refSeq_5UTR" \
+	"refSeq_3UTR" \
+	"refSeq_INTRON" \
 	"refSeq_GENE" \
 	"repeatMasker" \
 	)

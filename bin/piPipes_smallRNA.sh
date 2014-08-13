@@ -20,7 +20,7 @@
 ##########
 # Config #
 ##########
-export SMALLRNA_VERSION=1.0.0
+export SMALLRNA_VERSION=1.0.1
 
 #########
 # USAGE #
@@ -65,6 +65,7 @@ ${OPTIONAL}[ optional ]
 		 *You are able to run the same library multiple times with different normalization method. They will not collapse.
 	-c      Number of CPUs to use, default: 8
 	-o      Output directory, default: current directory $PWD
+	-F      A list of Fasta files, delimited by comma, used to do filtering (other than rRNA precursor sequence provide).
 	-P      A list of Fasta files, delimited by comma, used to do pre-genomic mapping and analysis. For example, given "-P miniwhite.fa,virus.fa", after removing reads mappable to rRNA and miRNA hairpin, reads are mapped to miniWhite sequence first. Only the non-miniWhite-mappers are mapped to virus sequence. And only the non-miniWhite, non-virus mappers will be used in the genome mapping and further analysis.
 	-O      A list of Fasta files, delimited by comma, used to do post-genomic mapping and analysis. For example, given "-O gfp.fa,luciferase.fa", after removing reads mappable rRNA, miRNA hairpin and genome, reads are mapped to gfp sequence first. Only the non-genome non-gfp mappers are mapped to luciferase sequence. If more than one sequences are put in one Fasta file, they will be treated equally. ${UNDERLINE}Please only use letters and numbers as filename and USE \$HOME instead of ~ to indicate the home directory.${RESET}
 EOF
@@ -74,7 +75,7 @@ echo -e "${COLOR_END}"
 #############################
 # ARGS reading and checking #
 #############################
-while getopts "hi:c:o:g:vN:P:O:" OPTION; do
+while getopts "hi:c:o:g:vN:F:P:O:" OPTION; do
 	case $OPTION in
 		h)	usage && exit 0 ;;
 		i)	INPUT_FASTQ=`readlink -f $OPTARG` ;;
@@ -82,7 +83,8 @@ while getopts "hi:c:o:g:vN:P:O:" OPTION; do
 		c)	CPU=$OPTARG ;;
 		v)	echo2 "SMALLRNA_VERSION: v$SMALLRNA_VERSION" && exit 0 ;;
 		g)	export GENOME=`echo ${OPTARG} | tr '[A-Z]' '[a-z]'` ;;
-		N)	export NORMMETHOD=`echo ${OPTARG} | tr '[A-Z]' '[a-z]'` ;;
+		N) 	export NORMMETHOD=`echo ${OPTARG} | tr '[A-Z]' '[a-z]'` ;;
+		F)  FILTER_MAPPING_FILE_LIST=$OPTARG ;;
 		P)	PRE_GENOME_MAPPING_FILE_LIST=$OPTARG ;;
 		O)	POST_GENOME_MAPPING_FILE_LIST=$OPTARG ;;
 		*)	usage && exit 1 ;;
@@ -106,11 +108,12 @@ touch .writting_permission && rm -rf .writting_permission || (echo2 "Cannot writ
 #################################
 # creating output files/folders #
 #################################
-TABLE=${PREFIX}.basic_stats
+export TABLE=${PREFIX}.basic_stats
 export PDF_DIR=$OUTDIR/pdfs && mkdir -p $PDF_DIR
 READS_DIR=input_read_files && mkdir -p $READS_DIR
 rRNA_DIR=rRNA_mapping && mkdir -p $rRNA_DIR
 MIRNA_DIR=hairpins_mapping && mkdir -p $MIRNA_DIR
+FILTER_DIR=custom_filter && mkdir -p $FILTER_DIR
 PRE_GENOME_MAPPING_DIR=pre_genome_mapping && mkdir -p $PRE_GENOME_MAPPING_DIR
 POST_GENOME_MAPPING_DIR=post_genome_mapping && mkdir -p $POST_GENOME_MAPPING_DIR
 GENOMIC_MAPPING_DIR=genome_mapping && mkdir -p $GENOMIC_MAPPING_DIR
@@ -174,13 +177,46 @@ INSERT=$READS_DIR/${PREFIX}.insert # insert file, a format with two fields delim
 [ ! -f .${JOBUID}.status.${STEP}.fq2insert ] && echo2 "fq2insert failed" "error"
 STEP=$((STEP+1))
 
+####################
+## pre filtering ###
+####################
+INPUT=$READS_DIR/${PREFIX}.insert
+MM=0 # haven't implement method to take mismatch # from user
+# parsing customer defined pre-genomic mapping variables
+[[ ! -z $FILTER_MAPPING_FILE_LIST ]] && \
+	echo2 "Mapping to customer defined filtering indexes"
+	eval `echo $FILTER_MAPPING_FILE_LIST | awk 'BEGIN{FS=","}{printf "export FILTER_MAPPING_FILES=(" ; ;for (i=1;i<=NF;++i) printf "\"%s\" ", $i; printf ")\n";}'`
+	for TARGET in "${FILTER_MAPPING_FILES[@]}"; do
+		TARGET_NAME1=`basename $TARGET`
+		TARGET_NAME=${TARGET_NAME1%.fa}
+		TARGET_FA=`readlink -f $TARGET`
+		[[ ! -f $TARGET_FA ]] && echo2 "File $TARGET specified by -F do not exist" "error"
+		if [[ ! -f .${JOBUID}.status.${STEP}.${TARGET_NAME}_filtering_mapping ]]; then
+			OUTDIR1=$FILTER_DIR/${TARGET_NAME} && mkdir -p $OUTDIR1 || echo2 "Cannot create directory $OUTDIR1, please check the permission. And try to only use letter and number to name the Fasta file" "error"
+			bowtie-build $TARGET_FA $OUTDIR1/$TARGET_NAME 1>/dev/null 2>/dev/null || echo2 "Failed to build the bowtie index for $TARGET_FA" "error"
+			faSize -tab -detailed $TARGET_FA > $OUTDIR1/${TARGET_NAME}.sizes && \
+			PREFIX1=`basename $INPUT` && PREFIX1=${OUTDIR1}/${PREFIX1%.insert} && \
+			echo2 "Mapping to ${TARGET_NAME}" && \
+			bowtie -r -v 0 -a --best --strata -p $CPU -S \
+				--un ${INPUT%.insert}.x_${TARGET_NAME}.insert \
+				$OUTDIR1/$TARGET_NAME \
+				$INPUT \
+				1> /dev/null \
+				2> ${PREFIX1}.log && \
+			rm -rf $OUTDIR1/${TARGET_NAME}*ebwt && \
+			touch .${JOBUID}.status.${STEP}.${TARGET_NAME}_filtering_mapping
+		fi
+		INPUT=${INPUT%.insert}.x_${TARGET_NAME}.insert
+	done
+
 #####################################
 # Pre Processing before any Mapping #
 #####################################
 # getting rid of sequences mapping to rRNA, we use -k 1 option for speed purpose
 echo2 "Mapping to rRNA, with $rRNA_MM mismatch(es) allowed"
+INSERT=$INPUT
+x_rRNA_INSERT=${INSERT%.insert}.x_rRNA.insert
 rRNA_BED_LOG=$rRNA_DIR/${PREFIX}.rRNA.log
-x_rRNA_INSERT=$READS_DIR/${PREFIX}.x_rRNA.insert
 [ ! -f .${JOBUID}.status.${STEP}.rRNA_mapping ] && \
 	totalReads=`awk '{a+=$2}END{printf "%d", a}' ${INSERT}` && echo $totalReads > .${JOBUID}.totalReads && \
 	bowtie -r -S -v $rRNA_MM -k 1 -p $CPU \
@@ -204,8 +240,8 @@ nonrRNAReads=`cat .${JOBUID}.nonrRNAReads`
 # miRNA hairpin Mapping #
 #########################
 echo2 "Mapping to microRNA Hairpin, with $hairpin_MM mismatch(es) allowed; only keep unique mappers"
-x_rRNA_HAIRPIN_INSERT=$READS_DIR/${PREFIX}.x_rRNA.hairpin.insert # insert file storing reads that nonmappable to rRNA and mappable to hairpin
-x_rRNA_x_hairpin_INSERT=$READS_DIR/${PREFIX}.x_rRNA.x_hairpin.insert # reads that nonmappable to rRNA or hairpin
+x_rRNA_HAIRPIN_INSERT=${x_rRNA_INSERT%insert}hairpin.insert # insert file storing reads that nonmappable to rRNA and mappable to hairpin
+x_rRNA_x_hairpin_INSERT=${x_rRNA_INSERT%insert}x_hairpin.insert # reads that nonmappable to rRNA or hairpin
 x_rRNA_HAIRPIN_BED2=$MIRNA_DIR/${PREFIX}.x_rRNA.hairpin.v${hairpin_MM}m1.bed2 # bed2 format with hairpin mapper, with the hairpin as reference
 x_rRNA_HAIRPIN_BED2_LENDIS=$MIRNA_DIR/${PREFIX}.x_rRNA.hairpin.v${hairpin_MM}m1.lendis # length distribution for hairpin mapper
 x_rRNA_HAIRPIN_GENOME_BED2=$GENOMIC_MAPPING_DIR/${PREFIX}.x_rRNA.hairpin.${GENOME}v${genome_MM}a.bed2 # bed2 format with hairpin mapper, with genome as reference
@@ -259,7 +295,7 @@ MM=0 # haven't implement method to take mismatch # from user
 		[[ ! -f $TARGET_FA ]] && echo2 "File $TARGET specified by -P do not exist" "error"
 		if [[ ! -f .${JOBUID}.status.${STEP}.${TARGET_NAME}_mapping ]]; then
 			OUTDIR1=$PRE_GENOME_MAPPING_DIR/${TARGET_NAME} && mkdir -p $OUTDIR1 || echo2 "Cannot create directory $OUTDIR1, please check the permission. And try to only use letter and number to name the Fasta file" "error"
-			bowtie-build $TARGET_FA $OUTDIR1/$TARGET_NAME 1>&2 2>/dev/null || echo2 "Failed to build the bowtie index for $TARGET_FA" "error"
+			bowtie-build $TARGET_FA $OUTDIR1/$TARGET_NAME 1>/dev/null 2>/dev/null || echo2 "Failed to build the bowtie index for $TARGET_FA" "error"
 			faSize -tab -detailed $TARGET_FA > $OUTDIR1/${TARGET_NAME}.sizes
 			PREFIX1=`basename $INPUT` && PREFIX1=${OUTDIR1}/${PREFIX1%.insert} && \
 			echo2 "Mapping to ${TARGET_NAME}" && \
@@ -421,7 +457,7 @@ INPUT=${INPUT%.insert}.${GENOME}v${genome_MM}a.un.insert
 		if [[ ! -f .${JOBUID}.status.${STEP}.${TARGET_NAME}_mapping ]]; then
 			[[ ! -f $TARGET_FA ]] && echo2 "File $TARGET specified by -P do not exist" "error"
 			OUTDIR1=$POST_GENOME_MAPPING_DIR/${TARGET_NAME} && mkdir -p $OUTDIR1 || echo2 "Cannot create directory $OUTDIR1, please check the permission. And try to only use letter and number to name the Fasta file" "error"
-			bowtie-build $TARGET_FA $OUTDIR1/$TARGET_NAME 1>&2 2>/dev/null || echo2 "Failed to build the bowtie index for $TARGET_FA" "error"
+			bowtie-build $TARGET_FA $OUTDIR1/$TARGET_NAME 1>/dev/null 2>/dev/null || echo2 "Failed to build the bowtie index for $TARGET_FA" "error"
 			faSize -tab -detailed $TARGET_FA > $OUTDIR1/${TARGET_NAME}.sizes
 			PREFIX1=`basename $INPUT` && PREFIX1=${OUTDIR1}/${PREFIX1%.insert} && \
 			echo2 "Mapping to ${TARGET_NAME}" && \
@@ -700,6 +736,7 @@ STEP=$((STEP+1))
 echo2 "Merging pdfs"
 [ ! -f .${JOBUID}.status.${STEP}.merge_pdfs ] && \
 	gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=$PDF_DIR/${PREFIX}.${PACKAGE_NAME}.small_RNA_pipeline.${SMALLRNA_VERSION}.pdf \
+		$PDF_DIR/${PREFIX}.pie.pdf \
 		$PDF_DIR/`basename ${GENOME_UNIQUEMAP_BED2}`.+hairpin.lendis.pdf \
 		$PDF_DIR/`basename ${GENOME_ALLMAP_BED2}`.+hairpin.lendis.pdf \
 		$PDF_DIR/`basename ${GENOME_UNIQUEMAP_BED2}`.x_hairpin.lendis.pdf \

@@ -65,7 +65,8 @@ rm -rf ${para_file}*
 PDFs=""
 for t in ${TARGETS[@]}
 do \
-	[ -s $INTERSECT_OUTDIR/${ALL_BED}.intersect_with_${t}.pdf ] && PDFs=${PDFs}" "$INTERSECT_OUTDIR/${ALL_BED}.intersect_with_${t}.pdf
+	[ -s $INTERSECT_OUTDIR/${ALL_BED}.intersect_with_${t}.unique_species.pdf ] && PDFs=${PDFs}" "$INTERSECT_OUTDIR/${ALL_BED}.intersect_with_${t}.unique_species.pdf
+	[ -s $INTERSECT_OUTDIR/${ALL_BED}.intersect_with_${t}.all_reads.pdf ] && PDFs=${PDFs}" "$INTERSECT_OUTDIR/${ALL_BED}.intersect_with_${t}.all_reads.pdf
 	echo -ne "${t}\t" >> $smRNA_SUM
 	cat $INTERSECT_OUTDIR/.stats.${t}.smRNA >> $smRNA_SUM
 	echo -ne "${t}\t" >> $siRNA_SUM
@@ -74,7 +75,19 @@ do \
 	cat $INTERSECT_OUTDIR/.stats.${t}.piRNA >> $piRNA_SUM
 done
 
+# draw pie chart from exclusive groups
+rm -rf $INTERSECT_OUTDIR/exclusive_genomic_feature.bed
+grep 'miRNA hairpin reads' $TABLE > ${TABLE}.exclusive_genomic_feature.count
+for t in ${TARGETS_EXCLUSIVE[@]}
+do
+	# we run this everytime to ensure modification on the files
+	bedSort ${!t} /dev/stdout | bedtools_piPipes merge -i stdin | awk -v name=$t 'BEGIN{OFS="\t"}{print $1,$2,$3,name}' >> $INTERSECT_OUTDIR/exclusive_genomic_feature.bed
+done
+[ -f $INTERSECT_OUTDIR/exclusive_genomic_feature.bed ] && \
+	bedtools_piPipes intersect -wo -a $GENOME_ALLMAP_BED2 -b $INTERSECT_OUTDIR/exclusive_genomic_feature.bed | \
+		awk '{ct[$(NF-2)]+=$4/$5/$NF}END{for (f in ct) {print f"\t"ct[f]}}' >> ${TABLE}.exclusive_genomic_feature.count && \
+	Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_pie.R $PDF_DIR/${PREFIX}.pie ${TABLE}.exclusive_genomic_feature.count && \
+	rm -rf $INTERSECT_OUTDIR/exclusive_genomic_feature.bed
+
 ( gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=$PDF_DIR/${PREFIX}.features.pdf ${PDFs} && rm -rf ${PDFs} ) || \
 echo2 "Failed to merge pdf from features intersecting... check gs... Or use your favorarite pdf merge tool by editing line$LINENO in $0" "warning"
-
-
