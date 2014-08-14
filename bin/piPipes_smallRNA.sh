@@ -601,6 +601,7 @@ echo -e "genome mapping reads (-rRNA; -miRNA_hairpin)\t${totalMapCount}" >> $TAB
 echo -e "genome unique mapping reads (-rRNA; +miRNA_hairpin)\t$((uniqueMapCount+hairpinReads))" >> $TABLE && \
 echo -e "genome unique mapping reads (-rRNA; -miRNA_hairpin)\t${uniqueMapCount}" >> $TABLE && \
 echo -e "genome multiple mapping reads (-rRNA; -miRNA_hairpin)\t${multipMapCount}" >> $TABLE && \
+export TOTAL_GENOME_MAPPING_READS=$((totalMapCount+hairpinReads))
 
 # normalization method
 # input | rRNA | unique | uniqueXmiRNA | all | allXmiRNA | miRNA

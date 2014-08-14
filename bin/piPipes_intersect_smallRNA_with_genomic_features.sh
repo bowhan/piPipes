@@ -77,17 +77,23 @@ done
 
 # draw pie chart from exclusive groups
 rm -rf $INTERSECT_OUTDIR/exclusive_genomic_feature.bed
-grep 'miRNA hairpin reads' $TABLE > ${TABLE}.exclusive_genomic_feature.count
+echo -ne "miRNAs\t" > ${TABLE}.exclusive_genomic_feature.count && \
+grep 'miRNA hairpin reads' $TABLE | cut -f2 >> ${TABLE}.exclusive_genomic_feature.count && \
+echo "miRNAs" > ${TABLE}.exclusive_genomic_feature.order
 for t in ${TARGETS_EXCLUSIVE[@]}
 do
 	# we run this everytime to ensure modification on the files
+	echo "$t" >> ${TABLE}.exclusive_genomic_feature.order
 	bedSort ${!t} /dev/stdout | bedtools_piPipes merge -i stdin | awk -v name=$t 'BEGIN{OFS="\t"}{print $1,$2,$3,name}' >> $INTERSECT_OUTDIR/exclusive_genomic_feature.bed
 done
+
 [ -f $INTERSECT_OUTDIR/exclusive_genomic_feature.bed ] && \
 	bedtools_piPipes intersect -wo -a $GENOME_ALLMAP_BED2 -b $INTERSECT_OUTDIR/exclusive_genomic_feature.bed | \
 		awk '{ct[$(NF-2)]+=$4/$5/$NF}END{for (f in ct) {print f"\t"ct[f]}}' >> ${TABLE}.exclusive_genomic_feature.count && \
+	awk -v total=$TOTAL_GENOME_MAPPING_READS 'BEGIN{OFS="\t"}{ if (ARGIND==1) {a+=$2; b[$1]=$2;} else {printf "%s\t%.1f\n",$1, (b[$1]?b[$1]:0);}}END{printf "unannotated\t%.1f\n", total-a }' ${TABLE}.exclusive_genomic_feature.count ${TABLE}.exclusive_genomic_feature.order > ${TABLE}.exclusive_genomic_feature.count1 && \
+	mv ${TABLE}.exclusive_genomic_feature.count1 ${TABLE}.exclusive_genomic_feature.count && \
 	Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_pie.R $PDF_DIR/${PREFIX}.pie ${TABLE}.exclusive_genomic_feature.count && \
-	rm -rf $INTERSECT_OUTDIR/exclusive_genomic_feature.bed
+	rm -rf $INTERSECT_OUTDIR/exclusive_genomic_feature.bed ${TABLE}.exclusive_genomic_feature.order
 
 ( gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=$PDF_DIR/${PREFIX}.features.pdf ${PDFs} && rm -rf ${PDFs} ) || \
 echo2 "Failed to merge pdf from features intersecting... check gs... Or use your favorarite pdf merge tool by editing line$LINENO in $0" "warning"

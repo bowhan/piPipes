@@ -60,16 +60,23 @@
 	"repeatMasker" \
 	)
 	
+	prepachytene_piRNA=$prepachytene_piRNA_Cluster
+	hybrid_piRNA=$hybrid_piRNA_Cluster
+	pachytene_piRNA=$pachytene_piRNA_Cluster
+	FivePrimeUTR=$refSeq_5UTR
+	ThreePrimeUTR=$refSeq_3UTR
+	CDS=$flyBase_CDS
+	Intron=$refSeq_INTRON
+	Repeats=$repeatMasker
 	declare -a TARGETS_EXCLUSIVE=(\
+	"prepachytene_piRNA" \
+	"hybrid_piRNA" \
+	"pachytene_piRNA" \
+	"FivePrimeUTR" \
+	"ThreePrimeUTR" \
+	"Intron" \
+	"Repeats" \
 	"rRNA_tRNA" \
-	"prepachytene_piRNA_Cluster" \
-	"hybrid_piRNA_Cluster" \
-	"hybrid_piRNA_Cluster_EXON" \
-	"refSeq_5UTR" \
-	"refSeq_3UTR" \
-	"refSeq_INTRON" \
-	"refSeq_GENE" \
-	"repeatMasker" \
 	)
 # variables for small RNA direct mapping
 	declare -a DIRECT_MAPPING=( "repBase" "piRNAcluster" )

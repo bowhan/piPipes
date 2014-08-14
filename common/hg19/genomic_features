@@ -24,15 +24,20 @@
 	"snoRNA" \
 	)
 	
+	piRNA=$piRNA_Cluster
+	FivePrimeUTR=$refSeq_5UTR
+	ThreePrimeUTR=$refSeq_3UTR
+	Intron=$refSeq_INTRON
+	Repeats=$repeatMasker
 	declare -a TARGETS_EXCLUSIVE=( \
+	"piRNA" \
+	"FivePrimeUTR" \
+	"ThreePrimeUTR" \
+	"Intron" \
 	"tRNA" \
 	"snoRNA" \
-	"piRNA_Cluster" \
-	"refSeq_5UTR" \
-	"refSeq_3UTR" \
-	"refSeq_INTRON" \
 	"lincRNA" \
-	"repeatMasker" \
+	"Repeats" \
 	)
 		
 # variables for small RNA direct mapping
