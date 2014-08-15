@@ -55,12 +55,12 @@ ${REQUIRED}[ required ]
 		 Use "install" to install new genome
 ${OPTIONAL}[ optional ]
 	-N      Normalization method, choose from " unique | uniqueXmiRNA | all | allXmiRNA | miRNA | siRNA"
-		 unique:	use non-rRNA genomic unique mappers <default>.
-		 siRNA:	(only for dm3) use cis-NATs and structural loci siRNA (transposon siRNAs are EXCLUDED because it might contain piRNA degradation fragments). normalized to: reads per millions of siRNA <for oxidized library in fly>.
-		 uniqueXmiRNA:	use non-rRNA genomic unique mappers excluding microRNAs <for oxidized library in general>.
-		 all:	use non-rRNA genomic all mappers including microRNAs.
-		 allXmiRNA:	use non-rRNA genomic all mappers excluding microRNAs.
-		 miRNA:	use microRNAs. normalized to: reads per millions of miRNA <for unoxidized library that can assume no change on miRNAs>.
+	        unique: use non-rRNA genomic unique mappers <default>.
+	        siRNA: (only for dm3) use cis-NATs and structural loci siRNA (transposon siRNAs are EXCLUDED because it might contain piRNA degradation fragments). normalized to: reads per millions of siRNA <for oxidized library in fly>.
+	        uniqueXmiRNA: use non-rRNA genomic unique mappers excluding microRNAs <for oxidized library in general>.
+	        all: use non-rRNA genomic all mappers including microRNAs.
+	        allXmiRNA: use non-rRNA genomic all mappers excluding microRNAs.
+	        miRNA: use microRNAs. normalized to: reads per millions of miRNA <for unoxidized library that can assume no change on miRNAs>.
 	-c      Number of CPUs to use, default: 8
 	-o      Output directory, default: current directory $PWD
 	-A      Name to use for Sample A, default: using the basename of -a

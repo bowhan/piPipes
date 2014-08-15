@@ -35,22 +35,22 @@ Thank you for using it.
 
 ==================< paired-end >==================
 	${UNDERLINE}usage${RESET}:
-		piPipes deg \
-			-l left.fq \
-			-r right.fq \
-			-g dm3 \
-			-s small_RNA_pipeline_output \
-			-o output_directory [current directory] \
+		piPipes deg \ 
+			-l left.fq \ 
+			-r right.fq \ 
+			-g dm3 \ 
+			-s small_RNA_pipeline_output \ 
+			-o output_directory [current directory]  \ 
 			-c cpu [8]
 In paired-end mode, \1 should be in the same direction as the transcripts, opposite to dUTR based RNASeq.
 
 ==================< single-end >==================
 	${UNDERLINE}usage${RESET}:
-		piPipes deg \
-			-i input.fq \
-			-g dm3 \
-			-s small_RNA_pipeline_output \
-			-o output_directory [current directory] \
+		piPipes deg \ 
+			-i input.fq \ 
+			-g dm3 \ 
+			-s small_RNA_pipeline_output \ 
+			-o output_directory [current directory] \ 
 			-c cpu [8]
 
 In single-end mode, the sequence should be in the same direction as the RNA.
@@ -63,11 +63,12 @@ ${REQUIRED}[ required ]
 	-l      Left reads from Paired-End sequencing
 	-r      Right reads from Paired-End sequencing
 ========================< single-end >========================
-	-i      Input reads, Single-End sequencing
+	-i      Input reads, Single-End sequencing.
+==============================================================
 
 	-g      Genome assembly name, like mm9 or dm3. required
-		 Check $PIPELINE_DIRECTORY/common/genome_supported.txt for genome assemblies currently installed;
-		 Use "install" to install new genome
+	        Check $PIPELINE_DIRECTORY/common/genome_supported.txt for genome assemblies currently installed;
+	        Use "install" to install new genome
 ${OPTIONAL}[ optional ]
 	-s      small RNA pipeline output; if this option is provided, the pipeline check the Ping-Pong signiture between the two libraries.
 	-o      Output directory, default: current directory $PWD

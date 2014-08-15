@@ -47,8 +47,7 @@ ${REQUIRED}[ required ]
 ${OPTIONAL}[ optional ]
 	-l      Link to the iGenome, this is required if your genome is not in piPipes
 	-D      Only do downloading but not other computation
-		 This is designed be used when the user wants to separate downloading and other works. For instance, only the
-		 head node on a hpcc has internet access but it is not appropriate to be used to build index.
+	        This is designed be used when the user wants to separate downloading and other works. For instance, only the head node on a hpcc has internet access but it is not appropriate to be used to build index.
 	-c      Number of CPU to use
 EOF
 echo -e "${COLOR_END}"
@@ -332,8 +331,3 @@ mm9)
 esac
 
 echo $GENOME >> $PIPELINE_DIRECTORY/common/genome_supported.txt
-
-
-
-
-

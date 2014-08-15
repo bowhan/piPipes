@@ -19,7 +19,7 @@
 ##########
 # Config #
 ##########
-export CHIPSEQ_VERSION=1.0.0
+export CHIPSEQ_VERSION=1.1.0
 
 #########
 # USAGE #
@@ -34,26 +34,29 @@ Thank you for using it.
 
 ==================< paired-end >==================
 	${UNDERLINE}usage${RESET}:
-		pipile	chip \
-			-l left.IP.fq \
-			-r right.IP.fq \
-			-L left.INPUT.fq \
-			-R right.INPUT.fq \
-			-g mm9 \
-			-c cpu[8] \
-			-o output_dir[cwd] \
-			-x 500 [1000] \
+		piPipes	chip \ 
+			-l left.IP.fq \ 
+			-r right.IP.fq \ 
+			-L left.INPUT.fq \ 
+			-R right.INPUT.fq \ 
+			-g mm9 \ 
+			-u  \ 
+			-c cpu[8] \ 
+			-o output_dir[cwd] \ 
+			-x 500 [1000] \ 
 			-M /path/to/user/defined/region.bed1,/path/to/user/defined/region2.bed,/path/to/user/defined/region3.bed...
 
 ==================< single-end >==================
 	${UNDERLINE}usage${RESET}:
-		pipile	chip \
-			-i IP.fq \
-			-I INPUT.fq \
-			-g mm9 \
-			-c cpu[8] \
-			-o output_dir[cwd] \
-			-x 500 [1000] \
+		piPipes	chip \ 
+			-i IP.fq \ 
+			-I INPUT.fq \ 
+			-f 150 \ 
+			-e \ 
+			-g mm9 \ 
+			-c cpu[8] \ 
+			-o output_dir[cwd] \ 
+			-x 500 [1000] \ 
 			-M /path/to/user/defined/region.bed1,/path/to/user/defined/region2.bed,/path/to/user/defined/region3.bed...
 
 OPTIONS:
@@ -73,26 +76,36 @@ ${REQUIRED}[ required ]
 		 Check $PIPELINE_DIRECTORY/common/genome_supported.txt for genome assemblies currently installed;
 		 Use "piPipes install" to install new genome
 ${OPTIONAL}[ optional ]
+	-f      Fragment length for the library. The size of DNA after shearing. It will only be used for Single-End library. For Paired-End, it will be calculated from the alignments. default: 200
 	-B      Use "Broader" peak calling algorithm in MACS2; should be used for library like H3K9me3. default: off
-	-Q      MAPQ value used as threshold to filter alignments from Bowtie2 SAM/BAM output. The higher the MAPQ, the more unique the alignment. default: 1
-		 NOTE: Bowtie2 is ALWAYS called without -k or -a. Consequently, for each read, there will only be one best alignment given, no matter how many times it maps.
-		 If all the alignments are equally good, Bowtie2 chooses one randomly (see Bowtie2 manual for more details).
-		 Including multiple mappers ensures repetitive regions are not depleted. Keeping only one alignment avoids false positive signal on repetitive regions.
-		*If you would like to only consider unique mapper, set this option to more than 1, like 10. This usually removes multiple mappers which have equal good alignments.
 	-x      Length to extend up/downstream of each genomic features to draw the metagene plot. default: 1000
 	-M      Path to BED files for meta-plot analysis on user-defined regions. One plot for each BED file and different BED files should be delimited by comma.
-	     Do not use ~ to represent the home directory as ~ is expanded before passed into piPipes and it will not be expanded correctly unless repsent at the beginning of a string.
-		 Use $HOME instead, like -M $HOME/path/to/gfp,$HOME/path/to/white.fa
+        	Do not use ~ to represent the home directory as ~ is expanded before passed into piPipes and it will not be expanded correctly unless repsent at the beginning of a string.
+	        Use $HOME instead, like -M $HOME/path/to/gfp,$HOME/path/to/white.fa
 	-o      Output directory, default: current directory: $PWD
 	-c      Number of CPUs to use, default: 8
+<unique and multi-mapper options>
+	-u      Only use unique mappers. default: on
+	-m      Use both unique and multi-mappers. For multi-mappers, Bowtie2 randomly report one locus from the best aligments pool. default: off
+	-e      Use both unique and multi-mappers. For multi-mappers, use Expectation–Maximization algorithm implemented by CSEM to allocate them. Only alignments passing certain possibily are kept.
+	        Current CSEM is not compatible with bowtie2, so bowtie will be used instead. default: off
+
 EOF
 echo -e "${COLOR_END}"
 }
 
+
+#####################
+# const declaration #
+#####################
+CSEM_ITERATION=200 # number of iteration for CSEM
+SE_TLEN=200 # average fragment length for single-end sample
+
 #############################
 # ARGS reading and checking #
 #############################
-while getopts "hl:r:L:R:c:o:g:Bvx:Q:i:I:M:" OPTION; do
+USE_MULTIREADS=0
+while getopts "hf:l:r:L:R:c:o:g:Bvx:i:I:M:ume" OPTION; do
 	case $OPTION in
 		h)	usage && exit 0 ;;
 		v)	echo2 "CHIPSEQ_VERSION: v$CHIPSEQ_VERSION" && exit 0 ;;
@@ -103,11 +116,15 @@ while getopts "hl:r:L:R:c:o:g:Bvx:Q:i:I:M:" OPTION; do
 		i)	IP_FASTQ=`readlink -f $OPTARG`; SE_MODE=1 ;;
 		I)	INPUT_FASTQ=`readlink -f $OPTARG`; SE_MODE=1 ;;
 		o)	OUTDIR=`readlink -f $OPTARG` ;;
+		f)	SE_TLEN=$OPTARG ;;
 		M)	export USER_DEFINED_BED_FILES=$OPTARG ;;
 		c)	export CPU=$OPTARG ;;
 		g)	export GENOME=`echo ${OPTARG} | tr '[A-Z]' '[a-z]'` ;;
 		B)	export MACS2_BROAD_OPT="--broad" ;;
-		Q)	export MINIMAL_MAPQ=$OPTARG ;;
+		u)  export USE_MULTIREADS=$((USE_MULTIREADS+1));; # USE_MULTIREADS==1
+		m)  export USE_MULTIREADS=$((USE_MULTIREADS+2));; # USE_MULTIREADS==2
+		e)  export USE_MULTIREADS=$((USE_MULTIREADS+4));; # USE_MULTIREADS==4
+		# Q)	export MINIMAL_MAPQ=$OPTARG ;;
 		x)	export EXT_LEN=$OPTARG ;;
 		*)	usage && exit 1 ;;
 	esac
@@ -140,7 +157,19 @@ fi
 # check whether the this genome is supported or not
 check_genome $GENOME
 [ ! -z "${CPU##*[!0-9]*}" ] || CPU=8; export CPU
-[ ! -z $MINIMAL_MAPQ ] || MINIMAL_MAPQ=1; export MINIMAL_MAPQ
+# [ ! -z $MINIMAL_MAPQ ] || MINIMAL_MAPQ=1; export MINIMAL_MAPQ
+case $USE_MULTIREADS in
+	0) export USE_MULTIREADS=1; # default: using unique mappers
+	   GENOMIC_MAPPING_DIR=genome_mapping_unique_only ;;
+	1) GENOMIC_MAPPING_DIR=genome_mapping_unique_only ;;
+	2) GENOMIC_MAPPING_DIR=genome_mapping_randomly_assigned_multimapper ;;
+	3) echo2 "Please only use -u or -m" "error";;
+	4) GENOMIC_MAPPING_DIR=genome_mapping_CSEM_allocated_multimapper ;;
+	5) echo2 "Please only use -u or -e" "error";;
+	6) echo2 "Please only use -m or -e" "error";;
+	7) echo2 "Please only use -m or -e or -u" "error";;
+	*) echo2 "USE_MULTIREADS: $USE_MULTIREADS" "error";;
+esac
 [ ! -z "${EXT_LEN##*[!0-9]*}" ] || EXT_LEN=1000; export EXT_LEN
 [ ! -z $OUTDIR ] || OUTDIR=$PWD # if -o is not specified, use current directory
 cd ${OUTDIR} || (echo2 "Cannot access directory ${OUTDIR}... Exiting..." "error")
@@ -150,10 +179,8 @@ touch .writting_permission && rm -rf .writting_permission || (echo2 "Cannot writ
 # creating output files/folders #
 #################################
 export PDF_DIR=$OUTDIR/pdfs && mkdir -p $PDF_DIR
-# READS_DIR=input_read_files && mkdir -p $READS_DIR
-GENOMIC_MAPPING_DIR=genome_mapping && mkdir -p $GENOMIC_MAPPING_DIR
+mkdir -p $GENOMIC_MAPPING_DIR && ln -s $GENOMIC_MAPPING_DIR genome_mapping # backwards compatibility
 PEAKS_CALLING_DIR=macs2_peaks_calling && mkdir -p $PEAKS_CALLING_DIR
-# SUMMARY_DIR=summaries && mkdir -p $SUMMARY_DIR
 BW_OUTDIR=bigWig && mkdir -p $BW_OUTDIR
 AGG_DIR=aggregate_output && mkdir -p $AGG_DIR
 
@@ -167,12 +194,15 @@ checkBin "python"
 checkBin "samtools"
 checkBin "gs"
 checkBin "Rscript"
+checkBin "bowtie"
 checkBin "bowtie2"
+checkBin "csem"
 checkBin "ParaFly"
 checkBin "bedtools_piPipes"
 checkBin "bedGraphToBigWig"
 checkBin "express"
 checkBin "macs2"
+
 
 #############
 # Variables #
@@ -200,6 +230,8 @@ export COMMON_FOLDER=$PIPELINE_DIRECTORY/common/$GENOME
 export GENOME_FA=$COMMON_FOLDER/${GENOME}.fa
 # chrom information of this GENOME
 CHROM=$COMMON_FOLDER/${GENOME}.ChromInfo.txt
+# bowtie index
+export BOWTIE_INDEXES=$COMMON_FOLDER/BowtieIndex
 # bowtie2 index
 export BOWTIE2_INDEXES=$COMMON_FOLDER/Bowtie2Index
 
@@ -229,85 +261,259 @@ sanger)		bowtie2PhredOption="--phred33" ;; # Phred+33,  raw reads typically (0, 
 *)			echo2 "unable to determine the fastq version. Using sanger..." "warning";;
 esac
 
-############################
-# Align IP reads to genome #
-############################
-echo2 "Mapping IP reads to genome ${GENOME} with Bowtie2"
-if [[ -n $SE_MODE ]]; then
-	[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_bowtie2IP ] && \
-	bowtie2 -x genome \
-		-U $IP_FASTQ \
-		-q \
-		$bowtie2PhredOption \
-		--very-sensitive-local \
-		-p $CPU \
-		2> ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.b2.log | \
-		samtools view -uS -F0x4 -q ${MINIMAL_MAPQ} - > ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.b2.bam && \
-		samtools sort -@ $CPU ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.b2.bam ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.b2.sorted && \
-		samtools index ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.b2.sorted.bam && \
-		rm -rf ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.b2.bam && \
-		touch .${JOBUID}.status.${STEP}.genome_mapping_bowtie2IP
-	[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_bowtie2IP ] && echo2 "Failed in mapping IP to genome" "error"
-else
-	[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_bowtie2IP ] && \
-	bowtie2 -x genome \
-		-1 ${LEFT_IP_FASTQ} \
-		-2 ${RIGHT_IP_FASTQ} \
-		-q \
-		$bowtie2PhredOption \
-		--very-sensitive-local \
-		-X 800 \
-		--no-mixed \
-		-p $CPU \
-		2> ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.b2.log | \
-		samtools view -uS -f 0x2 -q ${MINIMAL_MAPQ} - > ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.b2.bam && \
-		samtools sort -@ $CPU ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.b2.bam ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.b2.sorted && \
-		samtools index ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.b2.sorted.bam && \
-		rm -rf ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.b2.bam && \
-		touch .${JOBUID}.status.${STEP}.genome_mapping_bowtie2IP
-	[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_bowtie2IP ] && echo2 "Failed in mapping IP to genome" "error"
-fi
-STEP=$((STEP+1))
+case $USE_MULTIREADS in
+	1)
+	# using unique mappers only
+	MINIMAL_MAPQ=10;
+	############################
+	# Align IP reads to genome #
+	############################
+	echo2 "Mapping IP reads to genome ${GENOME} with Bowtie2"
+	if [[ -n $SE_MODE ]]; then
+		[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_bowtie2IP ] && \
+		bowtie2 -x genome \
+			-U $IP_FASTQ \
+			-q \
+			$bowtie2PhredOption \
+			--very-sensitive-local \
+			-p $CPU \
+			2> ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.log | \
+			samtools view -uS -F0x4 -q ${MINIMAL_MAPQ} - > ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.bam && \
+			samtools sort -@ $CPU ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.bam ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.sorted && \
+			samtools index ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.sorted.bam && \
+			rm -rf ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.bam && \
+			touch .${JOBUID}.status.${STEP}.genome_mapping_bowtie2IP
+		[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_bowtie2IP ] && echo2 "Failed in mapping IP to genome" "error"
+	else
+		[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_bowtie2IP ] && \
+		bowtie2 -x genome \
+			-1 ${LEFT_IP_FASTQ} \
+			-2 ${RIGHT_IP_FASTQ} \
+			-q \
+			$bowtie2PhredOption \
+			--very-sensitive-local \
+			-X 800 \
+			--no-mixed \
+			-p $CPU \
+			2> ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.log | \
+			samtools view -uS -f 0x2 -q ${MINIMAL_MAPQ} - > ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.bam && \
+			samtools sort -@ $CPU ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.bam ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.sorted && \
+			samtools index ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.sorted.bam && \
+			rm -rf ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.bam && \
+			touch .${JOBUID}.status.${STEP}.genome_mapping_bowtie2IP
+		[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_bowtie2IP ] && echo2 "Failed in mapping IP to genome" "error"
+	fi
+	STEP=$((STEP+1))
 
-###############################
-# Align Input reads to genome #
-###############################
-echo2 "Mapping Input reads to genome ${GENOME} with Bowtie2"
-if [[ -n $SE_MODE ]]; then
-	[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_Input ] && \
-	bowtie2 -x genome \
-		-U $INPUT_FASTQ \
-		-q \
-		$bowtie2PhredOption \
-		--very-sensitive-local \
-		-p $CPU \
-		2> ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.b2.log | \
-		samtools view -uS -F0x4 -q ${MINIMAL_MAPQ} - > ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.b2.bam && \
-		samtools sort -@ $CPU ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.b2.bam ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.b2.sorted && \
-		samtools index ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.b2.sorted.bam && \
-		rm -rf ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.b2.bam && \
-		touch .${JOBUID}.status.${STEP}.genome_mapping_bowtie2Input
-	[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_bowtie2Input ] && echo2 "Failed in mapping Input to genome" "error"
-else
-	[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_Input ] && \
-	bowtie2 -x genome \
-		-1 ${LEFT_INPUT_FASTQ} \
-		-2 ${RIGHT_INPUT_FASTQ} \
-		-q \
-		$bowtie2PhredOption \
-		-X 800 \
-		--very-sensitive-local \
-		--no-mixed \
-		-p $CPU \
-		2> ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.b2.log | \
-		samtools view -uS -f 0x2 -q ${MINIMAL_MAPQ} - > ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.b2.bam && \
-		samtools sort -@ $CPU ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.b2.bam ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.b2.sorted && \
-		samtools index ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.b2.sorted.bam && \
-		rm -rf ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.b2.bam && \
-		touch .${JOBUID}.status.${STEP}.genome_mapping_Input
-	[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_Input ] && echo2 "Failed in mapping input to genome" "error"
-fi
-STEP=$((STEP+1))
+	###############################
+	# Align Input reads to genome #
+	###############################
+	echo2 "Mapping Input reads to genome ${GENOME} with Bowtie2"
+	if [[ -n $SE_MODE ]]; then
+		[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_Input ] && \
+		bowtie2 -x genome \
+			-U $INPUT_FASTQ \
+			-q \
+			$bowtie2PhredOption \
+			--very-sensitive-local \
+			-p $CPU \
+			2> ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.log | \
+			samtools view -uS -F0x4 -q ${MINIMAL_MAPQ} - > ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.bam && \
+			samtools sort -@ $CPU ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.bam ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.sorted && \
+			samtools index ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.sorted.bam && \
+			rm -rf ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.bam && \
+			touch .${JOBUID}.status.${STEP}.genome_mapping_bowtie2Input
+		[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_bowtie2Input ] && echo2 "Failed in mapping Input to genome" "error"
+	else
+		[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_Input ] && \
+		bowtie2 -x genome \
+			-1 ${LEFT_INPUT_FASTQ} \
+			-2 ${RIGHT_INPUT_FASTQ} \
+			-q \
+			$bowtie2PhredOption \
+			-X 800 \
+			--very-sensitive-local \
+			--no-mixed \
+			-p $CPU \
+			2> ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.log | \
+			samtools view -uS -f 0x2 -q ${MINIMAL_MAPQ} - > ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.bam && \
+			samtools sort -@ $CPU ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.bam ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.sorted && \
+			samtools index ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.sorted.bam && \
+			rm -rf ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.bam && \
+			touch .${JOBUID}.status.${STEP}.genome_mapping_Input
+		[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_Input ] && echo2 "Failed in mapping input to genome" "error"
+	fi
+	STEP=$((STEP+1))
+	;; # end of using unique mappers only
+
+	2)
+	# using randomly assigned mappers only
+	############################
+	# Align IP reads to genome #
+	############################
+	echo2 "Mapping IP reads to genome ${GENOME} with Bowtie2"
+	if [[ -n $SE_MODE ]]; then
+		[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_bowtie2IP ] && \
+		bowtie2 -x genome \
+			-U $IP_FASTQ \
+			-q \
+			$bowtie2PhredOption \
+			--very-sensitive-local \
+			-p $CPU \
+			2> ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.log | \
+			samtools view -uS -F0x4 - > ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.bam && \
+			samtools sort -@ $CPU ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.bam ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.sorted && \
+			samtools index ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.sorted.bam && \
+			rm -rf ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.bam && \
+			touch .${JOBUID}.status.${STEP}.genome_mapping_bowtie2IP
+		[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_bowtie2IP ] && echo2 "Failed in mapping IP to genome" "error"
+	else
+		[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_bowtie2IP ] && \
+		bowtie2 -x genome \
+			-1 ${LEFT_IP_FASTQ} \
+			-2 ${RIGHT_IP_FASTQ} \
+			-q \
+			$bowtie2PhredOption \
+			--very-sensitive-local \
+			-X 800 \
+			--no-mixed \
+			-p $CPU \
+			2> ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.log | \
+			samtools view -uS -f 0x2 - > ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.bam && \
+			samtools sort -@ $CPU ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.bam ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.sorted && \
+			samtools index ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.sorted.bam && \
+			rm -rf ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.bam && \
+			touch .${JOBUID}.status.${STEP}.genome_mapping_bowtie2IP
+		[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_bowtie2IP ] && echo2 "Failed in mapping IP to genome" "error"
+	fi
+	STEP=$((STEP+1))
+
+	###############################
+	# Align Input reads to genome #
+	###############################
+	echo2 "Mapping Input reads to genome ${GENOME} with Bowtie2"
+	if [[ -n $SE_MODE ]]; then
+		[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_Input ] && \
+		bowtie2 -x genome \
+			-U $INPUT_FASTQ \
+			-q \
+			$bowtie2PhredOption \
+			--very-sensitive-local \
+			-p $CPU \
+			2> ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.log | \
+			samtools view -uS -F0x4 - > ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.bam && \
+			samtools sort -@ $CPU ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.bam ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.sorted && \
+			samtools index ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.sorted.bam && \
+			rm -rf ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.bam && \
+			touch .${JOBUID}.status.${STEP}.genome_mapping_bowtie2Input
+		[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_bowtie2Input ] && echo2 "Failed in mapping Input to genome" "error"
+	else
+		[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_Input ] && \
+		bowtie2 -x genome \
+			-1 ${LEFT_INPUT_FASTQ} \
+			-2 ${RIGHT_INPUT_FASTQ} \
+			-q \
+			$bowtie2PhredOption \
+			-X 800 \
+			--very-sensitive-local \
+			--no-mixed \
+			-p $CPU \
+			2> ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.log | \
+			samtools view -uS -f 0x2 - > ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.bam && \
+			samtools sort -@ $CPU ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.bam ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.sorted && \
+			samtools index ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.sorted.bam && \
+			rm -rf ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.bam && \
+			touch .${JOBUID}.status.${STEP}.genome_mapping_Input
+		[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_Input ] && echo2 "Failed in mapping input to genome" "error"
+	fi
+	STEP=$((STEP+1))
+	;; # end of using randomly assigned mappers only
+	4)
+	# using CREM
+	############################
+	# Align IP reads to genome #
+	############################
+	echo2 "Mapping IP reads to genome ${GENOME} with Bowtie"
+	if [[ -n $SE_MODE ]]; then
+		[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_bowtieIP ] && \
+		bowtie -S -v 3 \
+			-a -m 100 --best --strata \
+			-p $CPU \
+			genome \
+			$IP_FASTQ \
+			2> ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.log | \
+			samtools view -uS -F0x4 - > ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.bam && \
+			csem b ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.bam  $SE_TLEN  $CSEM_ITERATION  ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.csem $CPU --extend-reads && \
+			piPipes_bam_ZW_filter ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.csem.bam > ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.bam && \
+			samtools sort -@ $CPU ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.bam ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.sorted && \
+			samtools index ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.sorted.bam && \
+			rm -rf ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.bam && \
+			touch .${JOBUID}.status.${STEP}.genome_mapping_bowtieIP
+		[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_bowtieIP ] && echo2 "Failed in mapping IP to genome" "error"
+	else
+		[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_bowtieIP ] && \
+		bowtie -S -v 3 \
+			-a -m 100 --best --strata \
+			-p $CPU \
+			genome \
+			-1 ${LEFT_IP_FASTQ} \
+			-2 ${RIGHT_IP_FASTQ} \
+			2> ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.log | \
+			samtools view -uS -f 0x2 - > ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.bam && \
+			samtools view -f0x40 ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.bam | awk '{v=($9>0?$9:-$9); ++t1; t2+=v;}END{printf "%d", t2/t1}' > ${GENOMIC_MAPPING_DIR}.IP.average_TLEN && \
+			csem b ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.bam  `cat ${GENOMIC_MAPPING_DIR}.IP.average_TLEN`  $CSEM_ITERATION  ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.csem $CPU --extend-reads && \
+			piPipes_bam_ZW_filter ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.csem.bam > ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.bam && \
+			samtools sort -@ $CPU ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.bam ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.sorted && \
+			samtools index ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.sorted.bam && \
+			rm -rf ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.bam && \
+			touch .${JOBUID}.status.${STEP}.genome_mapping_bowtieIP
+		[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_bowtieIP ] && echo2 "Failed in mapping IP to genome" "error"
+	fi
+	STEP=$((STEP+1))
+
+	###############################
+	# Align Input reads to genome #
+	###############################
+	echo2 "Mapping Input reads to genome ${GENOME} with Bowtie"
+	if [[ -n $SE_MODE ]]; then
+		[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_Input ] && \
+		bowtie -S -v 3 \
+			-a -m 100 --best --strata \
+			-p $CPU \
+			genome \
+			$INPUT_FASTQ \
+			2> ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.log | \
+			samtools view -uS -F0x4 - > ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.bam && \
+			csem b ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.bam  $SE_TLEN  $CSEM_ITERATION  ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.csem $CPU --extend-reads && \
+			piPipes_bam_ZW_filter ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.csem.bam > ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.bam && \
+			samtools sort -@ $CPU ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.bam ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.sorted && \
+			samtools index ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.sorted.bam && \
+			rm -rf ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.bam && \
+			touch .${JOBUID}.status.${STEP}.genome_mapping_bowtieInput
+		[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_bowtieInput ] && echo2 "Failed in mapping Input to genome" "error"
+	else
+		[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_Input ] && \
+		bowtie -S -v 3 \
+			-a -m 100 --best --strata \
+			-p $CPU \
+			genome \
+			-1 ${LEFT_INPUT_FASTQ} \
+			-2 ${RIGHT_INPUT_FASTQ} \
+			2> ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.log | \
+			samtools view -uS -f 0x2 - > ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.bam && \
+			samtools view -f0x40 ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.bam | awk '{v=($9>0?$9:-$9); ++t1; t2+=v;}END{printf "%d", t2/t1}' > ${GENOMIC_MAPPING_DIR}.Input.average_TLEN && \
+			csem b ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.bam  `cat ${GENOMIC_MAPPING_DIR}.Input.average_TLEN`  $CSEM_ITERATION  ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.csem $CPU --extend-reads && \
+			piPipes_bam_ZW_filter ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.csem.bam > ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.bam && \
+			samtools sort -@ $CPU ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.bam ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.sorted && \
+			samtools index ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.sorted.bam && \
+			rm -rf ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.bam && \
+			touch .${JOBUID}.status.${STEP}.genome_mapping_Input
+		[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_Input ] && echo2 "Failed in mapping input to genome" "error"
+	fi
+	STEP=$((STEP+1))
+	;; # end of using CREM
+esac
+
 
 #######################################
 # Call peaks using MACS2, with --SPMR #
@@ -318,8 +524,8 @@ if [[ -n $SE_MODE ]]; then
 	[ ! -f .${JOBUID}.status.${STEP}.peak_calling_with_macs2 ] && \
 		macs2 callpeak \
 			-f BAM \
-			-t ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.b2.sorted.bam \
-			-c ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.b2.sorted.bam \
+			-t ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.sorted.bam \
+			-c ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.sorted.bam \
 			-g $GENOME_SIZE \
 			$MACS2_BROAD_OPT \
 			--outdir $PEAKS_CALLING_DIR \
@@ -337,8 +543,8 @@ else
 	[ ! -f .${JOBUID}.status.${STEP}.peak_calling_with_macs2 ] && \
 		macs2 callpeak \
 			-f BAMPE \
-			-t ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.b2.sorted.bam \
-			-c ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.b2.sorted.bam \
+			-t ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.sorted.bam \
+			-c ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.sorted.bam \
 			-g $GENOME_SIZE \
 			$MACS2_BROAD_OPT \
 			--outdir $PEAKS_CALLING_DIR \

@@ -28,8 +28,8 @@ cat << EOF
 
 ChIP Seq pipeline single library mode v$CHIPSEQ2_VERSION from the $BOLD$PACKAGE_NAME$RESET
 $CHIP2_INTRO${RESET}
-Please email $CONTACT_EMAILS for any questions or bugs. 
-Thank you for using it. 
+Please email $CONTACT_EMAILS for any questions or bugs.
+Thank you for using it.
 
 ${UNDERLINE}usage${RESET}:
 	piPipes chip2	\ 
@@ -41,26 +41,25 @@ ${UNDERLINE}usage${RESET}:
 		-x 2000 [1000] \ 
 		-A piwi_heterozygous [basename of -a] \ 
 		-B piwi_mutant [basename of -b]
-	
+
 OPTIONS:
 	-h      Show this message
 	-v      Print out the version
 ${REQUIRED}[ required ]
 	-a      Directory to the folder with the output of single library mode, for sample A (wild-type)
 	-b      Directory to the folder with the output of single library mode, for sample B (mutant)
-	-g      Genome assembly name, like mm9 or dm3 
-		 Check "$PIPELINE_DIRECTORY/common/genome_supported.txt" for genome assemblies currently installed; 
-		 Use "install" to install new genome
+	-g      Genome assembly name, like mm9 or dm3
+	        Check "$PIPELINE_DIRECTORY/common/genome_supported.txt" for genome assemblies currently installed;
+	        Use "install" to install new genome
 ${OPTIONAL}[ optional ]
-	-x      Length (bp) to extend up/downstream of each genomic features to draw the metagene plot
-		 default: 1000
+	-x      Length (bp) to extend up/downstream of each genomic features to draw the metagene plot. default: 1000
 	-c      Number of CPUs to use, default: 8
 	-o      Output directory, default: current directory $PWD
 	-A      Name to use for Sample A, default: using the basename of -a
 	-B      Name to use for Sample B, default: using the basename of -b
 
-The pipeline will automatically detect the version and options of the single library run for the two samples and ensure the consistence. 
-	
+The pipeline will automatically detect the version and options of the single library run for the two samples and ensure the consistence.
+
 EOF
 echo -e "${COLOR_END}"
 }
@@ -84,11 +83,11 @@ while getopts "hva:b:g:c:o:A:B:x:" OPTION; do
 	esac
 done
 # if INPUT_FASTQ or GENOME is undefined, print out usage and exit
-[[ -z $SAMPLE_A_DIR ]] && usage && echo2 "Missing option -a for input dir for sample A (wild-type) file " "error" 
+[[ -z $SAMPLE_A_DIR ]] && usage && echo2 "Missing option -a for input dir for sample A (wild-type) file " "error"
 [[ ! -d $SAMPLE_A_DIR ]] && echo2 "Cannot find input directory $SAMPLE_A_DIR" "error"
-[[ -z $SAMPLE_B_DIR ]] && usage && echo2 "Missing option -b for input dir for sample B (mutant) file " "error" 
+[[ -z $SAMPLE_B_DIR ]] && usage && echo2 "Missing option -b for input dir for sample B (mutant) file " "error"
 [[ ! -d $SAMPLE_B_DIR ]] && echo2 "Cannot find input directory $SAMPLE_B_DIR" "error"
-[[ -z $GENOME ]]  && usage && echo2 "Missing option -g for specifying which genome assembly to use" "error" 
+[[ -z $GENOME ]]  && usage && echo2 "Missing option -g for specifying which genome assembly to use" "error"
 check_genome $GENOME
 [[ -z $SAMPLE_A_NAME ]] && export SAMPLE_A_NAME=`basename $SAMPLE_A_DIR`
 [[ -z $SAMPLE_B_NAME ]] && export SAMPLE_B_NAME=`basename $SAMPLE_B_DIR`
@@ -123,7 +122,7 @@ if [[ "${SE_OR_PE_A}" == "SE" ]]; then MACS2_f="BAM"; TN="tags"; else MACS2_f="B
 checkBin "gs"
 checkBin "Rscript"
 checkBin "macs2"
-	
+
 #################################
 # creating output files/folders #
 #################################
@@ -162,8 +161,8 @@ echo2 "Beginning running [${PACKAGE_NAME}] ChIPSeq pipeline dual library mode ve
 # in single library mode, the peak calling were done with normalization (--SPMR)
 # in order to call differential binding events, the two libraries need to be normalized here
 # ref: https://github.com/taoliu/MACS/wiki/Call-differential-binding-events
-SAMPLE_A_IP_BAM=$SAMPLE_A_DIR/genome_mapping/*IP.b2.sorted.bam
-SAMPLE_A_INPUT_BAM=$SAMPLE_A_DIR/genome_mapping/*Input.b2.sorted.bam
+SAMPLE_A_IP_BAM=$SAMPLE_A_DIR/genome_mapping/*IP.sorted.bam
+SAMPLE_A_INPUT_BAM=$SAMPLE_A_DIR/genome_mapping/*Input.sorted.bam
 echo2 "Running MACS2 without normalization for $SAMPLE_A_NAME"
 [ ! -f .${JOBUID}.status.${STEP}.peak_calling_A ] && \
 	macs2 callpeak \
@@ -183,8 +182,8 @@ EFFECTIVE_DEPTH_A=`grep "$TN after filtering in" $PEAKS_CALLING_DIR_A/*_peaks.xl
 ########################################################
 # Call peaks using MACS2, without --SPMR, for sample B #
 ########################################################
-SAMPLE_B_IP_BAM=$SAMPLE_B_DIR/genome_mapping/*IP.b2.sorted.bam
-SAMPLE_B_INPUT_BAM=$SAMPLE_B_DIR/genome_mapping/*Input.b2.sorted.bam
+SAMPLE_B_IP_BAM=$SAMPLE_B_DIR/genome_mapping/*IP.sorted.bam
+SAMPLE_B_INPUT_BAM=$SAMPLE_B_DIR/genome_mapping/*Input.sorted.bam
 echo2 "Running MACS2 without normalization for $SAMPLE_B_NAME"
 [ ! -f .${JOBUID}.status.${STEP}.peak_calling_B ] && \
 	macs2 callpeak \

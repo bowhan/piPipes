@@ -39,7 +39,7 @@ ${UNDERLINE}usage${RESET}:
 		-c 24 [8] \ 
 		-o output_dir [cwd] \ 
 		-A piwi_heterozygous [basename of -a] \ 
-		-B piwi_mutant [basename of -b] \
+		-B piwi_mutant [basename of -b] \ 
 		-n 100 [50]
 		
 OPTIONS:
@@ -49,8 +49,8 @@ ${REQUIRED}[ required ]
 	-a      Directory to the folder with the output of single library mode, for sample A (wild-type)
 	-b      Directory to the folder with the output of single library mode, for sample B (mutant)
 	-g      Genome assembly name, like mm9 or dm3. 
-		 Check "$PIPELINE_DIRECTORY/common/genome_supported.txt" for genome assemblies currently installed; 
-		 Use "install" to install new genome
+	        Check "$PIPELINE_DIRECTORY/common/genome_supported.txt" for genome assemblies currently installed; 
+	        Use "install" to install new genome
 ${OPTIONAL}[ optional ]
 	-c      Number of CPUs to use, default: 8
 	-o      Output directory, default: current directory $PWD
@@ -250,7 +250,3 @@ if [ "$GENOME" == "dm3" ]; then
 		touch .${JOBUID}.status.${STEP}.draw_eXpress_dm3
 	STEP=$((STEP+1))
 fi
-
-
-
-

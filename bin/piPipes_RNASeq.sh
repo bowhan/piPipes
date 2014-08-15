@@ -51,12 +51,10 @@ ${REQUIRED}[ required ]
 	-l      Left reads from Paired-End sequencing
 	-r      Right reads from Paired-End sequencing
 	-g      Genome assembly name, like mm9 or dm3. required
-		 Check $PIPELINE_DIRECTORY/common/genome_supported.txt for genome assemblies currently installed; 
-		 Use "install" to install new genome
+	        Check $PIPELINE_DIRECTORY/common/genome_supported.txt for genome assemblies currently installed; 
+	        Use "install" to install new genome
 ${OPTIONAL}[ optional ]
-	-L      Ligation based library preperation method; 
-		 Left reads (\1) being in the same direction as the transcripts; 
-		 default: off (dUTR based, \2 reads being in the same direction)
+	-L      Ligation based library preperation method; Left reads (\1) being in the same direction as the transcripts. default: off (dUTR based, \2 reads being in the same direction)
 	-o      Output directory, default: current directory $PWD
 	-c      Number of CPUs to use, default: 8
 	-B      How many rounds of batch algorithm to run for eXpress, default: 21
@@ -485,11 +483,3 @@ fi
 echo2 "Finished running ${PACKAGE_NAME} RNA-Seq pipeline version $RNASEQ_VERSION"
 echo2 "---------------------------------------------------------------------------------"
 touch .${GENOME}.${LIGATIONLIB}.RNASEQ_VERSION.${RNASEQ_VERSION}
-
-
-
-
-
-
-
-

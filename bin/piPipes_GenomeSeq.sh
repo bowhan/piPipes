@@ -50,8 +50,8 @@ ${REQUIRED}[ required ]
 	-l      Left reads from Paired-End sequencing; required
 	-r      Right reads from Paired-End sequencing; required
 	-g      Genome assembly name, like mm9 or dm3. required 
-		 Check $PIPELINE_DIRECTORY/common/genome_supported.txt for genome assemblies currently installed; 
-		 Use "install" to install new genome
+	        Check $PIPELINE_DIRECTORY/common/genome_supported.txt for genome assemblies currently installed; 
+	        Use "install" to install new genome
 ${OPTIONAL}[ optional ]
 	-d      VCF filtering depth, passed to "vcfutils.pl varFilter -D" and "retroseq.pl -call -depth", default: 100
 	-o      Output directory, default: current directory $PWD
@@ -392,7 +392,3 @@ fi
 echo2 "Finished running ${PACKAGE_NAME} Genome-Seq pipeline version $GENOMESEQ_VERSION"
 echo2 "---------------------------------------------------------------------------------"
 touch .${GENOME}.GENOMESEQ_VERSION.${GENOMESEQ_VERSION}
-
-
-
-
