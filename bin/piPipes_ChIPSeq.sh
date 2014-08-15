@@ -446,7 +446,7 @@ case $USE_MULTIREADS in
 			csem b ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.bam  $SE_TLEN  $CSEM_ITERATION  ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.csem $CPU --extend-reads && \
 			piPipes_bam_ZW_filter ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.csem.bam > ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.bam && \
 			samtools sort -@ $CPU ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.bam ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.sorted && \
-			samtools index ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.sorted.bam && \
+			samtools index ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.sorted.bam ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.csem.bam && \
 			rm -rf ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.bam && \
 			touch .${JOBUID}.status.${STEP}.genome_mapping_bowtieIP
 		[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_bowtieIP ] && echo2 "Failed in mapping IP to genome" "error"
@@ -465,7 +465,7 @@ case $USE_MULTIREADS in
 			piPipes_bam_ZW_filter ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.csem.bam > ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.bam && \
 			samtools sort -@ $CPU ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.bam ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.sorted && \
 			samtools index ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.sorted.bam && \
-			rm -rf ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.bam && \
+			rm -rf ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.bam ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.csem.bam && \
 			touch .${JOBUID}.status.${STEP}.genome_mapping_bowtieIP
 		[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_bowtieIP ] && echo2 "Failed in mapping IP to genome" "error"
 	fi
@@ -488,7 +488,7 @@ case $USE_MULTIREADS in
 			piPipes_bam_ZW_filter ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.csem.bam > ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.bam && \
 			samtools sort -@ $CPU ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.bam ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.sorted && \
 			samtools index ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.sorted.bam && \
-			rm -rf ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.bam && \
+			rm -rf ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.bam ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.csem.bam && \
 			touch .${JOBUID}.status.${STEP}.genome_mapping_bowtieInput
 		[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_bowtieInput ] && echo2 "Failed in mapping Input to genome" "error"
 	else
@@ -506,7 +506,7 @@ case $USE_MULTIREADS in
 			piPipes_bam_ZW_filter ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.csem.bam > ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.bam && \
 			samtools sort -@ $CPU ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.bam ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.sorted && \
 			samtools index ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.sorted.bam && \
-			rm -rf ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.bam && \
+			rm -rf ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.bam ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.csem.bam && \
 			touch .${JOBUID}.status.${STEP}.genome_mapping_Input
 		[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_Input ] && echo2 "Failed in mapping input to genome" "error"
 	fi
