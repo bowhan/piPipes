@@ -80,14 +80,14 @@ ${OPTIONAL}[ optional ]
 	-B      Use "Broader" peak calling algorithm in MACS2; should be used for library like H3K9me3. default: off
 	-x      Length to extend up/downstream of each genomic features to draw the metagene plot. default: 1000
 	-M      Path to BED files for meta-plot analysis on user-defined regions. One plot for each BED file and different BED files should be delimited by comma.
-        	Do not use ~ to represent the home directory as ~ is expanded before passed into piPipes and it will not be expanded correctly unless repsent at the beginning of a string.
+        	Do not use ~ to represent the home directory as ~ is expanded before passed into piPipes and it will not be expanded correctly unless present at the beginning of a string.
 	        Use $HOME instead, like -M $HOME/path/to/gfp,$HOME/path/to/white.fa
 	-o      Output directory, default: current directory: $PWD
 	-c      Number of CPUs to use, default: 8
 <unique and multi-mapper options>
 	-u      Only use unique mappers. default: on
 	-m      Use both unique and multi-mappers. For multi-mappers, Bowtie2 randomly report one locus from the best aligments pool. default: off
-	-e      Use both unique and multi-mappers. For multi-mappers, use Expectation–Maximization algorithm implemented by CSEM to allocate them. Only alignments passing certain possibily are kept.
+	-e      Use both unique and multi-mappers. For multi-mappers, use Expectation–Maximization algorithm implemented by CSEM to allocate them. Only alignments passing CREM posterior 0.5 are kept.
 	        Current CSEM is not compatible with bowtie2, so bowtie will be used instead. default: off
 
 EOF

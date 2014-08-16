@@ -54,15 +54,15 @@ ${REQUIRED}[ required ]
 		 Use "install" to install new genome
 ${OPTIONAL}[ optional ]
 	-N      Normalization method, choose from " input | rRNA | unique | uniqueXmiRNA | all | allXmiRNA | miRNA "
-	 	 unique:	use non-rRNA genomic unique mappers <default>.
-	 	 input:	use the number of reads input to the pipeline, this will include genome unmappers. But might be useful when you have additional sequence in the genome, like a transgene.
-	 	 rRNA:	use the number of reads mapped to rRNA.
-	 	 uniqueXmiRNA:	use non-rRNA genomic unique mappers excluding microRNAs <for oxidized library for piRNA mutant>.
-	 	 all:	use non-rRNA genomic all mappers including microRNAs.
-	 	 allXmiRNA:	use non-rRNA genomic all mappers excluding microRNAs.
-	 	 miRNA:	use microRNAs. normalized to: reads per millions of miRNA <for unoxidized library for piRNA mutant>.
-		 *Different normalization methods, including "siRNA", are available in the dual sample mode.
-		 *You are able to run the same library multiple times with different normalization method. They will not collapse.
+	        unique:	use non-rRNA genomic unique mappers <default>.
+	        input:	use the number of reads input to the pipeline, this will include genome unmappers. But might be useful when you have additional sequence in the genome, like a transgene.
+	        rRNA:	use the number of reads mapped to rRNA.
+	        uniqueXmiRNA:	use non-rRNA genomic unique mappers excluding microRNAs <for oxidized library for piRNA mutant>.
+	        all:	use non-rRNA genomic all mappers including microRNAs.
+	        allXmiRNA:	use non-rRNA genomic all mappers excluding microRNAs.
+	        miRNA:	use microRNAs. normalized to: reads per millions of miRNA <for unoxidized library for piRNA mutant>.
+	        *Different normalization methods, including "siRNA", are available in the dual sample mode.
+	        *You are able to run the same library multiple times with different normalization method. They will not collapse.
 	-c      Number of CPUs to use, default: 8
 	-o      Output directory, default: current directory $PWD
 	-F      A list of Fasta files, delimited by comma, used to do filtering (other than rRNA precursor sequence provide).
@@ -138,6 +138,7 @@ checkBin "bowtie"
 checkBin "ParaFly"
 checkBin "bedtools_piPipes"
 checkBin "bedGraphToBigWig"
+checkBin "piPipes_bed2Summary"
 checkBin "piPipes_fastq_to_insert"
 checkBin "piPipes_insertBed_to_bed2"
 
@@ -335,7 +336,7 @@ MM=0 # haven't implement method to take mismatch # from user
 				{\
 					printf "%d\t%.0f\t%.0f\n", d, (s[d]?s[d]:0), (as[d]?as[d]:0); \
 				}\
-			}' ${PREFIX1}.${TARGET_NAME}.v${MM}a.bed2 | sort -k1,1n > ${PREFIX1}.${TARGET_NAME}.v${MM}a.lendis && \
+			}' ${PREFIX1}.${TARGET_NAME}.v${MM}a.bed2 | sort -k1,1n > ${PREFIX1}.${TARGET_NAME}.v${MM}a.unique.lendis && \
 			awk 'BEGIN{FS=OFS="\t"}\
 			{ \
 				if ($5==1) \
@@ -351,7 +352,7 @@ MM=0 # haven't implement method to take mismatch # from user
 				{\
 					printf "%d\t%.0f\t%.0f\n", d, (s[d]?s[d]:0), (as[d]?as[d]:0); \
 				}\
-			}'  ${PREFIX1}.${TARGET_NAME}.v${MM}a.piRNA.bed2 | sort -k1,1n > ${PREFIX1}.${TARGET_NAME}.v${MM}a.piRNA.lendis && \
+			}'  ${PREFIX1}.${TARGET_NAME}.v${MM}a.piRNA.bed2 | sort -k1,1n > ${PREFIX1}.${TARGET_NAME}.v${MM}a.piRNA.unique.lendis && \
 				awk 'BEGIN{FS=OFS="\t"}\
 				{ \
 					if ($5==1) \
@@ -367,20 +368,67 @@ MM=0 # haven't implement method to take mismatch # from user
 					{\
 						printf "%d\t%.0f\t%.0f\n", d, (s[d]?s[d]:0), (as[d]?as[d]:0); \
 					}\
-				}'  ${PREFIX1}.${TARGET_NAME}.v${MM}a.siRNA.bed2 | sort -k1,1n > ${PREFIX1}.${TARGET_NAME}.v${MM}a.siRNA.lendis && \
+				}'  ${PREFIX1}.${TARGET_NAME}.v${MM}a.siRNA.bed2 | sort -k1,1n > ${PREFIX1}.${TARGET_NAME}.v${MM}a.siRNA.unique.lendis && \
+			awk 'BEGIN{FS=OFS="\t"}\
+			{ \
+				l=$3-$2; \
+				if (l>m) m=l; \
+				if ($6=="+") s[l]+=$4/$5;\
+				else as[l]+=$4/$5; \
+			}END\
+			{\
+				for (d=1;d<=m;++d) \
+				{\
+					printf "%d\t%.0f\t%.0f\n", d, (s[d]?s[d]:0), (as[d]?as[d]:0); \
+				}\
+			}' ${PREFIX1}.${TARGET_NAME}.v${MM}a.bed2 | sort -k1,1n > ${PREFIX1}.${TARGET_NAME}.v${MM}a.all.lendis && \
+			awk 'BEGIN{FS=OFS="\t"}\
+			{ \
+				l=$3-$2; \
+				if (l>m) m=l; \
+				if ($6=="+") s[l]+=$4/$5;\
+				else as[l]+=$4/$5; \
+			}END\
+			{\
+				for (d=1;d<=m;++d) \
+				{\
+					printf "%d\t%.0f\t%.0f\n", d, (s[d]?s[d]:0), (as[d]?as[d]:0); \
+				}\
+			}'  ${PREFIX1}.${TARGET_NAME}.v${MM}a.piRNA.bed2 | sort -k1,1n > ${PREFIX1}.${TARGET_NAME}.v${MM}a.piRNA.all.lendis && \
+				awk 'BEGIN{FS=OFS="\t"}\
+				{ \
+					l=$3-$2; \
+					if (l>m) m=l; \
+					if ($6=="+") s[l]+=$4/$5;\
+					else as[l]+=$4/$5; \
+				}END\
+				{\
+					for (d=1;d<=m;++d) \
+					{\
+						printf "%d\t%.0f\t%.0f\n", d, (s[d]?s[d]:0), (as[d]?as[d]:0); \
+					}\
+				}'  ${PREFIX1}.${TARGET_NAME}.v${MM}a.siRNA.bed2 | sort -k1,1n > ${PREFIX1}.${TARGET_NAME}.v${MM}a.siRNA.all.lendis && \
+			piPipes_local_ping_pong -a ${PREFIX1}.${TARGET_NAME}.v${MM}a.bed2 -b ${PREFIX1}.${TARGET_NAME}.v${MM}a.bed2 -p $CPU > ${PREFIX1}.${TARGET_NAME}.v${MM}a.pp && \
+			piPipes_local_ping_pong -a ${PREFIX1}.${TARGET_NAME}.v${MM}a.siRNA.bed2 -b ${PREFIX1}.${TARGET_NAME}.v${MM}a.siRNA.bed2 -p $CPU > ${PREFIX1}.${TARGET_NAME}.v${MM}a.siRNA.pp && \
 			piPipes_local_ping_pong -a ${PREFIX1}.${TARGET_NAME}.v${MM}a.piRNA.bed2 -b ${PREFIX1}.${TARGET_NAME}.v${MM}a.piRNA.bed2 -p $CPU > ${PREFIX1}.${TARGET_NAME}.v${MM}a.piRNA.pp && \
 			ext_len=30 && \
-			awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$7])) {printed[$7]=1; if ($2>=ext_len) { for (i=1;i<=1;++i) { if ($6=="+") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}' ${PREFIX1}.${TARGET_NAME}.v${MM}a.bed2       | bedtools_piPipes getfasta -fi $TARGET_FA -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${PREFIX1}.${TARGET_NAME}.v${MM}a.5end_60.percentage && \
-			awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$7])) {printed[$7]=1; if ($2>=ext_len) { for (i=1;i<=1;++i) { if ($6=="+") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}' ${PREFIX1}.${TARGET_NAME}.v${MM}a.piRNA.bed2 | bedtools_piPipes getfasta -fi $TARGET_FA -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${PREFIX1}.${TARGET_NAME}.v${MM}a.piRNA.5end_60.percentage && \
-			awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$7])) {printed[$7]=1; if ($2>=ext_len) { for (i=1;i<=1;++i) { if ($6=="+") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}' ${PREFIX1}.${TARGET_NAME}.v${MM}a.siRNA.bed2 | bedtools_piPipes getfasta -fi $TARGET_FA -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${PREFIX1}.${TARGET_NAME}.v${MM}a.siRNA.5end_60.percentage && \
-			awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$7])) {printed[$7]=1; if ($2>=ext_len) { for (i=1;i<=1;++i) { if ($6=="-") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}' ${PREFIX1}.${TARGET_NAME}.v${MM}a.bed2       | bedtools_piPipes getfasta -fi $TARGET_FA -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${PREFIX1}.${TARGET_NAME}.v${MM}a.3end_60.percentage && \
-			awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$7])) {printed[$7]=1; if ($2>=ext_len) { for (i=1;i<=1;++i) { if ($6=="-") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}' ${PREFIX1}.${TARGET_NAME}.v${MM}a.piRNA.bed2 | bedtools_piPipes getfasta -fi $TARGET_FA -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${PREFIX1}.${TARGET_NAME}.v${MM}a.piRNA.3end_60.percentage && \
-			awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$7])) {printed[$7]=1; if ($2>=ext_len) { for (i=1;i<=1;++i) { if ($6=="-") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}' ${PREFIX1}.${TARGET_NAME}.v${MM}a.siRNA.bed2 | bedtools_piPipes getfasta -fi $TARGET_FA -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${PREFIX1}.${TARGET_NAME}.v${MM}a.siRNA.3end_60.percentage && \
+			awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$7])) {printed[$7]=1; if ($2>=ext_len) { for (i=1;i<=1;++i) { if ($6=="+") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}'  ${PREFIX1}.${TARGET_NAME}.v${MM}a.bed2       | bedtools_piPipes getfasta -fi $TARGET_FA -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${PREFIX1}.${TARGET_NAME}.v${MM}a.5end_60.percentage && \
+			awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$7])) {printed[$7]=1; if ($2>=ext_len) { for (i=1;i<=1;++i) { if ($6=="+") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}'  ${PREFIX1}.${TARGET_NAME}.v${MM}a.piRNA.bed2 | bedtools_piPipes getfasta -fi $TARGET_FA -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${PREFIX1}.${TARGET_NAME}.v${MM}a.piRNA.5end_60.percentage && \
+			awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$7])) {printed[$7]=1; if ($2>=ext_len) { for (i=1;i<=1;++i) { if ($6=="+") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}'  ${PREFIX1}.${TARGET_NAME}.v${MM}a.siRNA.bed2 | bedtools_piPipes getfasta -fi $TARGET_FA -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${PREFIX1}.${TARGET_NAME}.v${MM}a.siRNA.5end_60.percentage && \
+			awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$7])) {printed[$7]=1; if ($2>=ext_len) { for (i=1;i<=1;++i) { if ($6=="-") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}'  ${PREFIX1}.${TARGET_NAME}.v${MM}a.bed2       | bedtools_piPipes getfasta -fi $TARGET_FA -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${PREFIX1}.${TARGET_NAME}.v${MM}a.3end_60.percentage && \
+			awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$7])) {printed[$7]=1; if ($2>=ext_len) { for (i=1;i<=1;++i) { if ($6=="-") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}'  ${PREFIX1}.${TARGET_NAME}.v${MM}a.piRNA.bed2 | bedtools_piPipes getfasta -fi $TARGET_FA -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${PREFIX1}.${TARGET_NAME}.v${MM}a.piRNA.3end_60.percentage && \
+			awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$7])) {printed[$7]=1; if ($2>=ext_len) { for (i=1;i<=1;++i) { if ($6=="-") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}'  ${PREFIX1}.${TARGET_NAME}.v${MM}a.siRNA.bed2 | bedtools_piPipes getfasta -fi $TARGET_FA -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${PREFIX1}.${TARGET_NAME}.v${MM}a.siRNA.3end_60.percentage && \
+			awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$7])) {printed[$7]=1; if ($2>=ext_len) { for (i=1;i<=$4;++i) { if ($6=="+") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}' ${PREFIX1}.${TARGET_NAME}.v${MM}a.bed2       | bedtools_piPipes getfasta -fi $TARGET_FA -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${PREFIX1}.${TARGET_NAME}.v${MM}a.5end_60.reads.percentage && \
+			awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$7])) {printed[$7]=1; if ($2>=ext_len) { for (i=1;i<=$4;++i) { if ($6=="+") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}' ${PREFIX1}.${TARGET_NAME}.v${MM}a.piRNA.bed2 | bedtools_piPipes getfasta -fi $TARGET_FA -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${PREFIX1}.${TARGET_NAME}.v${MM}a.piRNA.5end_60.reads.percentage && \
+			awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$7])) {printed[$7]=1; if ($2>=ext_len) { for (i=1;i<=$4;++i) { if ($6=="+") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}' ${PREFIX1}.${TARGET_NAME}.v${MM}a.siRNA.bed2 | bedtools_piPipes getfasta -fi $TARGET_FA -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${PREFIX1}.${TARGET_NAME}.v${MM}a.siRNA.5end_60.reads.percentage && \
+			awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$7])) {printed[$7]=1; if ($2>=ext_len) { for (i=1;i<=$4;++i) { if ($6=="-") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}' ${PREFIX1}.${TARGET_NAME}.v${MM}a.bed2       | bedtools_piPipes getfasta -fi $TARGET_FA -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${PREFIX1}.${TARGET_NAME}.v${MM}a.3end_60.reads.percentage && \
+			awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$7])) {printed[$7]=1; if ($2>=ext_len) { for (i=1;i<=$4;++i) { if ($6=="-") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}' ${PREFIX1}.${TARGET_NAME}.v${MM}a.piRNA.bed2 | bedtools_piPipes getfasta -fi $TARGET_FA -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${PREFIX1}.${TARGET_NAME}.v${MM}a.piRNA.3end_60.reads.percentage && \
+			awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$7])) {printed[$7]=1; if ($2>=ext_len) { for (i=1;i<=$4;++i) { if ($6=="-") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}' ${PREFIX1}.${TARGET_NAME}.v${MM}a.siRNA.bed2 | bedtools_piPipes getfasta -fi $TARGET_FA -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${PREFIX1}.${TARGET_NAME}.v${MM}a.siRNA.3end_60.reads.percentage && \
 			Rscript $PIPELINE_DIRECTORY/bin/piPipes_draw_smallRNA_features2.R \
-				$OUTDIR1/${PREFIX}".pre-genome."${TARGET_NAME} \
-				${PREFIX1}.${TARGET_NAME}.v${MM}a.lendis \
-				${PREFIX1}.${TARGET_NAME}.v${MM}a.siRNA.lendis \
-				${PREFIX1}.${TARGET_NAME}.v${MM}a.piRNA.lendis \
+				$OUTDIR1/${PREFIX}".pre-genome."${TARGET_NAME}.unique_species \
+				${PREFIX1}.${TARGET_NAME}.v${MM}a.unique.lendis \
+				${PREFIX1}.${TARGET_NAME}.v${MM}a.siRNA.unique.lendis \
+				${PREFIX1}.${TARGET_NAME}.v${MM}a.piRNA.unique.lendis \
 				${ext_len} \
 				${PREFIX1}.${TARGET_NAME}.v${MM}a.5end_60.percentage \
 				${PREFIX1}.${TARGET_NAME}.v${MM}a.3end_60.percentage \
@@ -388,6 +436,22 @@ MM=0 # haven't implement method to take mismatch # from user
 				${PREFIX1}.${TARGET_NAME}.v${MM}a.siRNA.3end_60.percentage \
 				${PREFIX1}.${TARGET_NAME}.v${MM}a.piRNA.5end_60.percentage \
 				${PREFIX1}.${TARGET_NAME}.v${MM}a.piRNA.3end_60.percentage 1>&2 && \
+			Rscript $PIPELINE_DIRECTORY/bin/piPipes_draw_smallRNA_features.R \
+				$OUTDIR1/${PREFIX}".pre-genome."${TARGET_NAME}.all_reads \
+				${PREFIX1}.${TARGET_NAME}.v${MM}a.all.lendis \
+				${PREFIX1}.${TARGET_NAME}.v${MM}a.siRNA.all.lendis \
+				${PREFIX1}.${TARGET_NAME}.v${MM}a.piRNA.all.lendis \
+				${ext_len} \
+				${PREFIX1}.${TARGET_NAME}.v${MM}a.5end_60.reads.percentage \
+				${PREFIX1}.${TARGET_NAME}.v${MM}a.pp \
+				${PREFIX1}.${TARGET_NAME}.v${MM}a.siRNA.5end_60.reads.percentage \
+				${PREFIX1}.${TARGET_NAME}.v${MM}a.siRNA.pp \
+				${PREFIX1}.${TARGET_NAME}.v${MM}a.piRNA.5end_60.reads.percentage \
+				${PREFIX1}.${TARGET_NAME}.v${MM}a.piRNA.pp 1>&2 && \
+			piPipes_bed2Summary -5 -i ${PREFIX1}.${TARGET_NAME}.v${MM}a.siRNA.bed2 -c $OUTDIR1/${TARGET_NAME}.sizes -o /dev/stdout | awk 'BEGIN{OFS="\t"}{$1=$1"-siRNA"; print $0}' > $OUTDIR1/${TARGET_NAME}.siRNA.summary && \
+			Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_summary.R $OUTDIR1/${TARGET_NAME}.siRNA.summary $OUTDIR1/siRNA $CPU 1 1>&2 && \
+			piPipes_bed2Summary -5 -i ${PREFIX1}.${TARGET_NAME}.v${MM}a.piRNA.bed2 -c $OUTDIR1/${TARGET_NAME}.sizes -o /dev/stdout | awk 'BEGIN{OFS="\t"}{$1=$1"-piRNA"; print $0}' > $OUTDIR1/${TARGET_NAME}.piRNA.summary && \
+			Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_summary.R $OUTDIR1/${TARGET_NAME}.piRNA.summary $OUTDIR1/piRNA $CPU 1 1>&2 && \
 			PDFs=$OUTDIR1/*pdf && \
 			gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=$PDF_DIR/`basename ${PREFIX1}`.pre-genome.${TARGET_NAME}.pdf ${PDFs} && \
 			rm -rf $PDFs && \
@@ -550,6 +614,10 @@ INPUT=${INPUT%.insert}.${GENOME}v${genome_MM}a.un.insert
 				${PREFIX1}.${TARGET_NAME}.v${MM}a.siRNA.3end_60.percentage \
 				${PREFIX1}.${TARGET_NAME}.v${MM}a.piRNA.5end_60.percentage \
 				${PREFIX1}.${TARGET_NAME}.v${MM}a.piRNA.3end_60.percentage 1>&2 && \
+			piPipes_bed2Summary -5 -i ${PREFIX1}.${TARGET_NAME}.v${MM}a.siRNA.bed2 -c $OUTDIR1/${TARGET_NAME}.sizes -o /dev/stdout | awk 'BEGIN{OFS="\t"}{$1=$1"-siRNA"; print $0}' > $OUTDIR1/${TARGET_NAME}.siRNA.summary && \
+			Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_summary.R $OUTDIR1/${TARGET_NAME}.siRNA.summary $OUTDIR1/ $CPU 1 1>&2 && \
+			piPipes_bed2Summary -5 -i ${PREFIX1}.${TARGET_NAME}.v${MM}a.piRNA.bed2 -c $OUTDIR1/${TARGET_NAME}.sizes -o /dev/stdout | awk 'BEGIN{OFS="\t"}{$1=$1"-piRNA"; print $0}' > $OUTDIR1/${TARGET_NAME}.piRNA.summary && \
+			Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_summary.R $OUTDIR1/${TARGET_NAME}.piRNA.summary $OUTDIR1/ $CPU 1 1>&2 && \
 			PDFs=$OUTDIR1/*pdf && \
 			gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=$PDF_DIR/`basename ${PREFIX1}`.post-genome.${TARGET_NAME}.pdf ${PDFs} && \
 			rm -rf $PDFs && \
@@ -738,6 +806,8 @@ echo2 "Merging pdfs"
 [ ! -f .${JOBUID}.status.${STEP}.merge_pdfs ] && \
 	gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=$PDF_DIR/${PREFIX}.${PACKAGE_NAME}.small_RNA_pipeline.${SMALLRNA_VERSION}.pdf \
 		$PDF_DIR/${PREFIX}.pie.pdf \
+		$PDF_DIR/${PREFIX}.siRNA.pie.pdf \
+		$PDF_DIR/${PREFIX}.piRNA.pie.pdf \
 		$PDF_DIR/`basename ${GENOME_UNIQUEMAP_BED2}`.+hairpin.lendis.pdf \
 		$PDF_DIR/`basename ${GENOME_ALLMAP_BED2}`.+hairpin.lendis.pdf \
 		$PDF_DIR/`basename ${GENOME_UNIQUEMAP_BED2}`.x_hairpin.lendis.pdf \
@@ -747,8 +817,11 @@ echo2 "Merging pdfs"
 		$PDF_DIR/`basename ${GENOME_ALLMAP_BED2}`.+hairpin.lendis.pdf \
 		$PDF_DIR/`basename ${GENOME_UNIQUEMAP_BED2}`.x_hairpin.lendis.pdf \
 		$PDF_DIR/`basename ${GENOME_ALLMAP_BED2}`.x_hairpin.lendis.pdf  \
+		$PDF_DIR/${PREFIX}.pie.pdf \
+		$PDF_DIR/${PREFIX}.siRNA.pie.pdf \
+		$PDF_DIR/${PREFIX}.piRNA.pie.pdf \
 		$PDF_DIR/${PREFIX}.features.pdf && \
-	touch  .${JOBUID}.status.${STEP}.merge_pdfs
+	touch .${JOBUID}.status.${STEP}.merge_pdfs
 STEP=$((STEP+1))
 
 #############
