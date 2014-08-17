@@ -27,18 +27,16 @@
 using namespace std;
 
 template <bool Five>
-inline void countBed2 (istream*, unordered_map<string, int>&, unordered_map<string, double* >&, unordered_map<string, double* >&, int );
+inline void countBed2 (istream*, unordered_map<string, int>&, unordered_map<string, double* >&, unordered_map<string, double* >& );
 
 int main (int argc, char** argv) {
 	std::string usage = R"(
 ======================================================
 This program takes bed2 file as input and summarize
-the hits on each chromosomes. The chromsomes were divided
-into different number of bins. 
+the hits on each chromosomes.
 Different from similar tools like bigWigSummary (kent),
 this script doesn't require the input to be sorted.
 As a consequence, it uses much more memory.
-
 Please contact bo.han@Umassmed.edu for any questions. 
 ======================================================
 )";
@@ -46,7 +44,7 @@ Please contact bo.han@Umassmed.edu for any questions.
 	std::string inputBed2FileName;
 	std::string chromSizeFileName;
 	std::string outputFileName;
-	int numOfBins {};
+	// int numOfBins {};
 	bool onlyCountFivePrimeEnd {};
 	boost::program_options::options_description opts {usage};
 	/** parsing cmdline **/
@@ -55,7 +53,7 @@ Please contact bo.han@Umassmed.edu for any questions.
 		("help,h", "Display This Help Message And Exit;")
 		("input,i", boost::program_options::value<std::string>(&inputBed2FileName)->default_value(std::string("stdin")), "Input BED2 file, using stdin by default; Also can be specified by stdin or -")
 		("chrom,c", boost::program_options::value<std::string>(&chromSizeFileName)->required(), "Chrom file")
-		("bin,b", boost::program_options::value<int>(&numOfBins)->default_value(1000), "Number of bins to devide the chromsome to")
+		// ("bin,b", boost::program_options::value<int>(&numOfBins)->default_value(1000), "Number of bins to devide the chromsome to")
 		("output,o", boost::program_options::value<std::string>(&outputFileName)->default_value(std::string("stdout")), "Output file, using stdout by default; Also can be specified by stdout or +")
 		("five,5", boost::program_options::bool_switch(&onlyCountFivePrimeEnd)->default_value(false), "Only count the five prime end?")
 		;
@@ -106,20 +104,20 @@ Please contact bo.han@Umassmed.edu for any questions.
 	while (getline (chromFh, line, '\n')) {
 		boost::split (container, line, boost::is_any_of ("\t"));
 		chromSizes[container[0]] = stoi (container[1]);
-		WatsonCounter[container[0]] = new double [numOfBins];
-		CrickCounter[container[0]] = new double [numOfBins];
-		for (int i=0; i<numOfBins;++i) {
+		WatsonCounter[container[0]] = new double [chromSizes[container[0]]];
+		CrickCounter[container[0]] = new double [chromSizes[container[0]]];
+		for (int i=0; i<chromSizes[container[0]];++i) {
 			WatsonCounter[container[0]][i] = 0.0;
 			CrickCounter[container[0]][i] = 0.0;
 		}
 	}
 	/* read input bed2 file */
 	if (onlyCountFivePrimeEnd)
-		countBed2<true> (in1, chromSizes, WatsonCounter, CrickCounter, numOfBins);
+		countBed2<true> (in1, chromSizes, WatsonCounter, CrickCounter);
 	else
-		countBed2<false> (in1, chromSizes, WatsonCounter, CrickCounter, numOfBins);
+		countBed2<false> (in1, chromSizes, WatsonCounter, CrickCounter);
 	for (const auto & chr_counts : WatsonCounter ) {
-		for ( int i=0; i<numOfBins;++i)
+		for ( int i=0; i< chromSizes[chr_counts.first];++i)
 			*out1 << chr_counts.first << '\t' << i+1 << '\t' << chr_counts.second[i] << "\t-" << CrickCounter[chr_counts.first][i] << '\n';
 	}
 	/** close input stream if it is not connecting to the stdin **/
@@ -137,7 +135,7 @@ Please contact bo.han@Umassmed.edu for any questions.
 
 
 template <bool Five>
-inline void countBed2 (istream* in, unordered_map<string, int>& chromSizes, unordered_map<string, double* >& Watson, unordered_map<string, double* >& Crick, int numOfBins) {
+inline void countBed2 (istream* in, unordered_map<string, int>& chromSizes, unordered_map<string, double* >& Watson, unordered_map<string, double* >& Crick) {
 	vector<string> container; container.reserve (7);
 	string line;
 	while (getline (*in, line)) {
@@ -148,23 +146,20 @@ inline void countBed2 (istream* in, unordered_map<string, int>& chromSizes, unor
 		}
 		if (container[5]=="+") { // Watson
 			if (Five) {
-				Watson[container[0]][stoi(container[1])%numOfBins] += stod (container[3])/stod(container[4]);
+				Watson[container[0]][stoi(container[1])] += stod (container[3])/stod(container[4]);
 			}
 			if (!Five) {
 				for (int i = stoi (container[1]); i<stoi (container[2]);++i)
-					Watson[container[0]][i%numOfBins] += stod (container[3])/stod(container[4]);
+					Watson[container[0]][i] += stod (container[3])/stod(container[4]);
 			}
 		} else { // Crick
 			if (Five) {
-				Crick[container[0]][(stoi(container[2])-1)%numOfBins] += stod (container[3])/stod(container[4]);
+				Crick[container[0]][(stoi(container[2])-1)] += stod (container[3])/stod(container[4]);
 			}
 			if (!Five){
 				for (int i = stoi (container[1]); i<stoi (container[2]);++i)
-					Crick[container[0]][i%numOfBins] += stod (container[3])/stod(container[4]);
+					Crick[container[0]][i] += stod (container[3])/stod(container[4]);
 			}
 		}
 	}
 }
-
-
-

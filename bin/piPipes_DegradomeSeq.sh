@@ -175,6 +175,12 @@ checkBin "piPipes_filter_CIGAR"
 #############
 # step counter
 STEP=1
+# determine 
+if [[ $LEFT_FASTQ == *gz ]]; then
+	CAT="zcat";
+else
+	CAT="cat"
+fi
 # job uid
 if [[ -n $PE_MODE ]]; then
 	JOBUID=`echo $LEFT_FASTQ | md5sum | cut -d" " -f1`
@@ -182,12 +188,12 @@ if [[ -n $PE_MODE ]]; then
 	RIGHT_FASTQ_NAME=`basename $RIGHT_FASTQ`
 	PREFIX=`echo -e "${LEFT_FASTQ_NAME}\n${RIGHT_FASTQ_NAME}" | sed -e 'N;s/^\(.*\).*\n\1.*$/\1/'` && export PREFIX=${PREFIX%.*}
 	[ -z "${PREFIX}" ] && export PREFIX=${LEFT_FASTQ_NAME%.f[aq]} # if $LEFT and $RIGHT does not have any PREFIX, use the name of $LEFT
-	READLEN=`head -2 $LEFT_FASTQ | awk '{getline; print length($0)}'`
+	READLEN=`$CAT $LEFT_FASTQ | head -2 | awk '{getline; print length($0)}'`
 else
 	JOBUID=`echo $INPUT_FASTQ | md5sum | cut -d" " -f1`
 	INPUT_FASTQ_NAME=`basename $INPUT_FASTQ`
 	export PREFIX=${INPUT_FASTQ_NAME%.f[aq]} # if $LEFT and $RIGHT does not have any PREFIX, use the name of $LEFT
-	READLEN=`head -2 $INPUT_FASTQ | awk '{getline; print length($0)}'`
+	READLEN=`$CAT $INPUT_FASTQ | head -2 | awk '{getline; print length($0)}'`
 fi
 
 # table to store the basic statistics of the library (genomic mappability)
@@ -207,7 +213,7 @@ export BOWTIE2_INDEXES=$COMMON_FOLDER/Bowtie2Index
 # STAR index for the genome
 STARINDEX=$COMMON_FOLDER/STARIndex
 # number of nucleotide to extend for small RNA mapping to degradome
-RC_EXT=200
+RC_EXT=100
 ##############################
 # beginning running pipeline #
 ##############################
