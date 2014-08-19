@@ -154,7 +154,7 @@ draw_summary = function (p, pdfPrefix, normScale) {
 	par (bty="n")
 	p$V3 = p$V3 * normScale
 	p$V4 = p$V4 * normScale
-	plot (p$V2,p$V3, xlim=c(0,nrow(p)), ylim=c(1.4*min(p$V4), 1.4*max(p$V3)) , type='n', xlab=paste("scaled gene body, scaled to", nrow(p), sep=" "), ylab="normalized signal", tck=0.01, main=p[1,1])
+	plot (p$V2,p$V3, xlim=c(0,nrow(p)), ylim=c(1.4*min(p$V4), 1.4*max(p$V3)) , type='n', xlab=paste("Gene body", nrow(p), sep=" "), ylab="Signal", tck=0.01, main=p[1,1])
 	points (p$V2, p$V3, col="blue", type="s")
 	points (p$V2, p$V4, col="red", type="s")
 	abline (h=0, lty=2)
