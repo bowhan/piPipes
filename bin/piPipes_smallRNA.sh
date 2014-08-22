@@ -317,8 +317,8 @@ MM=0 # haven't implement method to take mismatch # from user
 				$CPU \
 				$OUTDIR1 && \
 			para_file=$OUTDIR1/${RANDOM}${RANDOM}.para && \
-			echo "awk '\$3-\$2>=$siRNA_bot && \$3-\$2<$siRNA_top' ${PREFIX1}.${TARGET_NAME}.v${MM}a.bed2 > ${PREFIX1}.${TARGET_NAME}.v${MM}a.siRNA.bed2" >  $para_file && \
-			echo "awk '\$3-\$2>=$piRNA_bot && \$3-\$2<$piRNA_top' ${PREFIX1}.${TARGET_NAME}.v${MM}a.bed2 > ${PREFIX1}.${TARGET_NAME}.v${MM}a.piRNA.bed2" >> $para_file && \
+			echo "awk '\$3-\$2>=$siRNA_bot && \$3-\$2<=$siRNA_top' ${PREFIX1}.${TARGET_NAME}.v${MM}a.bed2 > ${PREFIX1}.${TARGET_NAME}.v${MM}a.siRNA.bed2" >  $para_file && \
+			echo "awk '\$3-\$2>=$piRNA_bot && \$3-\$2<=$piRNA_top' ${PREFIX1}.${TARGET_NAME}.v${MM}a.bed2 > ${PREFIX1}.${TARGET_NAME}.v${MM}a.piRNA.bed2" >> $para_file && \
 			ParaFly -c $para_file -CPU $CPU -failed_cmds ${para_file}.failedCommands 1>&2 && \
 			rm -rf ${para_file}* && \
 			awk 'BEGIN{FS=OFS="\t"}\
@@ -542,8 +542,8 @@ INPUT=${INPUT%.insert}.${GENOME}v${genome_MM}a.un.insert
 				$CPU \
 				$OUTDIR1 && \
 			para_file=$OUTDIR1/${RANDOM}${RANDOM}.para && \
-			echo "awk '\$3-\$2>=$siRNA_bot && \$3-\$2<$siRNA_top' ${PREFIX1}.${TARGET_NAME}.v${MM}a.bed2 > ${PREFIX1}.${TARGET_NAME}.v${MM}a.siRNA.bed2" >  $para_file && \
-			echo "awk '\$3-\$2>=$piRNA_bot && \$3-\$2<$piRNA_top' ${PREFIX1}.${TARGET_NAME}.v${MM}a.bed2 > ${PREFIX1}.${TARGET_NAME}.v${MM}a.piRNA.bed2" >> $para_file && \
+			echo "awk '\$3-\$2>=$siRNA_bot && \$3-\$2<=$siRNA_top' ${PREFIX1}.${TARGET_NAME}.v${MM}a.bed2 > ${PREFIX1}.${TARGET_NAME}.v${MM}a.siRNA.bed2" >  $para_file && \
+			echo "awk '\$3-\$2>=$piRNA_bot && \$3-\$2<=$piRNA_top' ${PREFIX1}.${TARGET_NAME}.v${MM}a.bed2 > ${PREFIX1}.${TARGET_NAME}.v${MM}a.piRNA.bed2" >> $para_file && \
 			ParaFly -c $para_file -CPU $CPU -failed_cmds ${para_file}.failedCommands 1>&2 && \
 			rm -rf ${para_file}* && \
 			awk 'BEGIN{FS=OFS="\t"}\
@@ -635,8 +635,8 @@ echo2 "Separating siRNA, piRNA based on length"
 [ -z "$piRNA_bot" -o -z "$piRNA_top" ]  && echo2 "lengt for piRNA is not defined! please check the \"variable\" file under common\$GENOME" "error"
 [ ! -f .${JOBUID}.status.${STEP}.sep_length ] && \
 	para_file=${RANDOM}${RANDOM}.para && \
-	echo "awk '\$3-\$2>=$siRNA_bot && \$3-\$2<$siRNA_top' ${GENOME_ALLMAP_BED2} > ${GENOME_ALLMAP_BED2%bed2}siRNA.bed2" > $para_file && \
-	echo "awk '\$3-\$2>=$piRNA_bot && \$3-\$2<$piRNA_top' ${GENOME_ALLMAP_BED2} > ${GENOME_ALLMAP_BED2%bed2}piRNA.bed2" >> $para_file && \
+	echo "awk '\$3-\$2>=$siRNA_bot && \$3-\$2<=$siRNA_top' ${GENOME_ALLMAP_BED2} > ${GENOME_ALLMAP_BED2%bed2}siRNA.bed2" > $para_file && \
+	echo "awk '\$3-\$2>=$piRNA_bot && \$3-\$2<=$piRNA_top' ${GENOME_ALLMAP_BED2} > ${GENOME_ALLMAP_BED2%bed2}piRNA.bed2" >> $para_file && \
 	ParaFly -c $para_file -CPU $CPU -failed_cmds ${para_file}.failedCommands 1>&2 && \
 	rm -rf ${para_file}* && \
 	touch  .${JOBUID}.status.${STEP}.sep_length
