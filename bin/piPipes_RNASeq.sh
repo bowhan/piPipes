@@ -227,6 +227,7 @@ xrRNA_RIGHT_FQ=${READS_DIR}/${PREFIX}.x_rRNA.2.fq && \
 [ ! -f .${JOBUID}.status.${STEP}.genome_mapping ] && \
 STAR \
 	--runMode alignReads \
+	--limitOutSAMoneReadBytes 1000000 \
 	--genomeDir $STARINDEX \
 	--readFilesIn ${xrRNA_LEFT_FQ} ${xrRNA_RIGHT_FQ} \
 	--runThreadN $CPU \
