@@ -21,7 +21,7 @@
 source (paste (Sys.getenv ("PIPELINE_DIRECTORY"),"/bin/piPipes.R",sep=""))
 
 pkgTest("gplots")
-pkgTest("multicore")
+pkgTest("parallel")
 
 argv = commandArgs (TRUE)
 mirRelativePos = read.table (argv[1], F, sep="\t", stringsAsFactors=F)

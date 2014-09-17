@@ -19,7 +19,7 @@
 
 source (paste (Sys.getenv ("PIPELINE_DIRECTORY"),"/bin/piPipes.R",sep=""))
 
-pkgTest ("multicore")
+pkgTest ("parallel")
 
 argv  = commandArgs (TRUE)
 summaryTableFile = argv[1]

@@ -166,7 +166,10 @@ eval LINK='$'`echo $GENOME`
 # install R packages if not available #
 #######################################
 echo2 "Testing/Installing missing R packages"
-[ ! -f $PIPELINE_DIRECTORY/common/.R_pkg_installed ] && Rscript $PIPELINE_DIRECTORY/bin/piPipes_install_packages.R 1>&2 && touch $PIPELINE_DIRECTORY/common/.R_pkg_installed
+#[ ! -f $PIPELINE_DIRECTORY/common/.R_pkg_installed ] && 
+# ALWAYS test for R packages
+Rscript $PIPELINE_DIRECTORY/bin/piPipes_install_packages.R 1>&2 
+#&& touch $PIPELINE_DIRECTORY/common/.R_pkg_installed
 
 #################
 # Download only #

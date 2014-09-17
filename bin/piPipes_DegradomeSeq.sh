@@ -213,7 +213,7 @@ export BOWTIE2_INDEXES=$COMMON_FOLDER/Bowtie2Index
 # STAR index for the genome
 STARINDEX=$COMMON_FOLDER/STARIndex
 # number of nucleotide to extend for small RNA mapping to degradome
-RC_EXT=100
+RC_EXT=200
 ##############################
 # beginning running pipeline #
 ##############################
@@ -610,12 +610,17 @@ if [ -n $SRA_ALL_BED2 ]; then
 			for t in ${TARGETS_SHORT[@]}; do \
 				awk -v piRNA_bot=$piRNA_bot -v piRNA_top=$piRNA_top '{if (!printed[$7] && $3-$2 >= piRNA_bot && $3-$2 <= piRNA_top) {print ">"$7"_"$4"\n"$7; printed[$7]=1}}' $SRA_ALL_BED2 | \
 				bowtie2 \
+					-N 0 \
+					-L 16 \
+					--gbar 16 \
+					--no-1mm-upfront \
+					-D 1 \
 					-x $INDEX_OUTDIR/${PREFIX}.${t}.r1.RC.ext${RC_EXT}.unique \
 					-f -p $CPU \
 					-U - 2>$SMRNA_MAP_DIR/`basename $SRA_ALL_BED2`.piRNA_map_to.${PREFIX}.${t}.species.b2.log | \
 				samtools view -bS - | \
 				bedtools_piPipes bamtobed -i | \
-				awk -v len=$((2*RC_EXT+1)) '{if($6=="+") { a[$2%len]++; b[($3-1)%len]++} else {c[$2%len]++;d[($3-1)%len]++}}END{for (i=0;i<len;++i) printf "%d\t%d\t%d\t%d\t%d\n", i+1, a[i], b[i], c[i], d[i]}' \
+				awk -v len=$((2*RC_EXT+1)) '{if($6=="+") { a[$2%len]++; b[($3-1)%len]++} else {c[$2%len]++;d[($3-1)%len]++}}END{for (i=0;i<len;++i) printf "%d\t%d\t%d\t%d\t%d\n", i+1, a[i], b[i], -c[i], -d[i]}' \
 					> $SMRNA_MAP_DIR/`basename $SRA_ALL_BED2`.piRNA_map_to.${PREFIX}.${t}.species #&& \
 #				awk -v siRNA_bot=$siRNA_bot -v siRNA_top=$siRNA_top '{if (!printed[$7] && $3-$2 >= siRNA_bot && $3-$2 <= siRNA_top) {print ">"$7"_"$4"\n"$7; printed[$7]=1}}' $SRA_ALL_BED2 | \
 #				bowtie2 \
@@ -655,12 +660,17 @@ if [ -n $SRA_ALL_BED2 ]; then
 			for t in ${TARGETS_SHORT[@]}; do \
 				awk -v piRNA_bot=$piRNA_bot -v piRNA_top=$piRNA_top '{if (!printed[$7] && $3-$2 >= piRNA_bot && $3-$2 <= piRNA_top) {print ">"$7"_"$4"\n"$7; printed[$7]=1}}' $SRA_ALL_BED2 | \
 				bowtie2 \
+					-N 0 \
+					-L 16 \
+					--gbar 16 \
+					--no-1mm-upfront \
+					-D 1 \
 					-x $INDEX_OUTDIR/${PREFIX}.${t}.RC.ext${RC_EXT}.unique \
 					-f -p $CPU \
 					-U - 2>$SMRNA_MAP_DIR/`basename $SRA_ALL_BED2`.piRNA_map_to.${PREFIX}.${t}.species.b2.log | \
 				samtools view -bS - | \
 				bedtools_piPipes bamtobed -i | \
-				awk -v len=$((2*RC_EXT+1)) '{if($6=="+") { a[$2%len]++; b[($3-1)%len]++} else {c[$2%len]++;d[($3-1)%len]++}}END{for (i=0;i<len;++i) printf "%d\t%d\t%d\t%d\t%d\n", i+1, a[i], b[i], c[i], d[i]}' \
+				awk -v len=$((2*RC_EXT+1)) '{if($6=="+") { a[$2%len]++; b[($3-1)%len]++} else {c[$2%len]++;d[($3-1)%len]++}}END{for (i=0;i<len;++i) printf "%d\t%d\t%d\t%d\t%d\n", i+1, a[i], b[i], -c[i], -d[i]}' \
 					> $SMRNA_MAP_DIR/`basename $SRA_ALL_BED2`.piRNA_map_to.${PREFIX}.${t}.species #&& \
 			# awk -v siRNA_bot=$siRNA_bot -v siRNA_top=$siRNA_top '{if (!printed[$7] && $3-$2 >= siRNA_bot && $3-$2 <= siRNA_top) {print ">"$7"_"$4"\n"$7; printed[$7]=1}}' $SRA_ALL_BED2 | \
 			# bowtie2 \
