@@ -61,6 +61,9 @@ ${OPTIONAL}[ optional ]
 	        all: use non-rRNA genomic all mappers including microRNAs.
 	        allXmiRNA: use non-rRNA genomic all mappers excluding microRNAs.
 	        miRNA: use microRNAs. normalized to: reads per millions of miRNA <for unoxidized library that can assume no change on miRNAs>.
+			42AB: use unique-mapping, 42AB derived piRNAs to normalize <fly only>
+			flam: use unique-mapping, flam derived piRNAs to normalize <fly only>
+			
 	-c      Number of CPUs to use, default: 8
 	-o      Output directory, default: current directory $PWD
 	-A      Name to use for Sample A, default: using the basename of -a
@@ -149,7 +152,7 @@ export BOWTIE_INDEXES=$COMMON_FOLDER/BowtieIndex
 # reading the information to intersect with, as well as some other annotation files
 . $COMMON_FOLDER/genomic_features 
 # normalization method
-# unique | uniqueXmiRNA | all | allXmiRNA | miRNA | siRNA
+# unique | uniqueXmiRNA | all | allXmiRNA | miRNA | siRNA | 42AB | flam
 case "$NORMMETHOD" in
 unique)
 	SAMPLE_A_NORMFACTOR=`head -6 $SAMPLE_A_DIR/*basic_stats | tail -1 | cut -f2 | awk '{print 1000000/$0}'`
@@ -181,7 +184,28 @@ sirna)
 		echo2 "The annotation for siRNA in ${GENOME} is poor. Please choose a different normalization method. \nIf unox library, choose \"miRNA\". If ox, choose \"uniquexmirna\"" "error"
 	;;
 	esac
-	
+;;
+42ab)
+	case $GENOME in
+	dm3)
+		SAMPLE_A_NORMFACTOR=`grep -P "piRNA_Cluster_42AB" $SAMPLE_A_DIR/summaries/*piRNA.sum | awk '{a+=$9}END{print 1000000/a}'`
+		SAMPLE_B_NORMFACTOR=`grep -P "piRNA_Cluster_42AB" $SAMPLE_B_DIR/summaries/*piRNA.sum | awk '{a+=$9}END{print 1000000/a}'`
+	;;
+	*)
+		echo2 "this normalization method is not supported for this organism" "error"
+	;;
+	esac
+;;
+flam)
+	case $GENOME in
+	dm3)
+		SAMPLE_A_NORMFACTOR=`grep -P "piRNA_Cluster_flam" $SAMPLE_A_DIR/summaries/*piRNA.sum | awk '{a+=$9}END{print 1000000/a}'`
+		SAMPLE_B_NORMFACTOR=`grep -P "piRNA_Cluster_flam" $SAMPLE_B_DIR/summaries/*piRNA.sum | awk '{a+=$9}END{print 1000000/a}'`
+	;;
+	*)
+		echo2 "this normalization method is not supported for this organism" "error"
+	;;
+	esac
 ;;
 *)
 	echo2 "unrecognized normalization option: $NORMMETHOD; using the default method" "warning"
