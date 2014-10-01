@@ -102,6 +102,7 @@ checkBin "genePredToBed"
 checkBin "bedtools_piPipes"
 checkBin "mrfast"
 checkBin "Rscript"
+# checkBin "rsync"
 
 ######################################
 # reading the genome record of piPipes #
@@ -259,7 +260,7 @@ echo2 "Building mrFast index for genome"
 
 # rRNA index
 echo2 "Building Bowtie/Bowtie2 index for rRNA"
-ln -s $IGENOME_DIR_NAME/UCSC/$GENOME/Sequence/AbundantSequences/*ibosomal.fa rRNA.fa 2>/dev/null
+[ ! -f rRNA.fa ] && ln -s $IGENOME_DIR_NAME/UCSC/$GENOME/Sequence/AbundantSequences/*ibosomal.fa rRNA.fa 2>/dev/null
 [ ! -s BowtieIndex/rRNA.sizes ] && bowtie-build rRNA.fa BowtieIndex/rRNA && faSize -tab -detailed rRNA.fa > BowtieIndex/rRNA.sizes
 [ ! -s Bowtie2Index/rRNA.sizes ] && bowtie2-build rRNA.fa Bowtie2Index/rRNA && faSize -tab -detailed rRNA.fa > Bowtie2Index/rRNA.sizes
 

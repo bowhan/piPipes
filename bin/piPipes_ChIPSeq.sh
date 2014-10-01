@@ -89,7 +89,7 @@ ${OPTIONAL}[ optional ]
 	-m      Use both unique and multi-mappers. For multi-mappers, Bowtie2 randomly report one locus from the best aligments pool. default: off
 	-e      Use both unique and multi-mappers. For multi-mappers, use Expectation–Maximization algorithm implemented by CSEM to allocate them. Only alignments passing CREM posterior 0.5 are kept.
 	        Current CSEM is not compatible with bowtie2, so bowtie will be used instead. default: off
-
+	-D      Delete large bed/bam files after pipeline finishes to save space (this step can also be ran separately). default: false
 EOF
 echo -e "${COLOR_END}"
 }
@@ -105,7 +105,7 @@ SE_TLEN=200 # average fragment length for single-end sample
 # ARGS reading and checking #
 #############################
 USE_MULTIREADS=0
-while getopts "hf:l:r:L:R:c:o:g:Bvx:i:I:M:ume" OPTION; do
+while getopts "hf:l:r:L:R:c:o:g:Bvx:i:I:M:umeD:" OPTION; do
 	case $OPTION in
 		h)	usage && exit 0 ;;
 		v)	echo2 "CHIPSEQ_VERSION: v$CHIPSEQ_VERSION" && exit 0 ;;
@@ -119,13 +119,13 @@ while getopts "hf:l:r:L:R:c:o:g:Bvx:i:I:M:ume" OPTION; do
 		f)	SE_TLEN=$OPTARG ;;
 		M)	export USER_DEFINED_BED_FILES=$OPTARG ;;
 		c)	export CPU=$OPTARG ;;
-		g)	export GENOME=`echo ${OPTARG} | tr '[A-Z]' '[a-z]'` ;;
+		g)	export GENOME=${OPTARG};;
 		B)	export MACS2_BROAD_OPT="--broad" ;;
 		u)  export USE_MULTIREADS=$((USE_MULTIREADS+1));; # USE_MULTIREADS==1
 		m)  export USE_MULTIREADS=$((USE_MULTIREADS+2));; # USE_MULTIREADS==2
 		e)  export USE_MULTIREADS=$((USE_MULTIREADS+4));; # USE_MULTIREADS==4
-		# Q)	export MINIMAL_MAPQ=$OPTARG ;;
 		x)	export EXT_LEN=$OPTARG ;;
+		D)	CLEAN=1;;
 		*)	usage && exit 1 ;;
 	esac
 done
@@ -576,6 +576,10 @@ STEP=$((STEP+1))
 #############
 # finishing #
 #############
+if [[ "$CLEAN" == 1 ]]; then
+	rm -f $PEAKS_CALLING_DIR/*bdg && rm -f .${JOBUID}.status.${STEP}.peak_calling_with_macs2
+fi
+
 echo2 "Finished running ${PACKAGE_NAME} ChIP-Seq pipeline version $CHIPSEQ_VERSION"
 echo2 "---------------------------------------------------------------------------------"
 echo $MACS2_BROAD_OPT > .MACS2_BROAD_OPT # only output this option when the run finishs

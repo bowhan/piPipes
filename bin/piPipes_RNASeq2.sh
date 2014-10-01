@@ -75,7 +75,7 @@ while getopts "hva:b:g:c:o:A:B:n:" OPTION; do
 		b)	SAMPLE_Bs=$OPTARG ;;
 		o)	OUTDIR=`readlink -f $OPTARG` ;;
 		c)	CPU=$OPTARG ;;
-		g)	export GENOME=`echo ${OPTARG} | tr '[A-Z]' '[a-z]'` ;;
+		g)	export GENOME=${OPTARG};;
 		A)  SAMPLE_A_NAME=$OPTARG ;;
 		B)  SAMPLE_B_NAME=$OPTARG ;;
 		n)	NUM_GENE_CUMM=$OPTARG ;;

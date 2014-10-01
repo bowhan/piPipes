@@ -73,7 +73,7 @@ ${OPTIONAL}[ optional ]
 	-s      small RNA pipeline output; if this option is provided, the pipeline check the Ping-Pong signiture between the two libraries.
 	-o      Output directory, default: current directory $PWD
 	-c      Number of CPUs to use, default: 8
-
+	-D      Delete large bed/bam files after pipeline finishes to save space (this step can also be ran separately), default: false
 
 EOF
 echo -e "${COLOR_END}"
@@ -82,7 +82,7 @@ echo -e "${COLOR_END}"
 #############################
 # ARGS reading and checking #
 #############################
-while getopts "hl:r:i:c:o:g:s:v" OPTION; do
+while getopts "hl:r:i:c:o:g:s:vD:" OPTION; do
 	case $OPTION in
 		h)	usage && exit 1 ;;
 		l)	LEFT_FASTQ=`readlink -f $OPTARG`; PE_MODE=1 ;;
@@ -90,9 +90,10 @@ while getopts "hl:r:i:c:o:g:s:v" OPTION; do
 		i)	INPUT_FASTQ=`readlink -f $OPTARG`; SE_MODE=1 ;;
 		o)	OUTDIR=`readlink -f $OPTARG` ;;
 		c)	CPU=$OPTARG ;;
-		g)	export GENOME=`echo ${OPTARG} | tr '[A-Z]' '[a-z]'` ;;
+		g)	export GENOME=${OPTARG};;
 		v)	echo2 "DEG_VERSION: v$DEG_VERSION" && exit 0 ;;
 		s)	export SRA_LIB_DIR=`readlink -f $OPTARG` ;;
+		D)	CLEAN=1;;
 		*)	usage && exit 1 ;;
 	esac
 done
@@ -620,17 +621,8 @@ if [ -n $SRA_ALL_BED2 ]; then
 					-U - 2>$SMRNA_MAP_DIR/`basename $SRA_ALL_BED2`.piRNA_map_to.${PREFIX}.${t}.species.b2.log | \
 				samtools view -bS - | \
 				bedtools_piPipes bamtobed -i | \
-				awk -v len=$((2*RC_EXT+1)) '{if($6=="+") { a[$2%len]++; b[($3-1)%len]++} else {c[$2%len]++;d[($3-1)%len]++}}END{for (i=0;i<len;++i) printf "%d\t%d\t%d\t%d\t%d\n", i+1, a[i], b[i], -c[i], -d[i]}' \
-					> $SMRNA_MAP_DIR/`basename $SRA_ALL_BED2`.piRNA_map_to.${PREFIX}.${t}.species #&& \
-#				awk -v siRNA_bot=$siRNA_bot -v siRNA_top=$siRNA_top '{if (!printed[$7] && $3-$2 >= siRNA_bot && $3-$2 <= siRNA_top) {print ">"$7"_"$4"\n"$7; printed[$7]=1}}' $SRA_ALL_BED2 | \
-#				bowtie2 \
-# 					-x $INDEX_OUTDIR/${PREFIX}.r1.RC.ext${RC_EXT}.unique \
-# 					-f -p $CPU \
-# 					-U - 2>$SMRNA_MAP_DIR/`basename $SRA_ALL_BED2`.siRNA_map_to.${PREFIX}.species.b2.log | \
-# 				samtools view -bS - | \
-# 				bedtools_piPipes bamtobed -i | \
-# 				awk -v len=$((2*RC_EXT+1)) '{if($6=="+") { a[$2%len]++; b[($3-1)%len]++} else {c[$2%len]++;d[($3-1)%len]++}}END{for (i=0;i<len;++i) printf "%d\t%d\t%d\t%d\t%d\n", i+1, a[i], b[i], c[i], d[i]}' \
-# 					> $SMRNA_MAP_DIR/`basename $SRA_ALL_BED2`.siRNA_map_to.${PREFIX}.species
+				awk -v len=$((2*RC_EXT+1)) '{if($6=="+") { s[$2%len]++;} else {as[($3-1)%len]++}}END{for (i=0;i<len;++i) printf "%d\t%d\t%d\n", i+1, s[i], -as[i]}' \
+					> $SMRNA_MAP_DIR/`basename $SRA_ALL_BED2`.piRNA_map_to.${PREFIX}.${t}.species
 			done && \
 			touch .${JOBUID}.status.${STEP}.map_smRNA_to_degRC_index_$SMRNA_ID
 	else # SE
@@ -670,17 +662,8 @@ if [ -n $SRA_ALL_BED2 ]; then
 					-U - 2>$SMRNA_MAP_DIR/`basename $SRA_ALL_BED2`.piRNA_map_to.${PREFIX}.${t}.species.b2.log | \
 				samtools view -bS - | \
 				bedtools_piPipes bamtobed -i | \
-				awk -v len=$((2*RC_EXT+1)) '{if($6=="+") { a[$2%len]++; b[($3-1)%len]++} else {c[$2%len]++;d[($3-1)%len]++}}END{for (i=0;i<len;++i) printf "%d\t%d\t%d\t%d\t%d\n", i+1, a[i], b[i], -c[i], -d[i]}' \
-					> $SMRNA_MAP_DIR/`basename $SRA_ALL_BED2`.piRNA_map_to.${PREFIX}.${t}.species #&& \
-			# awk -v siRNA_bot=$siRNA_bot -v siRNA_top=$siRNA_top '{if (!printed[$7] && $3-$2 >= siRNA_bot && $3-$2 <= siRNA_top) {print ">"$7"_"$4"\n"$7; printed[$7]=1}}' $SRA_ALL_BED2 | \
-			# bowtie2 \
-			# 	-x $INDEX_OUTDIR/${PREFIX}.RC.ext${RC_EXT}.unique \
-			# 	-f -p $CPU \
-			# 	-U - 2>$SMRNA_MAP_DIR/`basename $SRA_ALL_BED2`.siRNA_map_to.${PREFIX}.species.b2.log | \
-			# samtools view -bS - | \
-			# bedtools_piPipes bamtobed -i | \
-			# awk -v len=$((2*RC_EXT+1)) '{if($6=="+") { a[$2%len]++; b[($3-1)%len]++} else {c[$2%len]++;d[($3-1)%len]++}}END{for (i=0;i<len;++i) printf "%d\t%d\t%d\t%d\t%d\n", i+1, a[i], b[i], c[i], d[i]}' \
-			# 	> $SMRNA_MAP_DIR/`basename $SRA_ALL_BED2`.siRNA_map_to.${PREFIX}.species && \
+				awk -v len=$((2*RC_EXT+1)) '{if($6=="+") { s[$2%len]++;} else {as[($3-1)%len]++}}END{for (i=0;i<len;++i) printf "%d\t%d\t%d\n", i+1, s[i], -as[i]}' \
+					> $SMRNA_MAP_DIR/`basename $SRA_ALL_BED2`.piRNA_map_to.${PREFIX}.${t}.species
 			done && \
 		touch .${JOBUID}.status.${STEP}.map_smRNA_to_degRC_index_$SMRNA_ID
 	fi
@@ -690,6 +673,14 @@ STEP=$((STEP+1))
 #############
 # finishing #
 #############
+if [[ "$CLEAN" == 1 ]]; then
+	rm -f $BW_OUTDIR/*bedGraph
+	rm -f $GENOMIC_MAPPING_DIR/*mate1 $GENOMIC_MAPPING_DIR/*mate2
+	rm -f $xrRNA_LEFT_FQ $xrRNA_RIGHT_FQ $xrRNA_FQ
+	rm -f ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.bam
+	rm -rf $INDEX_OUTDIR && rm -f .${JOBUID}.status.${STEP}.generate_bowtie_index
+fi
+
 echo2 "Finished running ${PACKAGE_NAME} Degradome pipeline version $DEG_VERSION"
 echo2 "---------------------------------------------------------------------------------"
 touch .${GENOME}.DEG_VERSION.${DEG_VERSION}

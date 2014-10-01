@@ -34,13 +34,13 @@ Please email $CONTACT_EMAILS for any questions or bugs.
 Thank you for using it.
 
 ${UNDERLINE}usage${RESET}:
-	piPipes small \
-		-i input.fq[.gz] \
-		-g dm3 \
-		-N uniqueXmiRNA [unique] \
-		-o output_directory [current working directory] \
-		-c cpu [8] \
-		-P miniwhite.fa \
+	piPipes small \  
+		-i input.fq[.gz] \  
+		-g dm3 \  
+		-N uniqueXmiRNA [unique] \  
+		-o output_directory [current working directory] \  
+		-c cpu [8] \  
+		-P miniwhite.fa \  
 		-O gfp.fa,luciferase.fa
 
 OPTIONS:
@@ -54,20 +54,22 @@ ${REQUIRED}[ required ]
 		 Use "install" to install new genome
 ${OPTIONAL}[ optional ]
 	-N      Normalization method, choose from " input | rRNA | unique | uniqueXmiRNA | all | allXmiRNA | miRNA "
-	        unique:	use non-rRNA genomic unique mappers <default>.
-	        input:	use the number of reads input to the pipeline, this will include genome unmappers. But might be useful when you have additional sequence in the genome, like a transgene.
-	        rRNA:	use the number of reads mapped to rRNA.
-	        uniqueXmiRNA:	use non-rRNA genomic unique mappers excluding microRNAs <for oxidized library for piRNA mutant>.
-	        all:	use non-rRNA genomic all mappers including microRNAs.
-	        allXmiRNA:	use non-rRNA genomic all mappers excluding microRNAs.
-	        miRNA:	use microRNAs. normalized to: reads per millions of miRNA <for unoxidized library for piRNA mutant>.
-	        *Different normalization methods, including "siRNA", are available in the dual sample mode.
-	        *You are able to run the same library multiple times with different normalization method. They will not collapse.
+	        unique: use non-rRNA genomic unique mappers <default>.
+	        input: use the number of reads input to the pipeline, this will include genome unmappers. But might be useful when you have additional sequence in the genome, like a transgene.
+	        rRNA: use the number of reads mapped to rRNA.
+	        uniqueXmiRNA:	use non-rRNA genomic unique mappers excluding microRNAs <for oxidized library from piRNA mutant>.
+	        all: use non-rRNA genomic all mappers including microRNAs.
+	        allXmiRNA: use non-rRNA genomic all mappers excluding microRNAs.
+	        miRNA: use microRNAs. normalized to: reads per millions of miRNA <for unoxidized library from piRNA mutant>.
+	        * Different normalization methods, including "siRNA", are available in the dual sample mode.
+	        * You are able to run the same library multiple times with different normalization method. They will not collapse.
 	-c      Number of CPUs to use, default: 8
 	-o      Output directory, default: current directory $PWD
 	-F      A list of Fasta files, delimited by comma, used to do filtering (other than rRNA precursor sequence provide).
 	-P      A list of Fasta files, delimited by comma, used to do pre-genomic mapping and analysis. For example, given "-P miniwhite.fa,virus.fa", after removing reads mappable to rRNA and miRNA hairpin, reads are mapped to miniWhite sequence first. Only the non-miniWhite-mappers are mapped to virus sequence. And only the non-miniWhite, non-virus mappers will be used in the genome mapping and further analysis.
 	-O      A list of Fasta files, delimited by comma, used to do post-genomic mapping and analysis. For example, given "-O gfp.fa,luciferase.fa", after removing reads mappable rRNA, miRNA hairpin and genome, reads are mapped to gfp sequence first. Only the non-genome non-gfp mappers are mapped to luciferase sequence. If more than one sequences are put in one Fasta file, they will be treated equally. ${UNDERLINE}Please only use letters and numbers as filename and USE \$HOME instead of ~ to indicate the home directory.${RESET}
+	-D      Delete large bed/bam files after pipeline finishes to save space (this step can also be ran separately), default: false
+	
 EOF
 echo -e "${COLOR_END}"
 }
@@ -75,18 +77,19 @@ echo -e "${COLOR_END}"
 #############################
 # ARGS reading and checking #
 #############################
-while getopts "hi:c:o:g:vN:F:P:O:" OPTION; do
+while getopts "hi:c:o:g:vN:F:P:O:D:" OPTION; do
 	case $OPTION in
 		h)	usage && exit 0 ;;
 		i)	INPUT_FASTQ=`readlink -f $OPTARG` ;;
 		o)	OUTDIR=`readlink -f $OPTARG` ;;
 		c)	CPU=$OPTARG ;;
 		v)	echo2 "SMALLRNA_VERSION: v$SMALLRNA_VERSION" && exit 0 ;;
-		g)	export GENOME=`echo ${OPTARG} | tr '[A-Z]' '[a-z]'` ;;
+		g)	export GENOME=${OPTARG};;
 		N) 	export NORMMETHOD=`echo ${OPTARG} | tr '[A-Z]' '[a-z]'` ;;
 		F)  FILTER_MAPPING_FILE_LIST=$OPTARG ;;
 		P)	PRE_GENOME_MAPPING_FILE_LIST=$OPTARG ;;
 		O)	POST_GENOME_MAPPING_FILE_LIST=$OPTARG ;;
+		D)	CLEAN=1;;
 		*)	usage && exit 1 ;;
 	esac
 done
@@ -253,7 +256,7 @@ x_rRNA_HAIRPIN_GENOME_LOG=$GENOMIC_MAPPING_DIR/${PREFIX}.x_rRNA.hairpin.${GENOME
 		--un $x_rRNA_x_hairpin_INSERT \
 		hairpin \
 		$x_rRNA_INSERT \
-		2> /dev/null  | \
+		  | \
 	samtools view -bSF 0x4 - 2>/dev/null | \
 	bedtools_piPipes bamtobed -i - | awk '$6=="+"' > ${PREFIX}.x_rRNA.hairpin.v${hairpin_MM}m1.bed && \
 	piPipes_insertBed_to_bed2 $x_rRNA_INSERT ${PREFIX}.x_rRNA.hairpin.v${hairpin_MM}m1.bed > $x_rRNA_HAIRPIN_BED2 && \
@@ -827,6 +830,11 @@ STEP=$((STEP+1))
 #############
 # finishing #
 #############
+if [[ "$CLEAN" == 1 ]]; then
+	rm -f $GENOMIC_MAPPING_DIR/*bed2
+	rm -f $TRN_OUTDIR/*bed2
+fi
+
 echo2 "Finished running ${PACKAGE_NAME} small RNA pipeline version $SMALLRNA_VERSION"
 echo2 "---------------------------------------------------------------------------------"
 touch .${GENOME}.SMALLRNA_VERSION.${SMALLRNA_VERSION}

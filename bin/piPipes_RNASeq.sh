@@ -58,7 +58,7 @@ ${OPTIONAL}[ optional ]
 	-o      Output directory, default: current directory $PWD
 	-c      Number of CPUs to use, default: 8
 	-B      How many rounds of batch algorithm to run for eXpress, default: 21
-	
+	-D      Delete large bed/bam files after pipeline finishes to save space (this step can also be ran separately), default: false
 EOF
 echo -e "${COLOR_END}"
 }
@@ -66,17 +66,18 @@ echo -e "${COLOR_END}"
 #############################
 # ARGS reading and checking #
 #############################
-while getopts "hl:r:c:o:g:B:vL" OPTION; do
+while getopts "hl:r:c:o:g:B:vLD:" OPTION; do
 	case $OPTION in
 		h)	usage && exit 0 ;;
 		l)	LEFT_FASTQ=`readlink -f $OPTARG` ;;
 		r)	RIGHT_FASTQ=`readlink -f $OPTARG` ;;
 		o)	OUTDIR=`readlink -f $OPTARG` ;;
 		c)	CPU=$OPTARG ;;
-		g)	export GENOME=`echo ${OPTARG} | tr '[A-Z]' '[a-z]'` ;;
+		g)	export GENOME=${OPTARG};;
 		v)	echo2 "RNASEQ_VERSION: v$RNASEQ_VERSION" && exit 0 ;;
 		L)	LIGATIONLIB=1 ;; # ligation based
 		B)	eXpressBATCH=$OPTARG ;;
+		D)	CLEAN=1;;
 		*)	usage && exit 1 ;;
 	esac
 done
@@ -481,6 +482,13 @@ fi
 #############
 # finishing #
 #############
+if [[ "$CLEAN" == 1 ]]; then
+	rm -f $BW_OUTDIR/*bedGraph
+	rm -f $GENOMIC_MAPPING_DIR/*bedpe
+	rm -f $GENOMIC_MAPPING_DIR/*mate1 $GENOMIC_MAPPING_DIR/*mate2
+	rm -rf ${READS_DIR}/${PREFIX}.x_rRNA.1.fq ${READS_DIR}/${PREFIX}.x_rRNA.2.fq
+fi
+
 echo2 "Finished running ${PACKAGE_NAME} RNA-Seq pipeline version $RNASEQ_VERSION"
 echo2 "---------------------------------------------------------------------------------"
 touch .${GENOME}.${LIGATIONLIB}.RNASEQ_VERSION.${RNASEQ_VERSION}

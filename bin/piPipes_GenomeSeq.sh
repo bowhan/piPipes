@@ -58,7 +58,6 @@ ${OPTIONAL}[ optional ]
 	-c      Number of CPUs to use, default: 8
 	-e      Transgene sequence in fasta format, GFP for example. It can contain multiple sequences. piPipes calls TEMP to identify new insertion site.
 	-M      Use mrFast and VariationHunter. mrFast requires large amount of memory. So default: off
-	
 EOF
 echo -e "${COLOR_END}"
 }
@@ -73,7 +72,7 @@ while getopts "hl:r:c:o:g:d:ve:M" OPTION; do
 		r)	RIGHT_FASTQ=`readlink -f $OPTARG` ;;
 		o)	OUTDIR=`readlink -f $OPTARG` ;;
 		c)	CPU=$OPTARG ;;
-		g)	GENOME=`echo ${OPTARG} | tr '[A-Z]' '[a-z]'` ;;
+		g)	GENOME=${OPTARG};;
 		v)	echo2 "GENOMESEQ_VERSION: v$GENOMESEQ_VERSION" && exit 0 ;;		
 		d)	VCFFILTER_DEPTH=$OPTARG ;;
 		e)	TRANSGENE_FA=`readlink -f $OPTARG` ;;
@@ -389,6 +388,7 @@ fi
 #############
 # finishing #
 #############
+
 echo2 "Finished running ${PACKAGE_NAME} Genome-Seq pipeline version $GENOMESEQ_VERSION"
 echo2 "---------------------------------------------------------------------------------"
 touch .${GENOME}.GENOMESEQ_VERSION.${GENOMESEQ_VERSION}

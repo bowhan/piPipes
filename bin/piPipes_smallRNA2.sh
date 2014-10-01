@@ -54,16 +54,15 @@ ${REQUIRED}[ required ]
 		 Check "$PIPELINE_DIRECTORY/common/genome_supported.txt" for genome assemblies currently installed; 
 		 Use "install" to install new genome
 ${OPTIONAL}[ optional ]
-	-N      Normalization method, choose from " unique | uniqueXmiRNA | all | allXmiRNA | miRNA | siRNA"
+	-N      Normalization method, choose from " unique | uniqueXmiRNA | all | allXmiRNA | miRNA"; three more available for fly dm3 "siRNA | 42AB | flam"
 	        unique: use non-rRNA genomic unique mappers <default>.
-	        siRNA: (only for dm3) use cis-NATs and structural loci siRNA (transposon siRNAs are EXCLUDED because it might contain piRNA degradation fragments). normalized to: reads per millions of siRNA <for oxidized library in fly>.
-	        uniqueXmiRNA: use non-rRNA genomic unique mappers excluding microRNAs <for oxidized library in general>.
+	        uniqueXmiRNA: use non-rRNA genomic unique mappers excluding microRNAs <for oxidized library>.
 	        all: use non-rRNA genomic all mappers including microRNAs.
 	        allXmiRNA: use non-rRNA genomic all mappers excluding microRNAs.
-	        miRNA: use microRNAs. normalized to: reads per millions of miRNA <for unoxidized library that can assume no change on miRNAs>.
-			42AB: use unique-mapping, 42AB derived piRNAs to normalize <fly only>
-			flam: use unique-mapping, flam derived piRNAs to normalize <fly only>
-			
+	        miRNA: use microRNAs. normalized to: reads per millions of miRNA <for unoxidized library of mutants that assumes no change for miRNAs>.
+			siRNA: (only for dm3) use cis-NATs and structural loci siRNA (transposon siRNAs are EXCLUDED because it might contain piRNA degradation fragments). normalized to: reads per millions of siRNA <for oxidized library in fly>.
+	        42AB:  (only for dm3) use unique-mapping, 42AB derived piRNAs to normalize
+	        flam:  (only for dm3) use unique-mapping, flam derived piRNAs to normalize
 	-c      Number of CPUs to use, default: 8
 	-o      Output directory, default: current directory $PWD
 	-A      Name to use for Sample A, default: using the basename of -a
@@ -86,7 +85,7 @@ while getopts "hva:b:g:c:o:A:B:N:" OPTION; do
 		b)	SAMPLE_B_DIR=`readlink -f $OPTARG` ;;
 		o)	OUTDIR=`readlink -f $OPTARG` ;;
 		c)	CPU=$OPTARG ;;
-		g)	export GENOME=`echo ${OPTARG} | tr '[A-Z]' '[a-z]'` ;;
+		g)	export GENOME=${OPTARG};;
 		A)  export SAMPLE_A_NAME=$OPTARG ;;
 		B)  export SAMPLE_B_NAME=$OPTARG ;;
 		N)	export NORMMETHOD=`echo ${OPTARG} | tr '[A-Z]' '[a-z]'` ;;
@@ -116,7 +115,7 @@ touch .writting_permission && rm -rf .writting_permission || (echo2 "Cannot writ
 #################
 SAMPLE_A_VERSION=`ls -a $SAMPLE_A_DIR | grep SMALLRNA_VERSION`
 SAMPLE_B_VERSION=`ls -a $SAMPLE_B_DIR | grep SMALLRNA_VERSION`
-[ $SAMPLE_A_VERSION != $SAMPLE_B_VERSION ] && echo2 "It appears that the two runs were not done by the same assemly or same version of single library mode pipeline." "error"
+[ $SAMPLE_A_VERSION != $SAMPLE_B_VERSION ] && echo2 "It appears that the two runs were not done by the same assemly or same version of single library mode pipeline." "warning"
 
 #################################
 # creating output files/folders #
@@ -125,6 +124,7 @@ HAIRPIN_DIR=hairpin_compare && mkdir -p $HAIRPIN_DIR
 export PDF_DIR=$OUTDIR/pdfs && mkdir -p $PDF_DIR
 TRN_DIR=transposon_abundance && mkdir -p $TRN_DIR
 CLUSTER_DIR=piRNA_cluster_abundance && mkdir -p $CLUSTER_DIR
+GENIC_DIR=genic_abundance && mkdir -p $GENIC_DIR
 
 ########################
 # running binary check #
@@ -220,6 +220,9 @@ esac
 echo2 "---------------------------------------------------------------------------------"
 echo2 "Beginning running [${PACKAGE_NAME}] small RNA pipeline dual library mode version $SMALLRNA2_VERSION"
 
+ALL_BED2_A=`ls $SAMPLE_A_DIR/intersect_genomic_features/*${GENOME}*all.x_rpmk_MASK.bed2`
+ALL_BED2_B=`ls $SAMPLE_B_DIR/intersect_genomic_features/*${GENOME}*all.x_rpmk_MASK.bed2`
+
 #############################
 # draw microRNA balloonplot #
 #############################
@@ -234,18 +237,30 @@ SAMPLE_B_MIR_BED2=$SAMPLE_B_DIR/hairpins_mapping/*bed2.relative
 	touch .${JOBUID}.status.${STEP}.miRNA_balloonplot.normalized_by_$NORMMETHOD 
 STEP=$((STEP+1))
 
+#########################################
+# draw piRNA abundance for genic mapper #
+#########################################
+echo2 "Calculating piRNA abundances for each genic transcripts"
+threePrimeUTR=$COMMON_FOLDER/UCSC.refSeq.3UTR.bed.gz
+[ ! -f .${JOBUID}.status.${STEP}.genic_abundance.normalized_by_$NORMMETHOD ] && \
+para_file=$GENIC_DIR/${RANDOM}${RANDOM}.para && \
+	echo "awk '\$3-\$2>=$piRNA_bot' $ALL_BED2_A | bedtools_piPipes intersect -split -wo -f 0.99 -a stdin -b $threePrimeUTR | awk -v depth=$SAMPLE_A_NORMFACTOR '{if (\$6==\$13) a[\$11]+=\$4/\$NF/\$5; else b[\$11]+=\$4/\$NF/\$5; total[\$11]=1}END{for (c in total) { printf \"%s\t%.2f\t%.2f\n\", c, (a[c]?a[c]:0)*depth, (b[c]?b[c]:0)*depth}}' > $GENIC_DIR/${SAMPLE_A_NAME}.genic.abundance.normalized_by_$NORMMETHOD " >> $para_file  && \
+	echo "awk '\$3-\$2>=$piRNA_bot' $ALL_BED2_B | bedtools_piPipes intersect -split -wo -f 0.99 -a stdin -b $threePrimeUTR | awk -v depth=$SAMPLE_B_NORMFACTOR '{if (\$6==\$13) a[\$11]+=\$4/\$NF/\$5; else b[\$11]+=\$4/\$NF/\$5; total[\$11]=1}END{for (c in total) { printf \"%s\t%.2f\t%.2f\n\", c, (a[c]?a[c]:0)*depth, (b[c]?b[c]:0)*depth}}' > $GENIC_DIR/${SAMPLE_B_NAME}.genic.abundance.normalized_by_$NORMMETHOD " >> $para_file  && \
+	ParaFly -c $para_file -CPU $CPU -failed_cmds ${para_file}.failedCommands 1>&2 && \
+	Rscript --slave $PIPELINE_DIRECTORY/bin/piPipes_draw_scatter_plot.R $GENIC_DIR/${SAMPLE_A_NAME}.genic.abundance.normalized_by_$NORMMETHOD $GENIC_DIR/${SAMPLE_B_NAME}.genic.abundance.normalized_by_$NORMMETHOD $SAMPLE_A_NAME $SAMPLE_B_NAME $PDF_DIR/${SAMPLE_A_NAME}_vs_${SAMPLE_B_NAME}.genic.abundance.normalized_by_$NORMMETHOD && \
+	touch .${JOBUID}.status.${STEP}.piRNA_cluster_abundance.normalized_by_$NORMMETHOD
+STEP=$((STEP+1))
+
 ###################################################
 # draw piRNA abundance for each transposon family #
 ###################################################
-ALL_BED2_A=`ls $SAMPLE_A_DIR/genome_mapping/*${GENOME}*all.piRNA.bed2`
-ALL_BED2_B=`ls $SAMPLE_B_DIR/genome_mapping/*${GENOME}*all.piRNA.bed2`
 echo2 "Calculating piRNA abundances for each transposon family"
 case $GENOME in
 dm3)
 	[ ! -f .${JOBUID}.status.${STEP}.transposon_abundance.normalized_by_$NORMMETHOD ] && \
 	para_file=$TRN_DIR/${RANDOM}${RANDOM}.para && \
-	echo "bedtools_piPipes intersect -split -wo -f 0.99 -a $ALL_BED2_A -b $Trn | awk -v depth=$SAMPLE_A_NORMFACTOR '{split(\$11,name,\".\"); if (\$6==\$13) {a[name[1]]+=\$4/\$NF/\$5; sa[name[1]]+=(\$4/\$NF/\$5)*(\$3-\$2);} else {b[name[1]]+=\$4/\$NF/\$5; sb[name[1]]+=(\$4/\$NF/\$5)*(\$3-\$2);}; total[name[1]]=1; class[name[1]]=\$12;}END{for (c in total) { printf \"%s\t%s\t%.2f\t%.2f\n\", c, class[c], (a[c]?a[c]:0)*depth, (b[c]?b[c]:0)*depth; printf \"%s\t%s\t%.2f\t%.2f\n\", c, class[c], a[c]==0?0:( (sa[c]?sa[c]:0)/a[c] ), b[c]==0?0: ( (sb[c]?sb[c]:0)/b[c] ) >> \"/dev/stderr\";}}' > $TRN_DIR/${SAMPLE_A_NAME}.transposon.abundance.normalized_by_$NORMMETHOD 2> $TRN_DIR/${SAMPLE_A_NAME}.transposon.mean_len.normalized_by_$NORMMETHOD" >> $para_file  && \
-	echo "bedtools_piPipes intersect -split -wo -f 0.99 -a $ALL_BED2_B -b $Trn | awk -v depth=$SAMPLE_B_NORMFACTOR '{split(\$11,name,\".\"); if (\$6==\$13) {a[name[1]]+=\$4/\$NF/\$5; sa[name[1]]+=(\$4/\$NF/\$5)*(\$3-\$2);} else {b[name[1]]+=\$4/\$NF/\$5; sb[name[1]]+=(\$4/\$NF/\$5)*(\$3-\$2);}; total[name[1]]=1; class[name[1]]=\$12;}END{for (c in total) { printf \"%s\t%s\t%.2f\t%.2f\n\", c, class[c], (a[c]?a[c]:0)*depth, (b[c]?b[c]:0)*depth; printf \"%s\t%s\t%.2f\t%.2f\n\", c, class[c], a[c]==0?0:( (sa[c]?sa[c]:0)/a[c] ), b[c]==0?0: ( (sb[c]?sb[c]:0)/b[c] ) >> \"/dev/stderr\";}}' > $TRN_DIR/${SAMPLE_B_NAME}.transposon.abundance.normalized_by_$NORMMETHOD 2> $TRN_DIR/${SAMPLE_B_NAME}.transposon.mean_len.normalized_by_$NORMMETHOD" >> $para_file  && \
+	echo "awk '\$3-\$2>=$piRNA_bot' $ALL_BED2_A | bedtools_piPipes intersect -split -wo -f 0.99 -a stdin -b $Trn | awk -v depth=$SAMPLE_A_NORMFACTOR '{split(\$11,name,\".\"); if (\$6==\$13) {a[name[1]]+=\$4/\$NF/\$5; sa[name[1]]+=(\$4/\$NF/\$5)*(\$3-\$2);} else {b[name[1]]+=\$4/\$NF/\$5; sb[name[1]]+=(\$4/\$NF/\$5)*(\$3-\$2);}; total[name[1]]=1; class[name[1]]=\$12;}END{for (c in total) { printf \"%s\t%s\t%.2f\t%.2f\n\", c, class[c], (a[c]?a[c]:0)*depth, (b[c]?b[c]:0)*depth; printf \"%s\t%s\t%.2f\t%.2f\n\", c, class[c], a[c]==0?0:( (sa[c]?sa[c]:0)/a[c] ), b[c]==0?0: ( (sb[c]?sb[c]:0)/b[c] ) >> \"/dev/stderr\";}}' > $TRN_DIR/${SAMPLE_A_NAME}.transposon.abundance.normalized_by_$NORMMETHOD 2> $TRN_DIR/${SAMPLE_A_NAME}.transposon.mean_len.normalized_by_$NORMMETHOD" >> $para_file  && \
+	echo "awk '\$3-\$2>=$piRNA_bot' $ALL_BED2_B | bedtools_piPipes intersect -split -wo -f 0.99 -a stdin -b $Trn | awk -v depth=$SAMPLE_B_NORMFACTOR '{split(\$11,name,\".\"); if (\$6==\$13) {a[name[1]]+=\$4/\$NF/\$5; sa[name[1]]+=(\$4/\$NF/\$5)*(\$3-\$2);} else {b[name[1]]+=\$4/\$NF/\$5; sb[name[1]]+=(\$4/\$NF/\$5)*(\$3-\$2);}; total[name[1]]=1; class[name[1]]=\$12;}END{for (c in total) { printf \"%s\t%s\t%.2f\t%.2f\n\", c, class[c], (a[c]?a[c]:0)*depth, (b[c]?b[c]:0)*depth; printf \"%s\t%s\t%.2f\t%.2f\n\", c, class[c], a[c]==0?0:( (sa[c]?sa[c]:0)/a[c] ), b[c]==0?0: ( (sb[c]?sb[c]:0)/b[c] ) >> \"/dev/stderr\";}}' > $TRN_DIR/${SAMPLE_B_NAME}.transposon.abundance.normalized_by_$NORMMETHOD 2> $TRN_DIR/${SAMPLE_B_NAME}.transposon.mean_len.normalized_by_$NORMMETHOD" >> $para_file  && \
 	ParaFly -c $para_file -CPU $CPU -failed_cmds ${para_file}.failedCommands 1>&2 && \
 	Rscript --slave $PIPELINE_DIRECTORY/bin/piPipes_draw_scatter_plot.R $TRN_DIR/${SAMPLE_A_NAME}.transposon.abundance.normalized_by_$NORMMETHOD $TRN_DIR/${SAMPLE_B_NAME}.transposon.abundance.normalized_by_$NORMMETHOD $SAMPLE_A_NAME $SAMPLE_B_NAME $PDF_DIR/${SAMPLE_A_NAME}_vs_${SAMPLE_B_NAME}.transposon.abundance.normalized_by_$NORMMETHOD && \
 	awk '$3>0&&$4>0' $TRN_DIR/${SAMPLE_A_NAME}.transposon.mean_len.normalized_by_$NORMMETHOD > $TRN_DIR/${SAMPLE_A_NAME}.transposon.mean_len.normalized_by_${NORMMETHOD}.no_zero && \
@@ -256,8 +271,8 @@ dm3)
 *)	
 	[ ! -f .${JOBUID}.status.${STEP}.transposon_abundance.normalized_by_$NORMMETHOD ] && \
 	para_file=$TRN_DIR/${RANDOM}${RANDOM}.para && \
-	echo "bedtools_piPipes intersect -wo -f 0.99 -a $ALL_BED2_A -b $repeatMasker | awk -v depth=$SAMPLE_A_NORMFACTOR '{if (\$6==\$13) a[\$11]+=\$4/\$NF/\$5; else b[\$11]+=\$4/\$NF/\$5; total[\$11]=1}END{for (c in total) { printf \"%s\t%.2f\t%.2f\n\", c, (a[c]?a[c]:0)*depth, (b[c]?b[c]:0)*depth}}' > $TRN_DIR/${SAMPLE_A_NAME}.transposon.abundance.normalized_by_$NORMMETHOD " >> $para_file  && \
-	echo "bedtools_piPipes intersect -wo -f 0.99 -a $ALL_BED2_B -b $repeatMasker | awk -v depth=$SAMPLE_B_NORMFACTOR '{if (\$6==\$13) a[\$11]+=\$4/\$NF/\$5; else b[\$11]+=\$4/\$NF/\$5; total[\$11]=1}END{for (c in total) { printf \"%s\t%.2f\t%.2f\n\", c, (a[c]?a[c]:0)*depth, (b[c]?b[c]:0)*depth}}' > $TRN_DIR/${SAMPLE_B_NAME}.transposon.abundance.normalized_by_$NORMMETHOD " >> $para_file  && \
+	echo "awk '\$3-\$2>=$piRNA_bot' $ALL_BED2_A | bedtools_piPipes intersect -wo -f 0.99 -a stdin -b $repeatMasker | awk -v depth=$SAMPLE_A_NORMFACTOR '{if (\$6==\$13) a[\$11]+=\$4/\$NF/\$5; else b[\$11]+=\$4/\$NF/\$5; total[\$11]=1}END{for (c in total) { printf \"%s\t%.2f\t%.2f\n\", c, (a[c]?a[c]:0)*depth, (b[c]?b[c]:0)*depth}}' > $TRN_DIR/${SAMPLE_A_NAME}.transposon.abundance.normalized_by_$NORMMETHOD " >> $para_file  && \
+	echo "awk '\$3-\$2>=$piRNA_bot' $ALL_BED2_B | bedtools_piPipes intersect -wo -f 0.99 -a stdin -b $repeatMasker | awk -v depth=$SAMPLE_B_NORMFACTOR '{if (\$6==\$13) a[\$11]+=\$4/\$NF/\$5; else b[\$11]+=\$4/\$NF/\$5; total[\$11]=1}END{for (c in total) { printf \"%s\t%.2f\t%.2f\n\", c, (a[c]?a[c]:0)*depth, (b[c]?b[c]:0)*depth}}' > $TRN_DIR/${SAMPLE_B_NAME}.transposon.abundance.normalized_by_$NORMMETHOD " >> $para_file  && \
 	ParaFly -c $para_file -CPU $CPU -failed_cmds ${para_file}.failedCommands 1>&2 && \
 	Rscript --slave $PIPELINE_DIRECTORY/bin/piPipes_draw_scatter_plot.R  $TRN_DIR/${SAMPLE_A_NAME}.transposon.abundance.normalized_by_$NORMMETHOD $TRN_DIR/${SAMPLE_B_NAME}.transposon.abundance.normalized_by_$NORMMETHOD $SAMPLE_A_NAME $SAMPLE_B_NAME $PDF_DIR/${SAMPLE_A_NAME}_vs_${SAMPLE_B_NAME}.transposon.abundance.normalized_by_$NORMMETHOD && \
 	touch .${JOBUID}.status.${STEP}.transposon_abundance.normalized_by_$NORMMETHOD
@@ -271,17 +286,18 @@ STEP=$((STEP+1))
 echo2 "Calculating piRNA abundances for each piRNA cluster family"
 [ ! -f .${JOBUID}.status.${STEP}.piRNA_cluster_abundance.normalized_by_$NORMMETHOD ] && \
 para_file=$CLUSTER_DIR/${RANDOM}${RANDOM}.para && \
-	echo "bedtools_piPipes intersect -split -wo -f 0.99 -a $ALL_BED2_A -b $piRNA_Cluster | awk -v depth=$SAMPLE_A_NORMFACTOR '{if (\$6==\$13) a[\$11]+=\$4/\$NF/\$5; else b[\$11]+=\$4/\$NF/\$5; total[\$11]=1}END{for (c in total) { printf \"%s\t%.2f\t%.2f\n\", c, (a[c]?a[c]:0)*depth, (b[c]?b[c]:0)*depth}}' > $CLUSTER_DIR/${SAMPLE_A_NAME}.cluster.abundance.normalized_by_$NORMMETHOD " >> $para_file  && \
-	echo "bedtools_piPipes intersect -split -wo -f 0.99 -a $ALL_BED2_B -b $piRNA_Cluster | awk -v depth=$SAMPLE_B_NORMFACTOR '{if (\$6==\$13) a[\$11]+=\$4/\$NF/\$5; else b[\$11]+=\$4/\$NF/\$5; total[\$11]=1}END{for (c in total) { printf \"%s\t%.2f\t%.2f\n\", c, (a[c]?a[c]:0)*depth, (b[c]?b[c]:0)*depth}}' > $CLUSTER_DIR/${SAMPLE_B_NAME}.cluster.abundance.normalized_by_$NORMMETHOD " >> $para_file  && \
+	echo "awk '\$3-\$2>=$piRNA_bot' $ALL_BED2_A | bedtools_piPipes intersect -split -wo -f 0.99 -a stdin -b $piRNA_Cluster | awk -v depth=$SAMPLE_A_NORMFACTOR '{if (\$6==\$13) a[\$11]+=\$4/\$NF/\$5; else b[\$11]+=\$4/\$NF/\$5; total[\$11]=1}END{for (c in total) { printf \"%s\t%.2f\t%.2f\n\", c, (a[c]?a[c]:0)*depth, (b[c]?b[c]:0)*depth}}' > $CLUSTER_DIR/${SAMPLE_A_NAME}.cluster.abundance.normalized_by_$NORMMETHOD " >> $para_file  && \
+	echo "awk '\$3-\$2>=$piRNA_bot' $ALL_BED2_B | bedtools_piPipes intersect -split -wo -f 0.99 -a stdin -b $piRNA_Cluster | awk -v depth=$SAMPLE_B_NORMFACTOR '{if (\$6==\$13) a[\$11]+=\$4/\$NF/\$5; else b[\$11]+=\$4/\$NF/\$5; total[\$11]=1}END{for (c in total) { printf \"%s\t%.2f\t%.2f\n\", c, (a[c]?a[c]:0)*depth, (b[c]?b[c]:0)*depth}}' > $CLUSTER_DIR/${SAMPLE_B_NAME}.cluster.abundance.normalized_by_$NORMMETHOD " >> $para_file  && \
 	ParaFly -c $para_file -CPU $CPU -failed_cmds ${para_file}.failedCommands 1>&2 && \
 	Rscript --slave $PIPELINE_DIRECTORY/bin/piPipes_draw_scatter_plot.R $CLUSTER_DIR/${SAMPLE_A_NAME}.cluster.abundance.normalized_by_$NORMMETHOD $CLUSTER_DIR/${SAMPLE_B_NAME}.cluster.abundance.normalized_by_$NORMMETHOD $SAMPLE_A_NAME $SAMPLE_B_NAME $PDF_DIR/${SAMPLE_A_NAME}_vs_${SAMPLE_B_NAME}.piRNAcluster.abundance.normalized_by_$NORMMETHOD && \
 	touch .${JOBUID}.status.${STEP}.piRNA_cluster_abundance.normalized_by_$NORMMETHOD
 STEP=$((STEP+1))
 
-############################################
-# count transposon & piRNA cluster & genes #
-############################################
-# deprecated
+echo2 "Done with small RNA pipeline dual-sample mode"
+
+########################################################
+# count transposon & piRNA cluster & genes # deprecated#
+########################################################
 # echo2 "Drawing scatterplot for eXpress counting of mRNA, transposon and cluster"
 # [ ! -f .${JOBUID}.status.${STEP}.draw_eXpress.normalized_by_$NORMMETHOD ] && \
 # awk -v depth=$SAMPLE_A_NORMFACTOR 'BEGIN{FS=OFS="\t"; getline; print }{$8*=depth; print }' $SAMPLE_A_DIR/eXpress_quantification_no_normalization/results.xprs > $SAMPLE_A_DIR/eXpress_quantification_no_normalization/results.xprs.normalized_by_${NORMMETHOD} && \
