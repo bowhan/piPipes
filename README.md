@@ -63,7 +63,7 @@ Due to the limitation on the size of the files on github, the genome sequence, m
 8. **piPipes** uses [BEDtools](https://github.com/bowhan/bedtools.git) to assign alignments to different genomic annotations (gene, transposon, piRNA cluster, et al.). 
 
 ##USAGE
-The pipeline finds almost everything under its own directory so please do not move the `piPipes` script. Use `ln  -s  $PATH_TO_piPipes/piPipes  $HOME/bin/piPipes` to create symbol link in your `$HOME/bin`; Or add `/path/to/piPipes` to your `$PATH`. 
+The pipeline finds almost everything under its own directory so please do not move the `piPipes` script. Use `ln -s  $ABSOLUTE_PATH_TO_piPipes/piPipes  $HOME/bin/piPipes` to create symbol link in your `$HOME/bin`; Or add `/path/to/piPipes` to your `$PATH`. 
 **But please do NOT add the `/path/to/piPipes/bin` to your `$PATH`**
 
 Call different pipelines using:		
