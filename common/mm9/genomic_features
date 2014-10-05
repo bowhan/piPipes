@@ -65,9 +65,9 @@
 	pachytene_piRNA=$pachytene_piRNA_Cluster
 	FivePrimeUTR=$refSeq_5UTR
 	ThreePrimeUTR=$refSeq_3UTR
-	CDS=$flyBase_CDS
 	Intron=$refSeq_INTRON
 	Repeats=$repeatMasker
+	
 	declare -a TARGETS_EXCLUSIVE=(\
 	"prepachytene_piRNA" \
 	"hybrid_piRNA" \
