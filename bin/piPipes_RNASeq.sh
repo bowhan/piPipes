@@ -18,7 +18,7 @@
 ##########
 # Config #
 ##########
-export RNASEQ_VERSION=1.0.0
+export RNASEQ_VERSION=1.0.1
 
 #########
 # USAGE #
@@ -66,7 +66,7 @@ echo -e "${COLOR_END}"
 #############################
 # ARGS reading and checking #
 #############################
-while getopts "hl:r:c:o:g:B:vLD:" OPTION; do
+while getopts "hl:r:c:o:g:B:vLD" OPTION; do
 	case $OPTION in
 		h)	usage && exit 0 ;;
 		l)	LEFT_FASTQ=`readlink -f $OPTARG` ;;
@@ -359,10 +359,10 @@ bowtie2 -x gene+cluster+repBase \
 	--quiet \
 	-p $CPU \
 	2> ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.log | \
-samtools view -bSq 10 - > ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.bam && \
+samtools view -bS - > ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.bam && \
 samtools sort -o -@ $CPU ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.bam ${DIRECTMAPPING_DIR}/foo | \
 bedtools_piPipes bamtobed -i - | \
-awk -v etr=$END_TO_REVERSE_STRAND 'BEGIN{FS=OFS="\t"}{l=split($4,arr,""); if (arr[l]==etr) $6=($6=="+"?"-":"+"); print $0}' > ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.bed && \
+awk -v etr=$END_TO_REVERSE_STRAND -v MAPQ=10 'BEGIN{FS=OFS="\t"}{l=split($4,arr,""); if (arr[l]==etr) $6=($6=="+"?"-":"+"); if ($5 > MAPQ) print $0}' > ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.bed && \
 touch .${JOBUID}.status.${STEP}.direct_mapping
 
 echo2 "Making summary graph"
@@ -410,6 +410,7 @@ awk -v depth=$NormScale 'BEGIN{OFS="\t"; getline; print}{$8*=depth; print}' $DIR
 touch .${JOBUID}.status.${STEP}.eXpress_quantification
 STEP=$((STEP+1))
 
+# for fly genome, the transcripts from piRNA cluster are usually undetectable. including them in eXpress will actually have negative influence.
 if [ "$GENOME" == "dm3" ]; then
 	echo2 "Mapping to genes and transposon directly with Bowtie2"
 	DIRECTMAPPING_DIR=gene_transposon_direct_mapping
@@ -427,10 +428,10 @@ if [ "$GENOME" == "dm3" ]; then
 		--quiet \
 		-p $CPU \
 		2> ${DIRECTMAPPING_DIR}/${PREFIX}.gene+transposon.log | \
-	samtools view -bSq 10 - > ${DIRECTMAPPING_DIR}/${PREFIX}.gene+transposon.bam && \
+	samtools view -bS - > ${DIRECTMAPPING_DIR}/${PREFIX}.gene+transposon.bam && \
 	samtools sort -o -@ $CPU ${DIRECTMAPPING_DIR}/${PREFIX}.gene+transposon.bam ${DIRECTMAPPING_DIR}/foo | \
 	bedtools_piPipes bamtobed -i - | \
-	awk -v etr=$END_TO_REVERSE_STRAND 'BEGIN{FS=OFS="\t"}{l=split($4,arr,""); if (arr[l]==etr) $6=($6=="+"?"-":"+"); print $0}' > ${DIRECTMAPPING_DIR}/${PREFIX}.gene+transposon.sorted.unique.bed && \
+	awk -v etr=$END_TO_REVERSE_STRAND -v MAPQ=10 'BEGIN{FS=OFS="\t"}{l=split($4,arr,""); if (arr[l]==etr) $6=($6=="+"?"-":"+"); if ($5 > MAPQ) print $0}' > ${DIRECTMAPPING_DIR}/${PREFIX}.gene+transposon.sorted.unique.bed && \
 	touch .${JOBUID}.status.${STEP}.direct_mapping_dm3_transposon
 
 	echo2 "Making summary graph"

@@ -82,7 +82,7 @@ echo -e "${COLOR_END}"
 #############################
 # ARGS reading and checking #
 #############################
-while getopts "hl:r:i:c:o:g:s:vD:" OPTION; do
+while getopts "hl:r:i:c:o:g:s:vD" OPTION; do
 	case $OPTION in
 		h)	usage && exit 1 ;;
 		l)	LEFT_FASTQ=`readlink -f $OPTARG`; PE_MODE=1 ;;

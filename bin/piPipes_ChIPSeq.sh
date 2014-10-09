@@ -105,7 +105,7 @@ SE_TLEN=200 # average fragment length for single-end sample
 # ARGS reading and checking #
 #############################
 USE_MULTIREADS=0
-while getopts "hf:l:r:L:R:c:o:g:Bvx:i:I:M:umeD:" OPTION; do
+while getopts "hf:l:r:L:R:c:o:g:Bvx:i:I:M:umeD" OPTION; do
 	case $OPTION in
 		h)	usage && exit 0 ;;
 		v)	echo2 "CHIPSEQ_VERSION: v$CHIPSEQ_VERSION" && exit 0 ;;
