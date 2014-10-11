@@ -121,7 +121,6 @@ rRNA_DIR=rRNA_mapping && mkdir -p $rRNA_DIR
 GENOMIC_MAPPING_DIR=genome_mapping && mkdir -p $GENOMIC_MAPPING_DIR
 CUFFLINKS_DIR=cufflinks_output && mkdir -p $CUFFLINKS_DIR
 HTSEQ_DIR=htseq_count && mkdir -p $HTSEQ_DIR
-DIRECTMAPPING_DIR=gene_transposon_cluster_direct_mapping && mkdir -p $DIRECTMAPPING_DIR
 # SUMMARY_DIR=summaries && mkdir -p $SUMMARY_DIR
 BW_OUTDIR=bigWig && mkdir -p $BW_OUTDIR
 
@@ -344,75 +343,10 @@ STEP=$((STEP+1))
 ##################################################
 # direct mapping and quantification with eXpress #
 ##################################################
-echo2 "Mapping to genes, transposon and piRNA cluster directly with Bowtie2"
+echo2 "Mapping to genes and transposon directly with Bowtie2"
 . $COMMON_FOLDER/genomic_features
-TRANSCRIPTOME_SIZES=$BOWTIE2_INDEXES/gene+cluster+repBase.sizes
-[ ! -f .${JOBUID}.status.${STEP}.direct_mapping ] && \
-bowtie2 -x gene+cluster+repBase \
-	-1 ${xrRNA_LEFT_FQ} \
-	-2 ${xrRNA_RIGHT_FQ} \
-	-q \
-	$bowtie2PhredOption \
-	-a \
-	-X 800 \
-	--no-mixed \
-	--quiet \
-	-p $CPU \
-	2> ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.log | \
-samtools view -bS - > ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.bam && \
-samtools sort -o -@ $CPU ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.bam ${DIRECTMAPPING_DIR}/foo | \
-bedtools_piPipes bamtobed -i - | \
-awk -v etr=$END_TO_REVERSE_STRAND -v MAPQ=10 'BEGIN{FS=OFS="\t"}{l=split($4,arr,""); if (arr[l]==etr) $6=($6=="+"?"-":"+"); if ($5 > MAPQ) print $0}' > ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.bed && \
-touch .${JOBUID}.status.${STEP}.direct_mapping
-
-echo2 "Making summary graph"
-[ ! -f .${JOBUID}.status.${STEP}.make_direct_mapping_sum ] && \
-grep -v 'NM_' $TRANSCRIPTOME_SIZES | grep -v 'NR_' > ${DIRECTMAPPING_DIR}/transposon.sizes && \
-bedtools_piPipes genomecov -i ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.bed -g $TRANSCRIPTOME_SIZES -strand + -bg \
-	> ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.plus.bedGraph && \
-bedtools_piPipes genomecov -i ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.bed -g $TRANSCRIPTOME_SIZES -strand - -bg \
-	| awk 'BEGIN{FS=OFS="\t"}{$4=-$4;print $0}' \
-	> ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.minus.bedGraph && \
-bedGraphToBigWig ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.plus.bedGraph  $TRANSCRIPTOME_SIZES ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.plus.bigWig && \
-bedGraphToBigWig ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.minus.bedGraph $TRANSCRIPTOME_SIZES ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.minus.bigWig && \
-paraFile=${DIRECTMAPPING_DIR}/bigWigSummary.para && \
-bgP=${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.plus.bigWig && \
-bgM=${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.minus.bigWig && \
-awk -v bgP=${bgP} -v bgM=${bgM} -v binSize=${BINSIZE} '{print "bigWigSummary", bgP, $1, 0, $2, binSize, "| sed -e \x27s/n\\/a/0/g\x027 >", bgP"."$1; print "bigWigSummary", bgM, $1, 0, $2, binSize, "| sed -e \x27s/n\\/a/0/g\x027 >", bgM"."$1;}' ${DIRECTMAPPING_DIR}/transposon.sizes > $paraFile && \
-ParaFly -c $paraFile -CPU $CPU && \
-paraFile=${OUTDIR}/drawFigures && \
-rm -rf ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.bigWig.summary && \
-for i in `cut -f1 ${DIRECTMAPPING_DIR}/transposon.sizes`; do \
-	[ ! -s ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.plus.bigWig.$i  ] && awk -v binSize=${BINSIZE} 'BEGIN{for (i=0;i<binSize-1;++i){printf "%d\t", 0} print 0;}' > ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.plus.bigWig.$i
-	[ ! -s ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.minus.bigWig.$i ] && awk -v binSize=${BINSIZE} 'BEGIN{for (i=0;i<binSize-1;++i){printf "%d\t", 0} print 0;}' > ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.minus.bigWig.$i
-	awk -v name=$i '{for (i=1;i<=NF;++i){printf "%s\t%d\t%d\n", name, i, $i}}' ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.plus.bigWig.$i  > ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.plus.bigWig.$i.t
-	awk -v name=$i '{for (i=1;i<=NF;++i){printf "%s\t%d\t%d\n", name, i, $i}}' ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.minus.bigWig.$i > ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.minus.bigWig.$i.t
-	paste ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.plus.bigWig.$i.t ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.minus.bigWig.$i.t | cut -f1,2,3,6 >> ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.bigWig.summary
-	rm -rf ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.plus.bigWig.$i ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.plus.bigWig.$i.t ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.minus.bigWig.$i ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.minus.bigWig.$i.t
-done && \
-Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_summary.R ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.bigWig.summary ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.bigWig.summary $CPU $NormScale 1>&2 && \
-PDFs=${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted*pdf && \
-gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=$PDF_DIR/${PREFIX}.gene+cluster+repBase.sorted.unique.pdf ${PDFs} && \
-rm -rf ${PDFs} && \
-touch .${JOBUID}.status.${STEP}.make_direct_mapping_sum
-
-[ ! -f .${JOBUID}.status.${STEP}.eXpress_quantification ] && \
-express \
-	-B $eXpressBATCH \
-	-o $DIRECTMAPPING_DIR \
-	--no-update-check \
-	--library-size ${MapMass%.*} \
-	$COMMON_FOLDER/${GENOME}.gene+cluster+repBase.fa \
-	${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.bam \
-	1>&2 2> $DIRECTMAPPING_DIR/${PREFIX}.gene+cluster+repBase.eXpress.log && \
-awk -v depth=$NormScale 'BEGIN{OFS="\t"; getline; print}{$8*=depth; print}' $DIRECTMAPPING_DIR/results.xprs > \
-	$DIRECTMAPPING_DIR/results.xprs.normalized && \
-touch .${JOBUID}.status.${STEP}.eXpress_quantification
-STEP=$((STEP+1))
-
 # for fly genome, the transcripts from piRNA cluster are usually undetectable. including them in eXpress will actually have negative influence.
 if [ "$GENOME" == "dm3" ]; then
-	echo2 "Mapping to genes and transposon directly with Bowtie2"
 	DIRECTMAPPING_DIR=gene_transposon_direct_mapping
 	mkdir -p $DIRECTMAPPING_DIR
 	TRANSCRIPTOME_SIZES=$BOWTIE2_INDEXES/gene+transposon.sizes
@@ -444,6 +378,7 @@ if [ "$GENOME" == "dm3" ]; then
 		> ${DIRECTMAPPING_DIR}/${PREFIX}.gene+transposon.sorted.unique.minus.bedGraph && \
 	bedGraphToBigWig ${DIRECTMAPPING_DIR}/${PREFIX}.gene+transposon.sorted.unique.plus.bedGraph  $TRANSCRIPTOME_SIZES ${DIRECTMAPPING_DIR}/${PREFIX}.gene+transposon.sorted.unique.plus.bigWig && \
 	bedGraphToBigWig ${DIRECTMAPPING_DIR}/${PREFIX}.gene+transposon.sorted.unique.minus.bedGraph $TRANSCRIPTOME_SIZES ${DIRECTMAPPING_DIR}/${PREFIX}.gene+transposon.sorted.unique.minus.bigWig && \
+	rm -f ${DIRECTMAPPING_DIR}/${PREFIX}.gene+transposon.sorted.unique.plus.bedGraph  ${DIRECTMAPPING_DIR}/${PREFIX}.gene+transposon.sorted.unique.minus.bedGraph && \
 	paraFile=${DIRECTMAPPING_DIR}/bigWigSummary.para && \
 	bgP=${DIRECTMAPPING_DIR}/${PREFIX}.gene+transposon.sorted.unique.plus.bigWig && \
 	bgM=${DIRECTMAPPING_DIR}/${PREFIX}.gene+transposon.sorted.unique.minus.bigWig && \
@@ -478,6 +413,73 @@ if [ "$GENOME" == "dm3" ]; then
 		$DIRECTMAPPING_DIR/results.xprs.normalized && \
 	touch .${JOBUID}.status.${STEP}.eXpress_quantification_dm3_transposon
 	STEP=$((STEP+1))
+else
+	DIRECTMAPPING_DIR=gene_transposon_cluster_direct_mapping
+	mkdir -p $DIRECTMAPPING_DIR
+	TRANSCRIPTOME_SIZES=$BOWTIE2_INDEXES/gene+cluster+repBase.sizes
+	[ ! -f .${JOBUID}.status.${STEP}.direct_mapping ] && \
+	bowtie2 -x gene+cluster+repBase \
+		-1 ${xrRNA_LEFT_FQ} \
+		-2 ${xrRNA_RIGHT_FQ} \
+		-q \
+		$bowtie2PhredOption \
+		-a \
+		-X 800 \
+		--no-mixed \
+		--quiet \
+		-p $CPU \
+		2> ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.log | \
+	samtools view -bS - > ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.bam && \
+	samtools sort -o -@ $CPU ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.bam ${DIRECTMAPPING_DIR}/foo | \
+	bedtools_piPipes bamtobed -i - | \
+	awk -v etr=$END_TO_REVERSE_STRAND -v MAPQ=10 'BEGIN{FS=OFS="\t"}{l=split($4,arr,""); if (arr[l]==etr) $6=($6=="+"?"-":"+"); if ($5 > MAPQ) print $0}' > ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.bed && \
+	touch .${JOBUID}.status.${STEP}.direct_mapping
+
+	echo2 "Making summary graph"
+	[ ! -f .${JOBUID}.status.${STEP}.make_direct_mapping_sum ] && \
+	grep -v 'NM_' $TRANSCRIPTOME_SIZES | grep -v 'NR_' > ${DIRECTMAPPING_DIR}/transposon.sizes && \
+	bedtools_piPipes genomecov -i ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.bed -g $TRANSCRIPTOME_SIZES -strand + -bg \
+		> ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.plus.bedGraph && \
+	bedtools_piPipes genomecov -i ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.bed -g $TRANSCRIPTOME_SIZES -strand - -bg \
+		| awk 'BEGIN{FS=OFS="\t"}{$4=-$4;print $0}' \
+		> ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.minus.bedGraph && \
+	bedGraphToBigWig ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.plus.bedGraph  $TRANSCRIPTOME_SIZES ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.plus.bigWig && \
+	bedGraphToBigWig ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.minus.bedGraph $TRANSCRIPTOME_SIZES ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.minus.bigWig && \
+	rm -f ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.plus.bedGraph ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.minus.bedGraph && \
+	paraFile=${DIRECTMAPPING_DIR}/bigWigSummary.para && \
+	bgP=${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.plus.bigWig && \
+	bgM=${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.minus.bigWig && \
+	awk -v bgP=${bgP} -v bgM=${bgM} -v binSize=${BINSIZE} '{print "bigWigSummary", bgP, $1, 0, $2, binSize, "| sed -e \x27s/n\\/a/0/g\x027 >", bgP"."$1; print "bigWigSummary", bgM, $1, 0, $2, binSize, "| sed -e \x27s/n\\/a/0/g\x027 >", bgM"."$1;}' ${DIRECTMAPPING_DIR}/transposon.sizes > $paraFile && \
+	ParaFly -c $paraFile -CPU $CPU && \
+	paraFile=${OUTDIR}/drawFigures && \
+	rm -rf ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.bigWig.summary && \
+	for i in `cut -f1 ${DIRECTMAPPING_DIR}/transposon.sizes`; do \
+		[ ! -s ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.plus.bigWig.$i  ] && awk -v binSize=${BINSIZE} 'BEGIN{for (i=0;i<binSize-1;++i){printf "%d\t", 0} print 0;}' > ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.plus.bigWig.$i
+		[ ! -s ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.minus.bigWig.$i ] && awk -v binSize=${BINSIZE} 'BEGIN{for (i=0;i<binSize-1;++i){printf "%d\t", 0} print 0;}' > ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.minus.bigWig.$i
+		awk -v name=$i '{for (i=1;i<=NF;++i){printf "%s\t%d\t%d\n", name, i, $i}}' ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.plus.bigWig.$i  > ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.plus.bigWig.$i.t
+		awk -v name=$i '{for (i=1;i<=NF;++i){printf "%s\t%d\t%d\n", name, i, $i}}' ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.minus.bigWig.$i > ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.minus.bigWig.$i.t
+		paste ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.plus.bigWig.$i.t ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.minus.bigWig.$i.t | cut -f1,2,3,6 >> ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.bigWig.summary
+		rm -rf ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.plus.bigWig.$i ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.plus.bigWig.$i.t ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.minus.bigWig.$i ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.minus.bigWig.$i.t
+	done && \
+	Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_summary.R ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.bigWig.summary ${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted.unique.bigWig.summary $CPU $NormScale 1>&2 && \
+	PDFs=${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.sorted*pdf && \
+	gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=$PDF_DIR/${PREFIX}.gene+cluster+repBase.sorted.unique.pdf ${PDFs} && \
+	rm -rf ${PDFs} && \
+	touch .${JOBUID}.status.${STEP}.make_direct_mapping_sum
+
+	[ ! -f .${JOBUID}.status.${STEP}.eXpress_quantification ] && \
+	express \
+		-B $eXpressBATCH \
+		-o $DIRECTMAPPING_DIR \
+		--no-update-check \
+		--library-size ${MapMass%.*} \
+		$COMMON_FOLDER/${GENOME}.gene+cluster+repBase.fa \
+		${DIRECTMAPPING_DIR}/${PREFIX}.gene+cluster+repBase.bam \
+		1>&2 2> $DIRECTMAPPING_DIR/${PREFIX}.gene+cluster+repBase.eXpress.log && \
+	awk -v depth=$NormScale 'BEGIN{OFS="\t"; getline; print}{$8*=depth; print}' $DIRECTMAPPING_DIR/results.xprs > \
+		$DIRECTMAPPING_DIR/results.xprs.normalized && \
+	touch .${JOBUID}.status.${STEP}.eXpress_quantification
+	STEP=$((STEP+1))
 fi
 
 #############
@@ -487,7 +489,8 @@ if [[ "$CLEAN" == 1 ]]; then
 	rm -f $BW_OUTDIR/*bedGraph
 	rm -f $GENOMIC_MAPPING_DIR/*bedpe
 	rm -f $GENOMIC_MAPPING_DIR/*mate1 $GENOMIC_MAPPING_DIR/*mate2
-	rm -rf ${READS_DIR}/${PREFIX}.x_rRNA.1.fq ${READS_DIR}/${PREFIX}.x_rRNA.2.fq
+	rm -f ${READS_DIR}/${PREFIX}.x_rRNA.1.fq ${READS_DIR}/${PREFIX}.x_rRNA.2.fq
+	rm -f ${DIRECTMAPPING_DIR}/${PREFIX}.gene+transposon.sorted.unique.bed
 fi
 
 echo2 "Finished running ${PACKAGE_NAME} RNA-Seq pipeline version $RNASEQ_VERSION"
