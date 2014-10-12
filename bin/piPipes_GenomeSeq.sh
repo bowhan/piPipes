@@ -239,6 +239,7 @@ echo2 "Mapping to genome ${GENOME} with BWA-MEM and calling varation by bcftools
 	rm -rf ${BWA_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.bwa-mem.bam && \
 	bedtools_piPipes genomecov -bg -ibam ${BWA_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.bwa-mem.sorted.bam -g $CHROM > ${BWA_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.bwa-mem.sorted.bdg && \
 	bedGraphToBigWig ${BWA_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.bwa-mem.sorted.bdg $CHROM $BW_OUTDIR/${PREFIX}.${GENOME}.bwa-mem.sorted.bigWig && \
+	rm -f ${BWA_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.bwa-mem.sorted.bdg && \
 	touch .${JOBUID}.status.${STEP}.genome_mapping_bwa_MEM
 STEP=$((STEP+1))
 

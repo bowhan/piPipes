@@ -19,7 +19,7 @@
 ##########
 # Config #
 ##########
-export CHIPSEQ_VERSION=1.1.0
+export CHIPSEQ_VERSION=1.2.0
 
 #########
 # USAGE #
@@ -84,11 +84,12 @@ ${OPTIONAL}[ optional ]
 	        Use $HOME instead, like -M $HOME/path/to/gfp,$HOME/path/to/white.fa
 	-o      Output directory, default: current directory: $PWD
 	-c      Number of CPUs to use, default: 8
-<unique and multi-mapper options>
+<unique and multi-mapper options for genome mapping>
 	-u      Only use unique mappers. default: on
 	-m      Use both unique and multi-mappers. For multi-mappers, Bowtie2 randomly report one locus from the best aligments pool. default: off
 	-e      Use both unique and multi-mappers. For multi-mappers, use Expectation–Maximization algorithm implemented by CSEM to allocate them. Only alignments passing CREM posterior 0.5 are kept.
 	        Current CSEM is not compatible with bowtie2, so bowtie will be used instead. default: off
+Note: for direct transposon consensus sequence mapping, piPipes always uses all mappers followed by eXpress quantification.
 	-D      Delete large bed/bam files after pipeline finishes to save space (this step can also be ran separately). default: false
 EOF
 echo -e "${COLOR_END}"
@@ -183,6 +184,7 @@ mkdir -p $GENOMIC_MAPPING_DIR && ln -s $GENOMIC_MAPPING_DIR genome_mapping # bac
 PEAKS_CALLING_DIR=macs2_peaks_calling && mkdir -p $PEAKS_CALLING_DIR
 BW_OUTDIR=bigWig && mkdir -p $BW_OUTDIR
 AGG_DIR=aggregate_output && mkdir -p $AGG_DIR
+DIRECTMAPPING_DIR=direct_mapping && mkdir -p $DIRECTMAPPING_DIR
 
 ########################
 # running binary check #
@@ -234,6 +236,11 @@ CHROM=$COMMON_FOLDER/${GENOME}.ChromInfo.txt
 export BOWTIE_INDEXES=$COMMON_FOLDER/BowtieIndex
 # bowtie2 index
 export BOWTIE2_INDEXES=$COMMON_FOLDER/Bowtie2Index
+#
+export BINSIZE=1000
+# eXpress
+[ ! -z "${eXpressBATCH##*[!0-9]*}" ] || eXpressBATCH=21
+export eXpressBATCH
 
 ##############################
 # beginning running pipeline #
@@ -255,9 +262,9 @@ else
 fi
 echo $READ_LEN > .READ_LEN
 case ${PHRED_SCORE} in
-solexa)		bowtie2PhredOption="--solexa-quals" ;; # Solexa+64, raw reads typically (-5, 40)
-illumina)	bowtie2PhredOption="--phred64" ;; # Illumina 1.5+ Phred+64,  raw reads typically (3, 40)
-sanger)		bowtie2PhredOption="--phred33" ;; # Phred+33,  raw reads typically (0, 40) (http://en.wikipedia.org/wiki/FASTQ_format)
+solexa)	export bowtie2PhredOption="--solexa-quals" ;; # Solexa+64, raw reads typically (-5, 40)
+illumina)	export bowtie2PhredOption="--phred64" ;; # Illumina 1.5+ Phred+64,  raw reads typically (3, 40)
+sanger)	export bowtie2PhredOption="--phred33" ;; # Phred+33,  raw reads typically (0, 40) (http://en.wikipedia.org/wiki/FASTQ_format)
 *)			echo2 "unable to determine the fastq version. Using sanger..." "warning";;
 esac
 
@@ -561,8 +568,21 @@ else
 fi
 STEP=$((STEP+1))
 
+# readling the depth
+if [[ -n $SE_MODE ]]; then MACS2_f="BAM"; TN="tags"; else MACS2_f="BAMPE"; TN="fragments"; fi
+
+export EFFECTIVE_DEPTH_IP=`grep "$TN after filtering in treatment" $PEAKS_CALLING_DIR/*_peaks.xls`
+export NormScaleIP=`echo $EFFECTIVE_DEPTH_IP | awk '{printf "%f\n", 1000000/$1}'`
+
+export EFFECTIVE_DEPTH_INPUT=`grep "$TN after filtering in control" $PEAKS_CALLING_DIR/*_peaks.xls`
+export NormScaleINPUT=`echo $EFFECTIVE_DEPTH_INPUT | awk '{printf "%f\n", 1000000/$1}'`
+
+# the effective depth is the smaller
+export EFFECTIVE_DEPTH=`grep "$TN after filtering in" $PEAKS_CALLING_DIR/*_peaks.xls | awk 'BEGIN{FS=" "; getline;m=$NF}{if (m>$NF) {m=$NF}} END{print m}'`
+export NormScale=`echo $EFFECTIVE_DEPTH | awk '{printf "%f\n", 1000000/$1}'`
+
 ############################################
-# draw figures for genomic features (mega) #
+# draw figures for genomic features (meta) #
 ############################################
 echo2 "Aggregating signal on each genomic features"
 [ ! -f .${JOBUID}.status.${STEP}.aggregate_beds ] && \
@@ -572,6 +592,38 @@ echo2 "Aggregating signal on each genomic features"
 	$BW_OUTDIR/${PREFIX}.ppois.bigWig,$BW_OUTDIR/${PREFIX}.FE.bigWig,$BW_OUTDIR/${PREFIX}.logLR.bigWig && \
 	touch .${JOBUID}.status.${STEP}.aggregate_beds
 STEP=$((STEP+1))
+
+######################################
+# Direct map to transposon consensus #
+######################################
+echo2 "Mapping to genes and transposon directly with Bowtie2"
+. $COMMON_FOLDER/genomic_features
+if [ "$GENOME" == "dm3" ]; then
+	# for fly genome, the transcripts from piRNA cluster are usually undetectable. including them in eXpress will actually have negative influence.
+	DIRECTMAPPING_INX="gene+transposon"
+else
+	DIRECTMAPPING_INX="gene+cluster+repBase"
+fi
+
+if [[ -n $SE_MODE ]]; then
+	[ ! -f .${JOBUID}.status.${STEP}.direct_mapping_eXpress_quantification ] && \
+	bash $DEBUG piPipes_direct_bowtie2_mapping_ChIP.sh \
+		-i ${IP_FASTQ} \
+		-I ${INPUT_FASTQ} \
+		-x $DIRECTMAPPING_INX \
+		-o $DIRECTMAPPING_DIR && \
+	touch .${JOBUID}.status.${STEP}.direct_mapping_eXpress_quantification
+else
+	[ ! -f .${JOBUID}.status.${STEP}.direct_mapping_eXpress_quantification ] && \
+	bash $DEBUG piPipes_direct_bowtie2_mapping_ChIP.sh \
+		-l ${LEFT_IP_FASTQ} \
+		-r ${RIGHT_IP_FASTQ} \
+		-L ${LEFT_INPUT_FASTQ} \
+		-R ${RIGHT_INPUT_FASTQ} \
+		-x $DIRECTMAPPING_INX \
+		-o $DIRECTMAPPING_DIR && \
+	touch .${JOBUID}.status.${STEP}.direct_mapping_eXpress_quantification
+fi 
 
 #############
 # finishing #

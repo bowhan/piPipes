@@ -60,7 +60,7 @@ ${OPTIONAL}[ optional ]
 	        all: use non-rRNA genomic all mappers including microRNAs.
 	        allXmiRNA: use non-rRNA genomic all mappers excluding microRNAs.
 	        miRNA: use microRNAs. normalized to: reads per millions of miRNA <for unoxidized library of mutants that assumes no change for miRNAs>.
-			siRNA: (only for dm3) use cis-NATs and structural loci siRNA (transposon siRNAs are EXCLUDED because it might contain piRNA degradation fragments). normalized to: reads per millions of siRNA <for oxidized library in fly>.
+	        siRNA: (only for dm3) use cis-NATs and structural loci siRNA (transposon siRNAs are EXCLUDED because it might contain piRNA degradation fragments). normalized to: reads per millions of siRNA <for oxidized library in fly>.
 	        42AB:  (only for dm3) use unique-mapping, 42AB derived piRNAs to normalize
 	        flam:  (only for dm3) use unique-mapping, flam derived piRNAs to normalize
 	-c      Number of CPUs to use, default: 8

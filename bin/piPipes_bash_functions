@@ -36,7 +36,7 @@ function check_genome {
 	do
 		[ "$GENOME_SUPPORTED" == "$1" ] && SUPPORTED=1
 	done
-	[[ "$SUPPORTED" != 1 ]] && echo2 "The genome \"${1}\" is not currently supported. Currently supported organisms: `cat $PIPELINE_DIRECTORY/genome_supported.txt`; Please use \"piPipes install\" to install new genome" "error"
+	[[ "$SUPPORTED" != 1 ]] && echo2 "The genome \"${1}\" is not currently supported. Currently supported organisms: `cat $PIPELINE_DIRECTORY/common/genome_supported.txt`; Please use \"piPipes install\" to install new genome" "error"
 }
 export -f check_genome
 
