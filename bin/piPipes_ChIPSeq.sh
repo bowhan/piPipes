@@ -571,10 +571,10 @@ STEP=$((STEP+1))
 # readling the depth
 if [[ -n $SE_MODE ]]; then MACS2_f="BAM"; TN="tags"; else MACS2_f="BAMPE"; TN="fragments"; fi
 
-export EFFECTIVE_DEPTH_IP=`grep "$TN after filtering in treatment" $PEAKS_CALLING_DIR/*_peaks.xls`
+export EFFECTIVE_DEPTH_IP=`grep "$TN after filtering in treatment" $PEAKS_CALLING_DIR/*_peaks.xls | awk 'BEGIN{FS=" "}{print $NF}'`
 export NormScaleIP=`echo $EFFECTIVE_DEPTH_IP | awk '{printf "%f\n", 1000000/$1}'`
 
-export EFFECTIVE_DEPTH_INPUT=`grep "$TN after filtering in control" $PEAKS_CALLING_DIR/*_peaks.xls`
+export EFFECTIVE_DEPTH_INPUT=`grep "$TN after filtering in control" $PEAKS_CALLING_DIR/*_peaks.xls | awk 'BEGIN{FS=" "}{print $NF}'`
 export NormScaleINPUT=`echo $EFFECTIVE_DEPTH_INPUT | awk '{printf "%f\n", 1000000/$1}'`
 
 # the effective depth is the smaller
@@ -600,9 +600,9 @@ echo2 "Mapping to genes and transposon directly with Bowtie2"
 . $COMMON_FOLDER/genomic_features
 if [ "$GENOME" == "dm3" ]; then
 	# for fly genome, the transcripts from piRNA cluster are usually undetectable. including them in eXpress will actually have negative influence.
-	DIRECTMAPPING_INX="gene+transposon"
+	DIRECTMAPPING_INX="transposon"
 else
-	DIRECTMAPPING_INX="gene+cluster+repBase"
+	DIRECTMAPPING_INX="repBase"
 fi
 
 if [[ -n $SE_MODE ]]; then
