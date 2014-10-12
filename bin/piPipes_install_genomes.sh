@@ -280,6 +280,7 @@ fi
 echo2 "Building Bowtie/BWA index for repBase transposon annotation" 
 [ ! -s ${GENOME}.repBase.fa ] && echo2 "Missing ${GENOME}.repBase.fa, if you are installing genomes other than dm3 or mm9, please retrieve that file from repBase" "error"
 [ ! -s BowtieIndex/repBase.sizes ] && bowtie-build ${GENOME}.repBase.fa BowtieIndex/repBase && faSize -tab -detailed ${GENOME}.repBase.fa > BowtieIndex/repBase.sizes
+[ ! -s Bowtie2Index/repBase.sizes ] && bowtie2-build ${GENOME}.repBase.fa Bowtie2Index/repBase && faSize -tab -detailed ${GENOME}.repBase.fa > Bowtie2Index/repBase.sizes
 [ ! -s ${GENOME}.repBase.eref ] && mkdir -p repBase && faSplit byname ${GENOME}.repBase.fa repBase/ && for i in repBase/*; do echo -e "`basename ${i%.fa}`\t`readlink -f $i`"; done > ${GENOME}.repBase.eref
 
 # piRNA cluster indexes

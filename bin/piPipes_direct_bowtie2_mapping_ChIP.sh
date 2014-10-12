@@ -30,6 +30,9 @@ while getopts "l:r:L:R:i:I:o:x:" OPTION; do
     esac
 done
 
+TRANSCRIPTOME_SIZES=$BOWTIE2_INDEXES/${dDIRECTMAPPING_INDEX}.sizes
+[[ ! -f $TRANSCRIPTOME_SIZES ]] && echo2 "Cannot find size file TRANSCRIPTOME_SIZES" "error"
+
 if [[ -n "dLEFT_IP_FQ" ]]; then
 # paired-end mode
     echo2 "Direct mapping IP to $dDIRECTMAPPING_INDEX"
@@ -49,7 +52,7 @@ if [[ -n "dLEFT_IP_FQ" ]]; then
     samtools sort -o -@ $CPU ${dDIRECTMAPPING_DIR}/${PREFIX}.IP.${dDIRECTMAPPING_INDEX}.bam ${dDIRECTMAPPING_DIR}/foo | \
     bedtools_piPipes bamtobed -i - | \
     awk -v MAPQ=10 '$5 > MAPQ' > ${dDIRECTMAPPING_DIR}/${PREFIX}.IP.${dDIRECTMAPPING_INDEX}.sorted.unique.bed
-    
+
     echo2 "Direct mapping INPUT to $dDIRECTMAPPING_INDEX"
     bowtie2 \
         -x $dDIRECTMAPPING_INDEX \
@@ -83,7 +86,7 @@ else
     samtools sort -o -@ $CPU ${dDIRECTMAPPING_DIR}/${PREFIX}.IP.${dDIRECTMAPPING_INDEX}.bam ${dDIRECTMAPPING_DIR}/foo | \
     bedtools_piPipes bamtobed -i - | \
     awk -v MAPQ=10 '$5 > MAPQ' > ${dDIRECTMAPPING_DIR}/${PREFIX}.IP.${dDIRECTMAPPING_INDEX}.sorted.unique.bed
-    
+
     echo2 "Direct mapping INPUT to $dDIRECTMAPPING_INDEX"
     bowtie2 \
         -x $dDIRECTMAPPING_INDEX \
@@ -107,27 +110,28 @@ bedtools_piPipes genomecov -i ${dDIRECTMAPPING_DIR}/${PREFIX}.input.${dDIRECTMAP
 bedGraphToBigWig ${dDIRECTMAPPING_DIR}/${PREFIX}.IP.${dDIRECTMAPPING_INDEX}.sorted.unique.bedGraph    $TRANSCRIPTOME_SIZES ${dDIRECTMAPPING_DIR}/${PREFIX}.IP.${dDIRECTMAPPING_INDEX}.sorted.unique.bigWig && \
 bedGraphToBigWig ${dDIRECTMAPPING_DIR}/${PREFIX}.input.${dDIRECTMAPPING_INDEX}.sorted.unique.bedGraph $TRANSCRIPTOME_SIZES ${dDIRECTMAPPING_DIR}/${PREFIX}.input.${dDIRECTMAPPING_INDEX}.sorted.unique.bigWig && \
 rm -f ${dDIRECTMAPPING_DIR}/*.bedGraph && \
+paraFile=${dDIRECTMAPPING_DIR}/${RANDOM}${RANDOM}.para && \
 bgP=${dDIRECTMAPPING_DIR}/${PREFIX}.IP.${dDIRECTMAPPING_INDEX}.sorted.unique.bigWig && \
 bgM=${dDIRECTMAPPING_DIR}/${PREFIX}.input.${dDIRECTMAPPING_INDEX}.sorted.unique.bigWig && \
 awk -v bgP=${bgP} -v bgM=${bgM} -v binSize=${BINSIZE} '{print "bigWigSummary", bgP, $1, 0, $2, binSize, "| sed -e \x27s/n\\/a/0/g\x027 >", bgP"."$1; print "bigWigSummary", bgM, $1, 0, $2, binSize, "| sed -e \x27s/n\\/a/0/g\x027 >", bgM"."$1;}' ${dDIRECTMAPPING_DIR}/transposon.sizes > $paraFile && \
 ParaFly -c $paraFile -CPU $CPU && \
 paraFile=${OUTDIR}/drawFigures && \
-rm -f ${dDIRECTMAPPING_DIR}/${PREFIX}.${ddDIRECTMAPPING_INDEX}.sorted.unique.bigWig.summary
+rm -f ${dDIRECTMAPPING_DIR}/${PREFIX}.${dDIRECTMAPPING_INDEX}.sorted.unique.bigWig.summary
 for i in `cut -f1 ${dDIRECTMAPPING_DIR}/transposon.sizes`; do \
-    [ ! -s ${dDIRECTMAPPING_DIR}/${PREFIX}.IP.${dDIRECTMAPPING_INDEX}.sorted.unique.bigWig.$i  ] && awk -v binSize=${BINSIZE} 'BEGIN{for (i=0;i<binSize-1;++i){printf "%d\t", 0} print 0;}' > ${dDIRECTMAPPING_DIR}/${PREFIX}.IP.${dDIRECTMAPPING_INDEX}.sorted.unique.bigWig.$i
-    [ ! -s ${dDIRECTMAPPING_DIR}/${PREFIX}.input.${ddDIRECTMAPPING_INDEX}.sorted.unique.bigWig.$i ] && awk -v binSize=${BINSIZE} 'BEGIN{for (i=0;i<binSize-1;++i){printf "%d\t", 0} print 0;}' > ${dDIRECTMAPPING_DIR}/${PREFIX}.input.${ddDIRECTMAPPING_INDEX}.sorted.unique.bigWig.$i
+    [ ! -s ${dDIRECTMAPPING_DIR}/${PREFIX}.IP.${dDIRECTMAPPING_INDEX}.sorted.unique.bigWig.$i  ] && echo | awk -v binSize=${BINSIZE} 'BEGIN{for (i=0;i<binSize-1;++i){printf "%d\t", 0} print 0;}' > ${dDIRECTMAPPING_DIR}/${PREFIX}.IP.${dDIRECTMAPPING_INDEX}.sorted.unique.bigWig.$i
+    [ ! -s ${dDIRECTMAPPING_DIR}/${PREFIX}.input.${dDIRECTMAPPING_INDEX}.sorted.unique.bigWig.$i ] && echo | awk -v binSize=${BINSIZE} 'BEGIN{for (i=0;i<binSize-1;++i){printf "%d\t", 0} print 0;}' > ${dDIRECTMAPPING_DIR}/${PREFIX}.input.${dDIRECTMAPPING_INDEX}.sorted.unique.bigWig.$i
     awk -v name=$i '{for (i=1;i<=NF;++i){printf "%s\t%d\t%d\n", name, i, $i}}' ${dDIRECTMAPPING_DIR}/${PREFIX}.IP.${dDIRECTMAPPING_INDEX}.sorted.unique.bigWig.$i    > ${dDIRECTMAPPING_DIR}/${PREFIX}.IP.${dDIRECTMAPPING_INDEX}.sorted.unique.bigWig.$i.t
     awk -v name=$i '{for (i=1;i<=NF;++i){printf "%s\t%d\t%d\n", name, i, $i}}' ${dDIRECTMAPPING_DIR}/${PREFIX}.input.${dDIRECTMAPPING_INDEX}.sorted.unique.bigWig.$i > ${dDIRECTMAPPING_DIR}/${PREFIX}.input.${dDIRECTMAPPING_INDEX}.sorted.unique.bigWig.$i.t
-    paste ${dDIRECTMAPPING_DIR}/${PREFIX}.IP.${dDIRECTMAPPING_INDEX}.sorted.unique.bigWig.$i.t ${dDIRECTMAPPING_DIR}/${PREFIX}.input.${dDIRECTMAPPING_INDEX}.sorted.unique.bigWig.$i.t | cut -f1,2,3,6 >> ${dDIRECTMAPPING_DIR}/${PREFIX}.${ddDIRECTMAPPING_INDEX}.sorted.unique.bigWig.summary
+    paste ${dDIRECTMAPPING_DIR}/${PREFIX}.IP.${dDIRECTMAPPING_INDEX}.sorted.unique.bigWig.$i.t ${dDIRECTMAPPING_DIR}/${PREFIX}.input.${dDIRECTMAPPING_INDEX}.sorted.unique.bigWig.$i.t | cut -f1,2,3,6 >> ${dDIRECTMAPPING_DIR}/${PREFIX}.${dDIRECTMAPPING_INDEX}.sorted.unique.bigWig.summary
     rm -rf ${dDIRECTMAPPING_DIR}/${PREFIX}.IP.${dDIRECTMAPPING_INDEX}.sorted.unique.bigWig.$i \
-           ${dDIRECTMAPPING_DIR}/${PREFIX}.input.${ddDIRECTMAPPING_INDEX}.sorted.unique.bigWig.$i \
+           ${dDIRECTMAPPING_DIR}/${PREFIX}.input.${dDIRECTMAPPING_INDEX}.sorted.unique.bigWig.$i \
            ${dDIRECTMAPPING_DIR}/${PREFIX}.IP.${dDIRECTMAPPING_INDEX}.sorted.unique.bigWig.$i.t \
            ${dDIRECTMAPPING_DIR}/${PREFIX}.input.${dDIRECTMAPPING_INDEX}.sorted.unique.bigWig.$i.t
 done
 
-Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_summary.R ${dDIRECTMAPPING_DIR}/${PREFIX}.${ddDIRECTMAPPING_INDEX}.sorted.unique.bigWig.summary ${dDIRECTMAPPING_DIR}/${PREFIX}.${ddDIRECTMAPPING_INDEX}.sorted.unique.bigWig.summary $CPU $NormScale 1>&2 && \
-PDFs=${dDIRECTMAPPING_DIR}/${PREFIX}.${PIPELINE_DIRECTORY}.sorted*pdf && \
-gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=$PDF_DIR/${PREFIX}.${PIPELINE_DIRECTORY}.unique.pdf ${PDFs} && \
+Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_summary.R ${dDIRECTMAPPING_DIR}/${PREFIX}.${dDIRECTMAPPING_INDEX}.sorted.unique.bigWig.summary ${dDIRECTMAPPING_DIR}/${PREFIX}.${dDIRECTMAPPING_INDEX}.sorted.unique.bigWig.summary $CPU $NormScale 1>&2 && \
+PDFs=${dDIRECTMAPPING_DIR}/${PREFIX}.${dDIRECTMAPPING_INDEX}.sorted*pdf && \
+gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=$PDF_DIR/${PREFIX}.${dDIRECTMAPPING_INDEX}.unique.pdf ${PDFs} && \
 rm -rf ${PDFs}
 
 
@@ -138,19 +142,17 @@ express \
     --library-size $EFFECTIVE_DEPTH_IP \
     --no-update-check \
     $COMMON_FOLDER/${GENOME}.${dDIRECTMAPPING_INDEX}.fa \
-    ${dDIRECTMAPPING_DIR}/${PREFIX}.IP.${dDIRECTMAPPING_INDEX}.bam \
-    1>&2 2> $dDIRECTMAPPING_DIR/${PREFIX}.IP.${dDIRECTMAPPING_INDEX}.eXpress.log && \
+    ${dDIRECTMAPPING_DIR}/${PREFIX}.IP.${dDIRECTMAPPING_INDEX}.bam  && \
 awk -v depth=$NormScale 'BEGIN{OFS="\t"; getline; print}{$8*=depth; print}' $dDIRECTMAPPING_DIR/results.xprs > $dDIRECTMAPPING_DIR/${PREFIX}.IP.${dDIRECTMAPPING_INDEX}.results.xprs.normalized
     
 echo2 "quantification input using eXpress"
-    express \
-        -B $eXpressBATCH \
-        -o $dDIRECTMAPPING_DIR \
-        --library-size $EFFECTIVE_DEPTH_INPUT \
-        --no-update-check \
-        $COMMON_FOLDER/${GENOME}.${dDIRECTMAPPING_INDEX}.fa \
-        ${dDIRECTMAPPING_DIR}/${PREFIX}.input.${dDIRECTMAPPING_INDEX}.bam \
-        1>&2 2> $dDIRECTMAPPING_DIR/${PREFIX}.input.${dDIRECTMAPPING_INDEX}.eXpress.log && \
+express \
+    -B $eXpressBATCH \
+    -o $dDIRECTMAPPING_DIR \
+    --library-size $EFFECTIVE_DEPTH_INPUT \
+    --no-update-check \
+    $COMMON_FOLDER/${GENOME}.${dDIRECTMAPPING_INDEX}.fa \
+    ${dDIRECTMAPPING_DIR}/${PREFIX}.input.${dDIRECTMAPPING_INDEX}.bam && \
 awk -v depth=$NormScale 'BEGIN{OFS="\t"; getline; print}{$8*=depth; print}' $dDIRECTMAPPING_DIR/results.xprs > $dDIRECTMAPPING_DIR/${PREFIX}.input.${dDIRECTMAPPING_INDEX}.results.xprs.normalized
 
 echo -e "target_id\teff_counts" > $dDIRECTMAPPING_DIR/${PREFIX}.IP.${dDIRECTMAPPING_INDEX}.results.xprs.normalized_counts && \
