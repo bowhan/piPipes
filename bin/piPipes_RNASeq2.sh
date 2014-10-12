@@ -153,18 +153,23 @@ SAMPLE_A_BAMS="" # in case enviromental variable has been set
 SAMPLE_B_BAMS=""
 SAMPLE_A_EXPRESS=""
 SAMPLE_B_EXPRESS=""
+if [ "$GENOME" == "dm3" ]; then
+	EXPRESS_DIR_NAME=gene_transposon_direct_mapping
+else
+	EXPRESS_DIR_NAME=gene_transposon_cluster_direct_mapping
+fi
 for DIR in "${SAMPLE_A_DIR[@]}" ; do 
 	echo2 $DIR
 	NORMFACTOR=`cat $DIR/.*.cufflinks_depth`
 	SAMPLE_A_NORMFACTOR+=( "$NORMFACTOR" )
 	SAMPLE_A_BAMS=`find ${DIR}/genome_mapping/ -name "*${GENOME}.sorted.bam" `","${SAMPLE_A_BAMS}
-	SAMPLE_A_EXPRESS=`find ${DIR}/gene_transposon_cluster_direct_mapping/ -name "*results.xprs.normalized" `" "${SAMPLE_A_EXPRESS}
+	SAMPLE_A_EXPRESS=`find ${DIR}/$EXPRESS_DIR_NAME/ -name "*results.xprs.normalized" `" "${SAMPLE_A_EXPRESS}
 done
 for DIR in "${SAMPLE_B_DIR[@]}" ; do 
 	NORMFACTOR=`cat $DIR/.*.cufflinks_depth`
 	SAMPLE_B_NORMFACTOR+=("$NORMFACTOR")
 	SAMPLE_B_BAMS=`find ${DIR}/genome_mapping/ -name "*${GENOME}.sorted.bam" `","${SAMPLE_B_BAMS}
-	SAMPLE_B_EXPRESS=`find ${DIR}/gene_transposon_cluster_direct_mapping/ -name "*results.xprs.normalized" `" "${SAMPLE_B_EXPRESS}
+	SAMPLE_B_EXPRESS=`find ${DIR}/$EXPRESS_DIR_NAME/ -name "*results.xprs.normalized" `" "${SAMPLE_B_EXPRESS}
 done
 
 ##############################
@@ -211,8 +216,14 @@ STEP=$((STEP+1))
 ############################################
 # count transposon & piRNA cluster & genes #
 ############################################
-echo2 "Drawing scatterplot for eXpress counting of mRNA, transposon and cluster"
-[ ! -f .${JOBUID}.status.${STEP}.draw_eXpress ] && \
+echo2 "Drawing scatterplot for eXpress counting of mRNA, transposon for flies"
+# for DIR in "${SAMPLE_A_DIR[@]}" ; do 
+# 	SAMPLE_A_EXPRESS=`find ${DIR}/gene_transposon_direct_mapping/ -name "*results.xprs.normalized" `" "${SAMPLE_A_EXPRESS}
+# done
+# for DIR in "${SAMPLE_B_DIR[@]}" ; do 
+# 	SAMPLE_B_EXPRESS=`find ${DIR}/gene_transposon_direct_mapping/ -name "*results.xprs.normalized" `" "${SAMPLE_B_EXPRESS}
+# done
+[ ! -f .${JOBUID}.status.${STEP}.draw_eXpress_dm3 ] && \
 echo -e "target_id\teff_counts" > ${SAMPLE_A_NAME}.results.xprs && \
 echo -e "target_id\teff_counts" > ${SAMPLE_B_NAME}.results.xprs && \
 cat $SAMPLE_A_EXPRESS | cut -f2,8 | grep -v id | sort -k1,1 | bedtools_piPipes groupby -i stdin -g 1 -c 2 -o mean >> ${SAMPLE_A_NAME}.results.xprs && \
@@ -222,31 +233,6 @@ Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_scatter_plot_eXpress_coun
 	${SAMPLE_B_NAME}.results.xprs \
 	$SAMPLE_A_NAME \
 	$SAMPLE_B_NAME \
-	$PDF_DIR/${SAMPLE_A_NAME}_vs_${SAMPLE_B_NAME}.gene_transposon_cluster.abundance && \
-	touch .${JOBUID}.status.${STEP}.draw_eXpress
+	$PDF_DIR/${SAMPLE_A_NAME}_vs_${SAMPLE_B_NAME}.gene_transposon.abundance && \
+	touch .${JOBUID}.status.${STEP}.draw_eXpress_dm3
 STEP=$((STEP+1))
-
-if [ "$GENOME" == "dm3" ]; then
-	echo2 "Drawing scatterplot for eXpress counting of mRNA, transposon for flies"
-	SAMPLE_A_EXPRESS=""
-	SAMPLE_B_EXPRESS=""
-	for DIR in "${SAMPLE_A_DIR[@]}" ; do 
-		SAMPLE_A_EXPRESS=`find ${DIR}/gene_transposon_direct_mapping/ -name "*results.xprs.normalized" `" "${SAMPLE_A_EXPRESS}
-	done
-	for DIR in "${SAMPLE_B_DIR[@]}" ; do 
-		SAMPLE_B_EXPRESS=`find ${DIR}/gene_transposon_direct_mapping/ -name "*results.xprs.normalized" `" "${SAMPLE_B_EXPRESS}
-	done
-	[ ! -f .${JOBUID}.status.${STEP}.draw_eXpress_dm3 ] && \
-	echo -e "target_id\teff_counts" > ${SAMPLE_A_NAME}.results_dm3.xprs && \
-	echo -e "target_id\teff_counts" > ${SAMPLE_B_NAME}.results_dm3.xprs && \
-	cat $SAMPLE_A_EXPRESS | cut -f2,8 | grep -v id | sort -k1,1 | bedtools_piPipes groupby -i stdin -g 1 -c 2 -o mean >> ${SAMPLE_A_NAME}.results_dm3.xprs && \
-	cat $SAMPLE_B_EXPRESS | cut -f2,8 | grep -v id | sort -k1,1 | bedtools_piPipes groupby -i stdin -g 1 -c 2 -o mean >> ${SAMPLE_B_NAME}.results_dm3.xprs && \
-	Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_scatter_plot_eXpress_counts.R \
-		${SAMPLE_A_NAME}.results_dm3.xprs \
-		${SAMPLE_B_NAME}.results_dm3.xprs \
-		$SAMPLE_A_NAME \
-		$SAMPLE_B_NAME \
-		$PDF_DIR/${SAMPLE_A_NAME}_vs_${SAMPLE_B_NAME}.gene_transposon.abundance && \
-		touch .${JOBUID}.status.${STEP}.draw_eXpress_dm3
-	STEP=$((STEP+1))
-fi
