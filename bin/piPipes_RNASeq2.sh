@@ -18,7 +18,7 @@
 ##########
 # Config #
 ##########
-export RNASEQ2_VERSION=1.0.0
+export RNASEQ2_VERSION=1.0.1
 
 #########
 # USAGE #
@@ -153,11 +153,9 @@ SAMPLE_A_BAMS="" # in case enviromental variable has been set
 SAMPLE_B_BAMS=""
 SAMPLE_A_EXPRESS=""
 SAMPLE_B_EXPRESS=""
-if [ "$GENOME" == "dm3" ]; then
-	EXPRESS_DIR_NAME=gene_transposon_direct_mapping
-else
-	EXPRESS_DIR_NAME=gene_transposon_cluster_direct_mapping
-fi
+
+EXPRESS_DIR_NAME=direct_transcriptome_mapping
+
 for DIR in "${SAMPLE_A_DIR[@]}" ; do 
 	echo2 $DIR
 	NORMFACTOR=`cat $DIR/.*.cufflinks_depth`
@@ -217,13 +215,7 @@ STEP=$((STEP+1))
 # count transposon & piRNA cluster & genes #
 ############################################
 echo2 "Drawing scatterplot for eXpress counting of mRNA, transposon for flies"
-# for DIR in "${SAMPLE_A_DIR[@]}" ; do 
-# 	SAMPLE_A_EXPRESS=`find ${DIR}/gene_transposon_direct_mapping/ -name "*results.xprs.normalized" `" "${SAMPLE_A_EXPRESS}
-# done
-# for DIR in "${SAMPLE_B_DIR[@]}" ; do 
-# 	SAMPLE_B_EXPRESS=`find ${DIR}/gene_transposon_direct_mapping/ -name "*results.xprs.normalized" `" "${SAMPLE_B_EXPRESS}
-# done
-[ ! -f .${JOBUID}.status.${STEP}.draw_eXpress_dm3 ] && \
+[ ! -f .${JOBUID}.status.${STEP}.draw_eXpress ] && \
 echo -e "target_id\teff_counts" > ${SAMPLE_A_NAME}.results.xprs && \
 echo -e "target_id\teff_counts" > ${SAMPLE_B_NAME}.results.xprs && \
 cat $SAMPLE_A_EXPRESS | cut -f2,8 | grep -v id | sort -k1,1 | bedtools_piPipes groupby -i stdin -g 1 -c 2 -o mean >> ${SAMPLE_A_NAME}.results.xprs && \
@@ -234,5 +226,5 @@ Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_scatter_plot_eXpress_coun
 	$SAMPLE_A_NAME \
 	$SAMPLE_B_NAME \
 	$PDF_DIR/${SAMPLE_A_NAME}_vs_${SAMPLE_B_NAME}.gene_transposon.abundance && \
-	touch .${JOBUID}.status.${STEP}.draw_eXpress_dm3
+	touch .${JOBUID}.status.${STEP}.draw_eXpress
 STEP=$((STEP+1))

@@ -398,7 +398,8 @@ if [[ -n $PE_MODE ]]; then
 		echo "bedtools_piPipes genomecov -5 -scale $NormScale -bg -strand + -i ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.f0x40.noS.unique.bed12 -g $CHROM > ${BW_OUTDIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.f0x40.noS.unique.Watson.bedGraph && bedGraphToBigWig ${BW_OUTDIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.f0x40.noS.unique.Watson.bedGraph $CHROM ${BW_OUTDIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.f0x40.noS.unique.Watson.bigWig"  >  $paraFile && \
 		echo "bedtools_piPipes genomecov -5 -scale $NormScale -bg -strand - -i ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.f0x40.noS.unique.bed12 -g $CHROM | awk 'BEGIN{OFS=\"\t\"}{\$4 = -\$4; print \$0}' > ${BW_OUTDIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.f0x40.noS.unique.Crick.bedGraph && bedGraphToBigWig ${BW_OUTDIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.f0x40.noS.unique.Crick.bedGraph $CHROM ${BW_OUTDIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.f0x40.noS.unique.Crick.bigWig" >> $paraFile && \
 		ParaFly -c $paraFile -CPU $CPU -failed_cmds ${paraFile}.failedCommands 1>&2 && \
-		rm -rf ${paraFile} ${paraFile}.completed && \
+		rm -f ${paraFile} ${paraFile}.completed && \
+		rm -f ${BW_OUTDIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.f0x40.noS.unique.Watson.bedGraph ${BW_OUTDIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.f0x40.noS.unique.Crick.bedGraph && \
 		touch .${JOBUID}.status.${STEP}.make_bigWig
 	STEP=$((STEP+1))
 else
@@ -414,7 +415,8 @@ else
 		echo "bedtools_piPipes genomecov -5 -scale $NormScale -bg -strand + -i ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.noS.unique.bed12 -g $CHROM > ${BW_OUTDIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.noS.unique.Watson.bedGraph && bedGraphToBigWig ${BW_OUTDIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.noS.unique.Watson.bedGraph $CHROM ${BW_OUTDIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.noS.unique.Watson.bigWig"  >  $paraFile && \
 		echo "bedtools_piPipes genomecov -5 -scale $NormScale -bg -strand - -i ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.noS.unique.bed12 -g $CHROM | awk 'BEGIN{OFS=\"\t\"}{\$4 = -\$4; print \$0}' > ${BW_OUTDIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.noS.unique.Crick.bedGraph && bedGraphToBigWig ${BW_OUTDIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.noS.unique.Crick.bedGraph $CHROM ${BW_OUTDIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.noS.unique.Crick.bigWig" >> $paraFile && \
 		ParaFly -c $paraFile -CPU $CPU -failed_cmds ${paraFile}.failedCommands 1>&2 && \
-		rm -rf ${paraFile} ${paraFile}.completed && \
+		rm -f ${paraFile} ${paraFile}.completed && \
+		rm -f ${BW_OUTDIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.noS.unique.Watson.bedGraph ${BW_OUTDIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.noS.unique.Crick.bedGraph && \
 		touch .${JOBUID}.status.${STEP}.make_bigWig
 	STEP=$((STEP+1))
 fi
