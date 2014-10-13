@@ -189,12 +189,12 @@ Variations were called using different algorithms.
 A more detailed explanation can be found [here](https://github.com/bowhan/piPipes/wiki/Genome-seq).
 
 ##CITATION
-* under review
-
+```
+Han, B. W., Wang, W., Zamore, P. D. & Weng, Z. piPipes: a set of pipelines for piRNA and transposon analysis via small RNA-seq, RNA-seq, degradome- and CAGE-seq, ChIP-seq and genomic DNA sequencing. Bioinformatics (in press).
+```
 ##CONTACT
 	
-    Wei Wang (wei.wang2 `at` umassmed.edu)
-    Bo W Han (bo.han `at` umassmed.edu, bowhan `at` me.com)
+piPipesQ@gmail.com
     
 ##LICENSE
 **piPipes** is released under the [GNU General Public License version 3](https://www.gnu.org/licenses/gpl.html).		
