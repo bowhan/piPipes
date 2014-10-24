@@ -18,7 +18,7 @@
 ##########
 # Config #
 ##########
-export RNASEQ_VERSION=1.0.2
+export RNASEQ_VERSION=1.0.3
 
 #########
 # USAGE #
@@ -126,13 +126,15 @@ then
 	END_TO_REVERSE_STRAND=2
 	SENSE_HTSEQ_OPT="yes"; 
 	ANTISENSE_HTSEQ_OPT="reverse"; 
-	EXPRESS_OPTION="--fr-stranded"
+	EXPRESS_OPTION_PE="--fr-stranded"
+	EXPRESS_OPTION_SE="--f-stranded"
 else 
 	LIBRARY_TYPE="fr-firststrand"
 	END_TO_REVERSE_STRAND=1
 	SENSE_HTSEQ_OPT="reverse"; 
 	ANTISENSE_HTSEQ_OPT="yes"; 
-	EXPRESS_OPTION="--rf-stranded"
+	EXPRESS_OPTION_PE="--rf-stranded"
+	EXPRESS_OPTION_SE="--r-stranded"
 fi
 echo $LIBRARY_TYPE > .LIBRARY_TYPE
 
@@ -432,6 +434,7 @@ if [[ -n $PE_MODE ]]; then
 
 	[ ! -f .${JOBUID}.status.${STEP}.eXpress_quantification ] && \
 	express \
+		$EXPRESS_OPTION_PE \
 		-B $eXpressBATCH \
 		-o $DIRECTMAPPING_DIR \
 		--no-update-check \
@@ -684,6 +687,7 @@ else # Single-End
 	# we currently don't specify the direction for eXpress to allow counting of antisense transcripts;
 	[ ! -f .${JOBUID}.status.${STEP}.eXpress_quantification ] && \
 	express \
+		$EXPRESS_OPTION_SE \
 		-B $eXpressBATCH \
 		-o $DIRECTMAPPING_DIR \
 		--no-update-check \
