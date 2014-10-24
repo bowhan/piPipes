@@ -10,7 +10,7 @@ In order to achieve a generic interface in terms of the genome assembles it supp
 For *small RNA-Seq*, *RNA-Seq* and *ChIP-Seq* pipelines, **piPipes** provides two modes: `single-sample mode` and `dual-sample mode`, to analyze single library and pair-wise comparison between two samples respectively. For *degradome-seq*, **piPipes** provide options to perform Ping-Pong analysis between degradome reads and small RNA reads.				
 
 
-Visit our [Wiki Page](https://github.com/bowhan/piPipes/wiki) for more details.
+Visit our [Wiki Page](https://github.com/bowhan/piPipes/wiki) for more details on how to install the genome, run each pipeline, and interpretate the output.
 
 ##INSTALL   
 **piPipes** is written in Bash, C/C++, Perl, Python and R. It currently only works under Linux environment.
@@ -18,11 +18,11 @@ Visit our [Wiki Page](https://github.com/bowhan/piPipes/wiki) for more details.
 ***
 ### C/C++
 **piPipes** comes with statically compiled linux x86_64 binaries for its own C++ scripts and the other tools written in C/C++. **Ideally, the users don't need to do any compiling.** 
-But if the static versions do not work in your system, exemplified by the error message "kernel too old", please compile them from src and move the binaries to the `bin`, or simply email us or file an issue in Github. 
+But if the static versions do not work in your system, exemplified by the error message "kernel too old", please compile them from src and move the binaries to the `bin`, or simply email us or file an issue on Github. 
 
 If you need to compile from source code:
 - Please install **BEDtools** using the source code in the `third_party` directory and rename it as `bedtools_piPipes` in the `bin` directory of `piPipes`. It has a little modification that makes our self-defined format more efficient to process. 			
-- Please install **bowtie** from https://github.com/bowhan/bowtie , where we have added native gzip/bzip2 support. It is currently the most updated (08/2014) and we will keep it updated.
+- Please install **bowtie** from https://github.com/bowhan/bowtie , where we have added native gzip/bzip2 support, which is required to run zipped, Paired-End sample for ChIP-seq pipeline.
 - Most of **piPipes's** C++ code utilizes *C++11* features and *Boost* library. It is recommended to install relatively new [GCC](http://gcc.gnu.org/) and [Boost](http://www.boost.org/users/download/) for compiling them.
 If you don't have them, we recommend to use [brew](https://github.com/Homebrew/linuxbrew) to install them automatically.		
 - Some codes require the [htslib](https://github.com/samtools/htslib) installed first.
@@ -34,7 +34,7 @@ If you don't have them, we recommend to use [brew](https://github.com/Homebrew/l
 
 ***
 ### R
-For R packages that are unavailable in the user's system, the installation is performed during the `piPipes install` process. They will be installed in the same directory as the pipeline in case the user doesn't have write permission in the R installation directory.
+For R packages that are unavailable in the user's system, the installation is performed during the `piPipes install` process. They will be installed in the same directory as the pipeline in case the user doesn't have write permission in the R installation directory. Please keep the version of R constant.
 ***
 
 ### Genome Annotation
@@ -189,12 +189,12 @@ Variations were called using different algorithms.
 A more detailed explanation can be found [here](https://github.com/bowhan/piPipes/wiki/Genome-seq).
 
 ##CITATION
-* under review
+
+Han, B. W., Wang, W., Zamore, P. D. & Weng, Z. piPipes: a set of pipelines for piRNA and transposon analysis via small RNA-seq, RNA-seq, degradome- and CAGE-seq, ChIP-seq and genomic DNA sequencing. Bioinformatics [(Advance Access)](http://bioinformatics.oxfordjournals.org/content/early/2014/10/16/bioinformatics.btu647.abstract).
 
 ##CONTACT
 	
-    Wei Wang (wei.wang2 `at` umassmed.edu)
-    Bo W Han (bo.han `at` umassmed.edu, bowhan `at` me.com)
+piPipesQ@gmail.com
     
 ##LICENSE
 **piPipes** is released under the [GNU General Public License version 3](https://www.gnu.org/licenses/gpl.html).		

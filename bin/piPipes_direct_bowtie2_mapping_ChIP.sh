@@ -142,7 +142,7 @@ express \
     --library-size $EFFECTIVE_DEPTH_IP \
     --no-update-check \
     $COMMON_FOLDER/${GENOME}.${dDIRECTMAPPING_INDEX}.fa \
-    ${dDIRECTMAPPING_DIR}/${PREFIX}.IP.${dDIRECTMAPPING_INDEX}.bam  && \
+    ${dDIRECTMAPPING_DIR}/${PREFIX}.IP.${dDIRECTMAPPING_INDEX}.bam 1>&2 && \
 awk -v depth=$NormScale 'BEGIN{OFS="\t"; getline; print}{$8*=depth; print}' $dDIRECTMAPPING_DIR/results.xprs > $dDIRECTMAPPING_DIR/${PREFIX}.IP.${dDIRECTMAPPING_INDEX}.results.xprs.normalized
     
 echo2 "quantification input using eXpress"
@@ -152,7 +152,7 @@ express \
     --library-size $EFFECTIVE_DEPTH_INPUT \
     --no-update-check \
     $COMMON_FOLDER/${GENOME}.${dDIRECTMAPPING_INDEX}.fa \
-    ${dDIRECTMAPPING_DIR}/${PREFIX}.input.${dDIRECTMAPPING_INDEX}.bam && \
+    ${dDIRECTMAPPING_DIR}/${PREFIX}.input.${dDIRECTMAPPING_INDEX}.bam 1>&2 && \
 awk -v depth=$NormScale 'BEGIN{OFS="\t"; getline; print}{$8*=depth; print}' $dDIRECTMAPPING_DIR/results.xprs > $dDIRECTMAPPING_DIR/${PREFIX}.input.${dDIRECTMAPPING_INDEX}.results.xprs.normalized
 
 echo -e "target_id\teff_counts" > $dDIRECTMAPPING_DIR/${PREFIX}.IP.${dDIRECTMAPPING_INDEX}.results.xprs.normalized_counts && \
