@@ -577,7 +577,7 @@ export NormScaleIP=`echo $EFFECTIVE_DEPTH_IP | awk '{printf "%f\n", 1000000/$1}'
 export EFFECTIVE_DEPTH_INPUT=`grep "$TN after filtering in control" $PEAKS_CALLING_DIR/*_peaks.xls | awk 'BEGIN{FS=" "}{print $NF}'`
 export NormScaleINPUT=`echo $EFFECTIVE_DEPTH_INPUT | awk '{printf "%f\n", 1000000/$1}'`
 
-# the effective depth is the smaller
+# the effective depth is the larger
 export EFFECTIVE_DEPTH=`grep "$TN after filtering in" $PEAKS_CALLING_DIR/*_peaks.xls | awk 'BEGIN{FS=" "; getline;m=$NF}{if (m>$NF) {m=$NF}} END{print m}'`
 export NormScale=`echo $EFFECTIVE_DEPTH | awk '{printf "%f\n", 1000000/$1}'`
 
