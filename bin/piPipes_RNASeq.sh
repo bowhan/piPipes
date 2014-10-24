@@ -382,7 +382,7 @@ if [[ -n $PE_MODE ]]; then
 	fi
 	TRANSCRIPTOME_SIZES=$BOWTIE2_INDEXES/${TRANSCRIPTOME_INDEX}.sizes
 
-	[ ! -f .${JOBUID}.status.${STEP}.direct_mapping_dm3_transposon ] && \
+	[ ! -f .${JOBUID}.status.${STEP}.direct_mapping ] && \
 	bowtie2 -x ${TRANSCRIPTOME_INDEX} \
 		-1 ${xrRNA_LEFT_FQ} \
 		-2 ${xrRNA_RIGHT_FQ} \
@@ -630,7 +630,7 @@ else # Single-End
 	fi
 	TRANSCRIPTOME_SIZES=$BOWTIE2_INDEXES/${TRANSCRIPTOME_INDEX}.sizes
 
-	[ ! -f .${JOBUID}.status.${STEP}.direct_mapping_dm3_transposon ] && \
+	[ ! -f .${JOBUID}.status.${STEP}.direct_mapping ] && \
 	bowtie2 -x ${TRANSCRIPTOME_INDEX} \
 		-U ${xrRNA_FQ} \
 		-q \
