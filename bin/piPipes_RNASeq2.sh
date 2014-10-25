@@ -56,6 +56,8 @@ ${OPTIONAL}[ optional ]
 	-o      Output directory, default: current directory $PWD
 	-A      Name to use for Sample A, default: using the basename of -a
 	-B      Name to use for Sample B, default: using the basename of -b
+	-F      By default, if two libraries were ran using different modes (for example, one is dUTR, the other one is ligation),
+	        this pipeline will not run. This option Force piPipes to run the dual-sample pipeline.
 	-n      The top n genes to draw heatmap and bar plot in cummeRbund, sorted by q-value and fold-change, default: 50
 
 The pipeline will automatically detect the version and options of the single library run for the two samples and ensure the consistence. 
@@ -67,7 +69,7 @@ echo -e "${COLOR_END}"
 #############################
 # ARGS reading and checking #
 #############################
-while getopts "hva:b:g:c:o:A:B:n:" OPTION; do
+while getopts "hva:b:g:c:o:A:B:Fn:" OPTION; do
 	case $OPTION in
 		h)	usage && exit 0 ;;
 		v)	echo2 "SMALLRNA2_VERSION: v$SMALLRNA2_VERSION" && exit 0 ;;
@@ -79,6 +81,7 @@ while getopts "hva:b:g:c:o:A:B:n:" OPTION; do
 		A)  SAMPLE_A_NAME=$OPTARG ;;
 		B)  SAMPLE_B_NAME=$OPTARG ;;
 		n)	NUM_GENE_CUMM=$OPTARG ;;
+		F)	FORCE_RUN=1;;
 		*)	usage && exit 1 ;;
 	esac
 done
@@ -115,8 +118,16 @@ for DIR in "${SAMPLE_A_DIR[@]}" "${SAMPLE_B_DIR[@]}"; do
 	echo $VERSION >> .RNASEQ_VERSION
 done
 case `sort -u .RNASEQ_VERSION | wc -l` in 
-	1) ;;
-	*) echo2 "Not all the directories were ran under the same version or condition of the single sample pipeline" "error";;
+	1) 
+	# do nothing
+	;;
+	*)
+		if [[ -n $FORCE_RUN ]]; then
+			echo2 "Not all the directories were ran under the same version or condition of the single sample pipeline" "warning"
+		else
+			echo2 "Not all the directories were ran under the same version or condition of the single sample pipeline" "error"
+		fi
+	;;
 esac
 
 ########################
