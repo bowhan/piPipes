@@ -317,7 +317,7 @@ case $USE_MULTIREADS in
 	###############################
 	echo2 "Mapping Input reads to genome ${GENOME} with Bowtie2"
 	if [[ -n $SE_MODE ]]; then
-		[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_Input ] && \
+		[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_bowtie2Input ] && \
 		bowtie2 -x genome \
 			-U $INPUT_FASTQ \
 			-q \
@@ -332,7 +332,7 @@ case $USE_MULTIREADS in
 			touch .${JOBUID}.status.${STEP}.genome_mapping_bowtie2Input
 		[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_bowtie2Input ] && echo2 "Failed in mapping Input to genome" "error"
 	else
-		[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_Input ] && \
+		[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_bowtie2Input ] && \
 		bowtie2 -x genome \
 			-1 ${LEFT_INPUT_FASTQ} \
 			-2 ${RIGHT_INPUT_FASTQ} \
@@ -347,8 +347,8 @@ case $USE_MULTIREADS in
 			samtools sort -@ $CPU ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.bam ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.sorted && \
 			samtools index ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.sorted.bam && \
 			rm -rf ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.bam && \
-			touch .${JOBUID}.status.${STEP}.genome_mapping_Input
-		[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_Input ] && echo2 "Failed in mapping input to genome" "error"
+			touch .${JOBUID}.status.${STEP}.genome_mapping_bowtie2Input
+		[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_bowtie2Input ] && echo2 "Failed in mapping input to genome" "error"
 	fi
 	STEP=$((STEP+1))
 	;; # end of using unique mappers only
@@ -400,7 +400,7 @@ case $USE_MULTIREADS in
 	###############################
 	echo2 "Mapping Input reads to genome ${GENOME} with Bowtie2"
 	if [[ -n $SE_MODE ]]; then
-		[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_Input ] && \
+		[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_bowtie2Input ] && \
 		bowtie2 -x genome \
 			-U $INPUT_FASTQ \
 			-q \
@@ -415,7 +415,7 @@ case $USE_MULTIREADS in
 			touch .${JOBUID}.status.${STEP}.genome_mapping_bowtie2Input
 		[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_bowtie2Input ] && echo2 "Failed in mapping Input to genome" "error"
 	else
-		[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_Input ] && \
+		[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_bowtie2Input ] && \
 		bowtie2 -x genome \
 			-1 ${LEFT_INPUT_FASTQ} \
 			-2 ${RIGHT_INPUT_FASTQ} \
@@ -430,8 +430,8 @@ case $USE_MULTIREADS in
 			samtools sort -@ $CPU ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.bam ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.sorted && \
 			samtools index ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.sorted.bam && \
 			rm -rf ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.bam && \
-			touch .${JOBUID}.status.${STEP}.genome_mapping_Input
-		[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_Input ] && echo2 "Failed in mapping input to genome" "error"
+			touch .${JOBUID}.status.${STEP}.genome_mapping_bowtie2Input
+		[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_bowtie2Input ] && echo2 "Failed in mapping input to genome" "error"
 	fi
 	STEP=$((STEP+1))
 	;; # end of using randomly assigned mappers only
@@ -483,7 +483,7 @@ case $USE_MULTIREADS in
 	###############################
 	echo2 "Mapping Input reads to genome ${GENOME} with Bowtie"
 	if [[ -n $SE_MODE ]]; then
-		[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_Input ] && \
+		[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_bowtieInput ] && \
 		bowtie -S -v 3 \
 			-a -m 100 --best --strata \
 			-p $CPU \
@@ -566,7 +566,9 @@ else
 		bedGraphToBigWig ${PEAKS_CALLING_DIR}/${PREFIX}.logLR.bdg $CHROM $BW_OUTDIR/${PREFIX}.logLR.bigWig && \
 	touch  .${JOBUID}.status.${STEP}.peak_calling_with_macs2
 fi
+[ ! -f .${JOBUID}.status.${STEP}.peak_calling_with_macs2 ] && echo2 "macs2 failed: cannot proceed" "error"
 STEP=$((STEP+1))
+
 
 # readling the depth
 if [[ -n $SE_MODE ]]; then MACS2_f="BAM"; TN="tags"; else MACS2_f="BAMPE"; TN="fragments"; fi

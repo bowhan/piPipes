@@ -50,14 +50,14 @@ mkdir -p mrFastIndex
 
 # download function for dm6, 6.01
 function download_dm6 {
-	DM6_GENOME_FA='ftp://ftp.flybase.net/releases/FB2014_04/dmel_r6.01/fasta/dmel-all-chromosome-r6.01.fasta.gz'
-	DM6_GENE_FA='ftp://ftp.flybase.net/releases/FB2014_04/dmel_r6.01/fasta/dmel-all-gene-r6.01.fasta.gz'
-	DM6_TRANSCRIPTS_FA='ftp://ftp.flybase.net/releases/FB2014_04/dmel_r6.01/fasta/dmel-all-transcript-r6.01.fasta.gz'
+	DM6_GENOME_FA='ftp://ftp.flybase.net/releases/current/dmel_r6.02/fasta/dmel-all-chromosome-r6.02.fasta.gz'
+	DM6_GENE_FA='ftp://ftp.flybase.net/releases/current/dmel_r6.02/fasta/dmel-all-gene-r6.02.fasta.gz'
+	DM6_TRANSCRIPTS_FA='ftp://ftp.flybase.net/releases/current/dmel_r6.02/fasta/dmel-all-transcript-r6.02.fasta.gz'
 	# DM6_MIRNA_FA='ftp://ftp.flybase.net/releases/FB2014_04/dmel_r6.01/fasta/dmel-all-miRNA-r6.01.fasta.gz'
-	DM6_TRNA_FA='ftp://ftp.flybase.net/releases/FB2014_04/dmel_r6.01/fasta/dmel-all-tRNA-r6.01.fasta.gz'
-	DM6_NCRNA_FA='ftp://ftp.flybase.net/releases/FB2014_04/dmel_r6.01/fasta/dmel-all-ncRNA-r6.01.fasta.gz'
-	DM6_TRANSPOSON_FA='ftp://ftp.flybase.net/releases/FB2014_04/dmel_r6.01/fasta/dmel-all-transposon-r6.01.fasta.gz'
-	DM6_GTF='ftp://ftp.flybase.net/releases/FB2014_04/dmel_r6.01/gtf/dmel-all-r6.01.gtf.gz'
+	DM6_TRNA_FA='ftp://ftp.flybase.net/releases/current/dmel_r6.02/fasta/dmel-all-tRNA-r6.02.fasta.gz'
+	DM6_NCRNA_FA='ftp://ftp.flybase.net/releases/current/dmel_r6.02/fasta/dmel-all-ncRNA-r6.02.fasta.gz'
+	DM6_TRANSPOSON_FA='ftp://ftp.flybase.net/releases/current/dmel_r6.02/fasta/dmel-all-transposon-r6.02.fasta.gz'
+	DM6_GTF='ftp://ftp.flybase.net/releases/current/dmel_r6.02/gtf/dmel-all-r6.02.gtf.gz'
 	declare -a DOWNLOAD_=("DM6_GENOME_FA" "DM6_GENE_FA" "DM6_TRANSCRIPTS_FA" "DM6_TRNA_FA" "DM6_NCRNA_FA" "DM6_TRANSPOSON_FA" "DM6_GTF")
 	for i in "${DOWNLOAD_[@]}"; do
 		[ ! -f $i ] && wget --continue -O - ${!i} | gunzip > $i 
@@ -141,7 +141,6 @@ mkdir -p BWAIndex
 [ ! -s BWAIndex/genome.bwt ] && bwa index -p BWAIndex/genome ${GENOME}.fa
 
 # converting gtf to bed and extract the fasta
-# TODO: correct this after flybase correct the mdg4 error
 [ ! -s ${GENOME}.genes.gtf ] && grep -v mdg4 DM6_GTF > ${GENOME}.genes.gtf # ln -s DM6_GTF ${GENOME}.genes.gtf
 [ ! -s ${GENOME}.genes.bed12 ] && gtfToGenePred ${GENOME}.genes.gtf ${GENOME}.genes.gp && genePredToBed ${GENOME}.genes.gp ${GENOME}.genes.bed12
 [ ! -s ${GENOME}.genes.fa ] && bedtools_piPipes getfasta -fi ${GENOME}.fa -bed ${GENOME}.genes.bed12 -fo ${GENOME}.genes.fa -name -split -s
@@ -198,8 +197,3 @@ echo2 "Building Bowtie/BWA index for repBase + piRNA cluster + genes"
 [ ! -s Bowtie2Index/gene+cluster+repBase.sizes ] && bowtie2-build ${GENOME}.gene+cluster+repBase.fa Bowtie2Index/gene+cluster+repBase && faSize -tab -detailed ${GENOME}.gene+cluster+repBase.fa > Bowtie2Index/gene+cluster+repBase.sizes
 
 echo $GENOME >> $PIPELINE_DIRECTORY/common/genome_supported.txt
-
-
-
-
-

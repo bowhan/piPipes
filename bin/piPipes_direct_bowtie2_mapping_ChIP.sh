@@ -33,7 +33,7 @@ done
 TRANSCRIPTOME_SIZES=$BOWTIE2_INDEXES/${dDIRECTMAPPING_INDEX}.sizes
 [[ ! -f $TRANSCRIPTOME_SIZES ]] && echo2 "Cannot find size file TRANSCRIPTOME_SIZES" "error"
 
-if [[ -n "dLEFT_IP_FQ" ]]; then
+if [[ -n $dLEFT_IP_FQ ]]; then
 # paired-end mode
     echo2 "Direct mapping IP to $dDIRECTMAPPING_INDEX"
     bowtie2 \
