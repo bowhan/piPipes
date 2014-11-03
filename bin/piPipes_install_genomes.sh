@@ -184,7 +184,7 @@ if [ "$DOWNLOAD_ONLY" == "1" ] ; then \
 		mkdir -p rmsk && cd rmsk && \
 		rsync -a -P "rsync://hgdownload.cse.ucsc.edu/goldenPath/${GENOME}/database/*rmsk.txt.gz" . && \
 		zcat *gz | \
-		awk 'BEGIN{FS=OFS="\t"}{print $6, $7-1, $8, $11, $1, $10}' > ../UCSC.RepeatMask.bed && \
+		awk 'BEGIN{FS=OFS="\t"}{print $6, $7, $8, $11, $1, $10}' > ../UCSC.RepeatMask.bed && \
 		cd ..
 	echo2 "Downloading finished but installation is not. Now you can run \"install\" again to install the rest without internet."
 	exit 0;
@@ -312,7 +312,7 @@ echo2 "Building Bowtie/BWA index for repBase + piRNA cluster + genes"
 	cd rmsk && \
 	rsync -a -P rsync://hgdownload.cse.ucsc.edu/goldenPath/${GENOME}/database/*rmsk.txt.gz . && \
 	zcat *gz | \
-	awk 'BEGIN{FS=OFS="\t"}{print $6, $7-1, $8, $11, $1, $10}' > ../UCSC.RepeatMask.bed && \
+	awk 'BEGIN{FS=OFS="\t"}{print $6, $7, $8, $11, $1, $10}' > ../UCSC.RepeatMask.bed && \
 	cd ..
 
 # making gtf files for htseq-count
