@@ -17,8 +17,8 @@ piPipes_bed2_to_bedGraph:	piPipes_bed2_to_bedGraph.cpp
 piPipes_calculate_miRNA_heterogeneity:	piPipes_calculate_miRNA_heterogeneity.cpp piPipes_hairpin.hpp
 	$(CXX) $(CXXFLAGS) piPipes_calculate_miRNA_heterogeneity.cpp $(LIBS) -o $@
 
-piPipes_fastq_to_insert:	piPipes_fastq_to_insert.cpp gzstream.h 
-	$(CXX) $(CXXFLAGS) piPipes_fastq_to_insert.cpp gzstream.C -lz $(LIBS) -o $@
+piPipes_fastq_to_insert:	piPipes_fastq_to_insert.cpp
+	$(CXX) $(CXXFLAGS) piPipes_fastq_to_insert.cpp $(LIBS) -lboost_iostreams -lz -lbz2 -o $@
 
 piPipes_filter_CIGAR:	piPipes_filter_CIGAR.cpp piPipes_sam.hpp
 	$(CXX) $(CXXFLAGS) piPipes_filter_CIGAR.cpp $(LIBS) -o $@

@@ -113,7 +113,7 @@ rm -f ${dDIRECTMAPPING_DIR}/*.bedGraph && \
 paraFile=${dDIRECTMAPPING_DIR}/${RANDOM}${RANDOM}.para && \
 bgP=${dDIRECTMAPPING_DIR}/${PREFIX}.IP.${dDIRECTMAPPING_INDEX}.sorted.unique.bigWig && \
 bgM=${dDIRECTMAPPING_DIR}/${PREFIX}.input.${dDIRECTMAPPING_INDEX}.sorted.unique.bigWig && \
-awk -v bgP=${bgP} -v bgM=${bgM} -v binSize=${BINSIZE} '{print "bigWigSummary", bgP, $1, 0, $2, binSize, "| sed -e \x27s/n\\/a/0/g\x027 >", bgP"."$1; print "bigWigSummary", bgM, $1, 0, $2, binSize, "| sed -e \x27s/n\\/a/0/g\x027 >", bgM"."$1;}' ${dDIRECTMAPPING_DIR}/transposon.sizes > $paraFile && \
+awk -v bgP=${bgP} -v bgM=${bgM} -v binSize=${BINSIZE} '{print "bigWigSummary", bgP, $1, 0, $2, binSize, "| sed -e \x27s/n\\/a/0/g\x27 >", bgP"."$1; print "bigWigSummary", bgM, $1, 0, $2, binSize, "| sed -e \x27s/n\\/a/0/g\x27 >", bgM"."$1;}' ${dDIRECTMAPPING_DIR}/transposon.sizes > $paraFile && \
 ParaFly -c $paraFile -CPU $CPU && \
 paraFile=${OUTDIR}/drawFigures && \
 rm -f ${dDIRECTMAPPING_DIR}/${PREFIX}.${dDIRECTMAPPING_INDEX}.sorted.unique.bigWig.summary
