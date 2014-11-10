@@ -414,7 +414,7 @@ if [[ -n $PE_MODE ]]; then
 	paraFile=${DIRECTMAPPING_DIR}/bigWigSummary.para && \
 	bgP=${DIRECTMAPPING_DIR}/${PREFIX}.${TRANSCRIPTOME_INDEX}.sorted.unique.plus.bigWig && \
 	bgM=${DIRECTMAPPING_DIR}/${PREFIX}.${TRANSCRIPTOME_INDEX}.sorted.unique.minus.bigWig && \
-	awk -v bgP=${bgP} -v bgM=${bgM} -v binSize=${BINSIZE} '{print "bigWigSummary", bgP, $1, 0, $2, binSize, "| sed -e \x27s/n\\/a/0/g\x027 >", bgP"."$1; print "bigWigSummary", bgM, $1, 0, $2, binSize, "| sed -e \x27s/n\\/a/0/g\x027 >", bgM"."$1;}' ${DIRECTMAPPING_DIR}/transposon.sizes > $paraFile && \
+	awk -v bgP=${bgP} -v bgM=${bgM} -v binSize=${BINSIZE} '{print "bigWigSummary", bgP, $1, 0, $2, binSize, "| sed -e \x27s/n\\/a/0/g\x27 >", bgP"."$1; print "bigWigSummary", bgM, $1, 0, $2, binSize, "| sed -e \x27s/n\\/a/0/g\x27 >", bgM"."$1;}' ${DIRECTMAPPING_DIR}/transposon.sizes > $paraFile && \
 	ParaFly -c $paraFile -CPU $CPU && \
 	paraFile=${OUTDIR}/drawFigures && \
 	rm -rf ${DIRECTMAPPING_DIR}/${PREFIX}.${TRANSCRIPTOME_INDEX}.sorted.unique.bigWig.summary && \
@@ -666,7 +666,7 @@ else # Single-End
 	paraFile=${DIRECTMAPPING_DIR}/bigWigSummary.para && \
 	bgP=${DIRECTMAPPING_DIR}/${PREFIX}.${TRANSCRIPTOME_INDEX}.sorted.unique.plus.bigWig && \
 	bgM=${DIRECTMAPPING_DIR}/${PREFIX}.${TRANSCRIPTOME_INDEX}.sorted.unique.minus.bigWig && \
-	awk -v bgP=${bgP} -v bgM=${bgM} -v binSize=${BINSIZE} '{print "bigWigSummary", bgP, $1, 0, $2, binSize, "| sed -e \x27s/n\\/a/0/g\x027 >", bgP"."$1; print "bigWigSummary", bgM, $1, 0, $2, binSize, "| sed -e \x27s/n\\/a/0/g\x027 >", bgM"."$1;}' ${DIRECTMAPPING_DIR}/transposon.sizes > $paraFile && \
+	awk -v bgP=${bgP} -v bgM=${bgM} -v binSize=${BINSIZE} '{print "bigWigSummary", bgP, $1, 0, $2, binSize, "| sed -e \x27s/n\\/a/0/g\x27 >", bgP"."$1; print "bigWigSummary", bgM, $1, 0, $2, binSize, "| sed -e \x27s/n\\/a/0/g\x27 >", bgM"."$1;}' ${DIRECTMAPPING_DIR}/transposon.sizes > $paraFile && \
 	ParaFly -c $paraFile -CPU $CPU && \
 	paraFile=${OUTDIR}/drawFigures && \
 	rm -rf ${DIRECTMAPPING_DIR}/${PREFIX}.${TRANSCRIPTOME_INDEX}.sorted.unique.bigWig.summary && \
