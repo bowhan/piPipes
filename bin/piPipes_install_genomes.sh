@@ -231,12 +231,30 @@ dm3)
 ;;
 *)
 	ln -s $IGENOME_DIR_NAME/UCSC/$GENOME/Sequence/WholeGenomeFasta/genome.fa ${GENOME}.fa
-	ln -s $IGENOME_DIR_NAME/UCSC/$GENOME/Sequence/WholeGenomeFasta/genome.fa.fai ${GENOME}.fa.fai
-	ln -s $IGENOME_DIR_NAME/UCSC/$GENOME/Annotation/Genes/ChromInfo.txt ${GENOME}.ChromInfo.txt
+	
+	if [ -s $IGENOME_DIR_NAME/UCSC/$GENOME/Sequence/WholeGenomeFasta/genome.fa.fai ]; then
+		ln -s $IGENOME_DIR_NAME/UCSC/$GENOME/Sequence/WholeGenomeFasta/genome.fa.fai ${GENOME}.fa.fai
+	else
+		samtools faidx ${GENOME}.fa
+	fi
+	
+	if [ -s $IGENOME_DIR_NAME/UCSC/$GENOME/Annotation/Genes/ChromInfo.txt ]; then  
+		ln -s $IGENOME_DIR_NAME/UCSC/$GENOME/Annotation/Genes/ChromInfo.txt ${GENOME}.ChromInfo.txt
+	else
+		faSize -tab -detailed ${GENOME}.fa > ${GENOME}.ChromInfo.txt
+	fi
+	
 	ln -s $IGENOME_DIR_NAME/UCSC/$GENOME/Sequence/BowtieIndex
 	ln -s $IGENOME_DIR_NAME/UCSC/$GENOME/Sequence/Bowtie2Index
 	ln -s $IGENOME_DIR_NAME/UCSC/$GENOME/Sequence/BWAIndex
-	ln -s $IGENOME_DIR_NAME/UCSC/$GENOME/Annotation/Genes/cytoBand.txt
+	
+	if [ -s $IGENOME_DIR_NAME/UCSC/$GENOME/Annotation/Genes/cytoBand.txt ]; then
+		ln -s $IGENOME_DIR_NAME/UCSC/$GENOME/Annotation/Genes/cytoBand.txt
+	else
+		# if the cytoband is not available in the iGenome package, try to download it from UCSC
+		wget -qO- http://hgdownload.cse.ucsc.edu/goldenPath/${GENOME}/database/cytoBandIdeo.txt.gz | gunzip | awk 'BEGIN{OFS="\t"}{print $1,$2,$3,$4}' > cytoBand.txt || \
+		echo2 "cytoBand.txt file is not available for this build of this organism; this will affect the circos plot in genome-seq pipeline\nyou can try other build of the same organism by providing the URL to -l option" "warning"
+	fi
 ;;
 esac
 
@@ -260,8 +278,16 @@ echo2 "Building mrFast index for genome"
 
 # rRNA index
 echo2 "Building Bowtie/Bowtie2 index for rRNA"
-[ ! -f rRNA.fa ] && ln -s $IGENOME_DIR_NAME/UCSC/$GENOME/Sequence/AbundantSequences/*ibosomal.fa rRNA.fa 2>/dev/null
-[ ! -s BowtieIndex/rRNA.sizes ] && bowtie-build rRNA.fa BowtieIndex/rRNA && faSize -tab -detailed rRNA.fa > BowtieIndex/rRNA.sizes
+if [ ! -f rRNA.fa ]; then
+	if [ -s $IGENOME_DIR_NAME/UCSC/$GENOME/Sequence/AbundantSequences/*ibosomal.fa ]; then
+		ln -s $IGENOME_DIR_NAME/UCSC/$GENOME/Sequence/AbundantSequences/*ibosomal.fa rRNA.fa
+	else
+		echo2 "the rRNA sequence does not exist in the iGenome package, please provide the rRNA sequence manually in Fasta format in file $PWD/rRNA.fa" "warning"
+		echo2 "For now, piPipes will create a dummy fasta file to make pipeline run" "warning"
+		echo -e ">dummy_rRNA\nAAAAAAAAAA" > rRNA.fa
+	fi
+fi
+[ ! -s BowtieIndex/rRNA.sizes ]  && bowtie-build  rRNA.fa BowtieIndex/rRNA  && faSize -tab -detailed rRNA.fa > BowtieIndex/rRNA.sizes
 [ ! -s Bowtie2Index/rRNA.sizes ] && bowtie2-build rRNA.fa Bowtie2Index/rRNA && faSize -tab -detailed rRNA.fa > Bowtie2Index/rRNA.sizes
 
 # microRNA and hairpin index
@@ -272,8 +298,8 @@ if [ ! -s ${GENOME}.hairpin.fa ]; then
 fi
 [ ! -s ${GENOME}.mature.fa ] &&  awk '{if ($1~/^>/) print $1; else {gsub ("U","T", $0); print}}' $IGENOME_DIR_NAME/UCSC/$GENOME/Annotation/SmallRNA/mature.fa > ${GENOME}.mature.fa
 [ ! -s BowtieIndex/hairpin.sizes ] && bowtie-build ${GENOME}.hairpin.fa BowtieIndex/hairpin && faSize -tab -detailed ${GENOME}.hairpin.fa > BowtieIndex/hairpin.sizes
-[ ! -s mature2hairpin.uniq.bed ]  && bowtie -S -f -v 0 -m 1 --best --strata --max ${GENOME}.mature.multiMapper.fa BowtieIndex/hairpin ${GENOME}.mature.fa 1> /dev/stdout 2> /dev/null | samtools view -uS - | bedtools_piPipes bamtobed -i - | awk '$6=="+"' > mature2hairpin.uniq.bed
-[ ! -s mature2hairpin.multi.bed ] && bowtie -S -f -v 0 -a   --best --strata BowtieIndex/hairpin ${GENOME}.mature.multiMapper.fa 1> /dev/stdout 2> /dev/null | samtools view -uS - | bedtools_piPipes bamtobed -i - | awk '$6=="+"' > mature2hairpin.multi.bed
+[ ! -s mature2hairpin.uniq.bed ]   && bowtie -S -f -v 0 -m 1 --best --strata --max ${GENOME}.mature.multiMapper.fa BowtieIndex/hairpin ${GENOME}.mature.fa 1> /dev/stdout 2> /dev/null | samtools view -uS - | bedtools_piPipes bamtobed -i - | awk '$6=="+"' > mature2hairpin.uniq.bed
+[ ! -s mature2hairpin.multi.bed ]  && bowtie -S -f -v 0 -a   --best --strata BowtieIndex/hairpin ${GENOME}.mature.multiMapper.fa 1> /dev/stdout 2> /dev/null | samtools view -uS - | bedtools_piPipes bamtobed -i - | awk '$6=="+"' > mature2hairpin.multi.bed
 [ ! -s mature2hairpin.allMapper.bed ] && cat mature2hairpin.uniq.bed mature2hairpin.multi.bed > mature2hairpin.allMapper.bed
 
 # repBase | transposon indexes # the pipiline should include the repBase.fa
