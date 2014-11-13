@@ -230,7 +230,18 @@ dm3)
 
 ;;
 *)
-	ln -s $IGENOME_DIR_NAME/UCSC/$GENOME/Sequence/WholeGenomeFasta/genome.fa ${GENOME}.fa
+	if [ -s $IGENOME_DIR_NAME/UCSC/$GENOME/Sequence/WholeGenomeFasta/genome.fa ]; then
+		ln -s $IGENOME_DIR_NAME/UCSC/$GENOME/Sequence/WholeGenomeFasta/genome.fa ${GENOME}.fa
+	else
+		# if genome.fa does not exist... try to create it from the Bowtie2 index
+		Bowtie2IndexPrefix=`find $IGENOME_DIR_NAME/UCSC/$GENOME/ -name "genome.1.bt2" | head -1`
+		if [[ ! -z $Bowtie2IndexPrefix ]]; then
+			Bowtie2IndexPrefix=${Bowtie2IndexPrefix%.1.bt2}
+			bowtie2-inspect $Bowtie2IndexPrefix > ${GENOME}.fa
+		else
+			echo2 "unable to find or generate fasta for the genome. Please create it manually and name it $PWD/${GENOME}.fa" "error"
+		fi
+	fi
 	
 	if [ -s $IGENOME_DIR_NAME/UCSC/$GENOME/Sequence/WholeGenomeFasta/genome.fa.fai ]; then
 		ln -s $IGENOME_DIR_NAME/UCSC/$GENOME/Sequence/WholeGenomeFasta/genome.fa.fai ${GENOME}.fa.fai
@@ -292,11 +303,18 @@ fi
 
 # microRNA and hairpin index
 echo2 "Building index for microRNA hairpin"
+
 if [ ! -s ${GENOME}.hairpin.fa ]; then
 	[ -f $IGENOME_DIR_NAME/UCSC/$GENOME/Annotation/SmallRNA/hairpin.fa ] && awk '{if ($1~/^>/) print $1; else {gsub ("U","T", $0); print}}' $IGENOME_DIR_NAME/UCSC/$GENOME/Annotation/SmallRNA/hairpin.fa > ${GENOME}.hairpin.fa
 	[ -f $IGENOME_DIR_NAME/UCSC/$GENOME/Annotation/SmallRNA/precursor.fa ] && awk '{if ($1~/^>/) print $1; else {gsub ("U","T", $0); print}}' $IGENOME_DIR_NAME/UCSC/$GENOME/Annotation/SmallRNA/precursor.fa > ${GENOME}.hairpin.fa
+	[ ! -s ${GENOME}.hairpin.fa ] && awk '{if ($1~/^>/) print $1; else {gsub ("U","T", $0); print}}' `find $IGENOME_DIR_NAME/UCSC/ -name "hairpin.fa" | head -1` > ${GENOME}.hairpin.fa
 fi
-[ ! -s ${GENOME}.mature.fa ] &&  awk '{if ($1~/^>/) print $1; else {gsub ("U","T", $0); print}}' $IGENOME_DIR_NAME/UCSC/$GENOME/Annotation/SmallRNA/mature.fa > ${GENOME}.mature.fa
+
+if [ ! -s ${GENOME}.mature.fa ]; then
+	[ -f $IGENOME_DIR_NAME/UCSC/$GENOME/Annotation/SmallRNA/mature.fa ] && awk '{if ($1~/^>/) print $1; else {gsub ("U","T", $0); print}}' $IGENOME_DIR_NAME/UCSC/$GENOME/Annotation/SmallRNA/mature.fa > ${GENOME}.mature.fa
+	[ ! -s ${GENOME}.mature.fa ] && awk '{if ($1~/^>/) print $1; else {gsub ("U","T", $0); print}}' `find $IGENOME_DIR_NAME/UCSC/ -name "mature.fa" | head -1` > ${GENOME}.mature.fa
+fi
+
 [ ! -s BowtieIndex/hairpin.sizes ] && bowtie-build ${GENOME}.hairpin.fa BowtieIndex/hairpin && faSize -tab -detailed ${GENOME}.hairpin.fa > BowtieIndex/hairpin.sizes
 [ ! -s mature2hairpin.uniq.bed ]   && bowtie -S -f -v 0 -m 1 --best --strata --max ${GENOME}.mature.multiMapper.fa BowtieIndex/hairpin ${GENOME}.mature.fa 1> /dev/stdout 2> /dev/null | samtools view -uS - | bedtools_piPipes bamtobed -i - | awk '$6=="+"' > mature2hairpin.uniq.bed
 [ ! -s mature2hairpin.multi.bed ]  && bowtie -S -f -v 0 -a   --best --strata BowtieIndex/hairpin ${GENOME}.mature.multiMapper.fa 1> /dev/stdout 2> /dev/null | samtools view -uS - | bedtools_piPipes bamtobed -i - | awk '$6=="+"' > mature2hairpin.multi.bed
@@ -311,7 +329,13 @@ echo2 "Building Bowtie/BWA index for repBase transposon annotation"
 
 # piRNA cluster indexes
 echo2 "Building Bowtie/BWA index for piRNA cluster"
-[ ! -s ${GENOME}.piRNAcluster.bed.gz ] && echo2 "Missing ${GENOME}.piRNAcluster.bed.gz, you are using a genome that is not optimized, some functions of the pipeline won't work." "warning"
+if [ ! -s ${GENOME}.piRNAcluster.bed.gz ]; then
+	echo2 "Missing ${GENOME}.piRNAcluster.bed.gz, you are using a genome that is not optimized. Creating a dummpy ${GENOME}.piRNAcluster.bed.gz to keep pipeline running. Please update ${GENOME}.piRNAcluster.bed.gz with your piRNA cluster annotation!" "warning"
+	head -1 ${GENOME}.fa | tr -d '>' | awk '{printf "%s\t", $1}' > ${GENOME}.piRNAcluster.bed && \
+	echo -e "0\t1\tdummpy\t255\t+" >> ${GENOME}.piRNAcluster.bed && \
+	gzip ${GENOME}.piRNAcluster.bed
+fi
+
 [ ! -s ${GENOME}.piRNAcluster.fa ] && bedtools_piPipes getfasta -fi ${GENOME}.fa -bed ${GENOME}.piRNAcluster.bed.gz -fo ${GENOME}.piRNAcluster.fa -name -split -s
 [ ! -s BowtieIndex/piRNAcluster.sizes ] && bowtie-build ${GENOME}.piRNAcluster.fa BowtieIndex/piRNAcluster && faSize -tab -detailed ${GENOME}.piRNAcluster.fa > BowtieIndex/piRNAcluster.sizes
 
