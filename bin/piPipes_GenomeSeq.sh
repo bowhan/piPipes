@@ -220,12 +220,21 @@ esac
 #################################
 # Align reads to genome: 2. BWA #
 #################################
+# check index
+if [[ -f $BWA_INDEXES/genome.fa.sa ]]; then
+	BWA_GENOME_INDEX=$BWA_INDEXES/genome.fa
+elif [[ -f $BWA_INDEXES/genome.sa ]]; then
+	BWA_GENOME_INDEX=$BWA_INDEXES/genome
+else
+	echo2 "Cannot file BWA index for the genome, please check $BWA_INDEXES" "error"
+fi
+
 echo2 "Mapping to genome ${GENOME} with BWA-MEM and calling varation by bcftools"
 [ ! -f .${JOBUID}.status.${STEP}.genome_mapping_bwa_MEM ] && \
 	bwa mem \
 		-t $CPU \
 		-c 1000000 \
-		$BWA_INDEXES/genome \
+		$BWA_GENOME_INDEX \
 		$LEFT_FASTQ \
 		$RIGHT_FASTQ \
 		2> $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.${GENOME}.bwa-mem.log | \

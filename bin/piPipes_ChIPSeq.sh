@@ -153,6 +153,7 @@ if [[ -n $SE_MODE ]]; then
 fi
 
 [[ -z $GENOME ]] && usage && echo2 "Missing option -g for specifying which genome assembly to use" "error"
+[ ! -z $OUTDIR ] || OUTDIR=$PWD # if -o is not specified, use current directory
 [ "$OUTDIR" != `readlink -f $PWD` ] && (mkdir -p "${OUTDIR}" || echo2 "Cannot create directory ${OUTDIR}" "warning")
 
 # check whether the this genome is supported or not
@@ -254,11 +255,13 @@ echo2 "Beginning running [${PACKAGE_NAME}] ChIP-Seq pipeline version $CHIPSEQ_VE
 echo2 "Determining the version of fastQ using SolexaQA"
 # determine version of fastq used, using a modified SolexaQA.pl
 if [[ -n $SE_MODE ]]; then
+	if [[ $IP_FASTQ == *.gz ]] ; then RD_CMD=zcat ; else RD_CMD=cat; fi
 	PHRED_SCORE=`perl $PIPELINE_DIRECTORY/bin/SolexaQA_piPipes.pl $IP_FASTQ`
-	READ_LEN=`head -2 $IP_FASTQ | tail -1 | awk '{print length($1)}'`
+	READ_LEN=`$RD_CMD $IP_FASTQ | head -2 | tail -1 | awk '{print length($1)}'`
 else
+	if [[ $LEFT_IP_FASTQ == *.gz ]] ; then RD_CMD=zcat ; else RD_CMD=cat; fi
 	PHRED_SCORE=`perl $PIPELINE_DIRECTORY/bin/SolexaQA_piPipes.pl ${LEFT_IP_FASTQ}`
-	READ_LEN=`head -2 $LEFT_IP_FASTQ | tail -1 | awk '{print length($1)}'`
+	READ_LEN=`$RD_CMD $LEFT_IP_FASTQ | head -2 | tail -1 | awk '{print length($1)}'`
 fi
 echo $READ_LEN > .READ_LEN
 case ${PHRED_SCORE} in
