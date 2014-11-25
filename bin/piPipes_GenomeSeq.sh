@@ -256,7 +256,7 @@ echo2 "Mapping to genome ${GENOME} with BWA ALN"
 [ ! -f .${JOBUID}.status.${STEP}.genome_mapping_bwa_aln ] && \
 	bwa aln -t $CPU -n $((READ_LEN/20)) -l 255 -R 10000 $BWA_GENOME_INDEX $LEFT_FASTQ  -f $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.1_sequence.sai && \
 	bwa aln -t $CPU -n $((READ_LEN/20)) -l 255 -R 10000 $BWA_GENOME_INDEX $RIGHT_FASTQ -f $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.2_sequence.sai && \
-	bwa sampe -P $BWA_INDEXES/genome $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.1_sequence.sai $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.2_sequence.sai $LEFT_FASTQ $RIGHT_FASTQ | \
+	bwa sampe -P $BWA_GENOME_INDEX $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.1_sequence.sai $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.2_sequence.sai $LEFT_FASTQ $RIGHT_FASTQ | \
 	samtools view -bS - > $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.bwa-aln.bam && \
 	samtools sort -@ $CPU $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.bwa-aln.bam  $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.bwa-aln.sorted && \
 	samtools index $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.bwa-aln.sorted.bam && \
