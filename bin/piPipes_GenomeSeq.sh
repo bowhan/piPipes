@@ -254,9 +254,9 @@ STEP=$((STEP+1))
 
 echo2 "Mapping to genome ${GENOME} with BWA ALN"
 [ ! -f .${JOBUID}.status.${STEP}.genome_mapping_bwa_aln ] && \
-	bwa aln -t $CPU -n $((READ_LEN/20)) -l 255 -R 10000 $BWA_INDEXES/genome $LEFT_FASTQ  -f $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.1_sequence.sai && \
-	bwa aln -t $CPU -n $((READ_LEN/20)) -l 255 -R 10000 $BWA_INDEXES/genome $RIGHT_FASTQ -f $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.2_sequence.sai && \
-	bwa sampe -P $BWA_INDEXES/genome $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.1_sequence.sai $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.2_sequence.sai $LEFT_FASTQ $RIGHT_FASTQ | \
+	bwa aln -t $CPU -n $((READ_LEN/20)) -l 255 -R 10000 $BWA_GENOME_INDEX $LEFT_FASTQ  -f $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.1_sequence.sai && \
+	bwa aln -t $CPU -n $((READ_LEN/20)) -l 255 -R 10000 $BWA_GENOME_INDEX $RIGHT_FASTQ -f $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.2_sequence.sai && \
+	bwa sampe -P $BWA_GENOME_INDEX $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.1_sequence.sai $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.2_sequence.sai $LEFT_FASTQ $RIGHT_FASTQ | \
 	samtools view -bS - > $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.bwa-aln.bam && \
 	samtools sort -@ $CPU $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.bwa-aln.bam  $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.bwa-aln.sorted && \
 	samtools index $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.bwa-aln.sorted.bam && \
@@ -377,22 +377,22 @@ if [[ ! -z $USE_MRFAST ]]; then
 		touch .${JOBUID}.status.${STEP}.genome_mapping_mrFast
 	STEP=$((STEP+1))
 
-	########################################
-	# Variation calling by VariationHunter #
-	########################################
-	echo2 "Calling variation by VariationHunter"
-	[ ! -f .${JOBUID}.status.${STEP}.VariationHunter ] && \
-		if [ -f .${JOBUID}.status.${STEP}.genome_mapping_mrFast ]; 
-		then
-			echo 1 > $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.sample.lib && \
-			echo -e "${PREFIX}\t${PREFIX}\t${mrFast_min}\t${mrFast_max}\t${READ_LEN}" > $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.sample.lib && \
-			VH -c $CHROM -i $PIPELINE_DIRECTORY/bin/VH_initInfo -l $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.sample.lib -r $COMMON_FOLDER/UCSC.RepeatMask.Satellite.bed -g $COMMON_FOLDER/${GENOME}.gap.bed -o $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.VHcluster.out -t $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.VHcluster.sample.name -x 500 -p 0.001 1>&2 && \
-			multiInd_SetCover -l $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.sample.lib -r $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.VHcluster.sample.name -c $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.VHcluster.out -t 1000000 -o $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.VHcluster.sample.Out.SV 1>&2 && \
-			touch .${JOBUID}.status.${STEP}.VariationHunter
-		else
-			echo2 "Mapping by mrFast failed. VariationHunter cannot run" "warning"
-		fi
-	STEP=$((STEP+1))
+########################################
+# Variation calling by VariationHunter #
+########################################
+echo2 "Calling variation by VariationHunter"
+[ ! -f .${JOBUID}.status.${STEP}.VariationHunter ] && \
+	if [ -f .${JOBUID}.status.${STEP}.genome_mapping_mrFast ]; 
+	then
+		echo 1 > $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.sample.lib && \
+		echo -e "${PREFIX}\t${PREFIX}\t${mrFast_min}\t${mrFast_max}\t${READ_LEN}" > $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.sample.lib && \
+		VH -c $CHROM -i $PIPELINE_DIRECTORY/bin/VH_initInfo -l $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.sample.lib -r $COMMON_FOLDER/UCSC.RepeatMask.Satellite.bed -g $COMMON_FOLDER/${GENOME}.gap.bed -o $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.VHcluster.out -t $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.VHcluster.sample.name -x 500 -p 0.001 1>&2 && \
+		multiInd_SetCover -l $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.sample.lib -r $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.VHcluster.sample.name -c $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.VHcluster.out -t 1000000 -o $MRFAST_GENOMIC_MAPPING_DIR/${PREFIX}.VHcluster.sample.Out.SV 1>&2 && \
+		touch .${JOBUID}.status.${STEP}.VariationHunter
+	else
+		echo2 "Mapping by mrFast failed. VariationHunter cannot run" "warning"
+	fi
+STEP=$((STEP+1))
 fi
 
 #############

@@ -133,6 +133,7 @@ PEAKS_CALLING_DIR_B=macs2_peaks_calling_no_normalization_${SAMPLE_B_NAME} && mkd
 BDGDIFF_DIR=differential_peaks_calling && mkdir -p $BDGDIFF_DIR
 # BW_OUTDIR=bigWig && mkdir -p $BW_OUTDIR
 AGG_DIR=aggregate_output && mkdir -p $AGG_DIR
+DIRECT_MAPPING=direct_mapping && mkdir -p $DIRECT_MAPPING
 
 #############
 # Variables #
@@ -234,3 +235,19 @@ echo2 "Aggregating signal on each genomic features"
 	`ls $BDGDIFF_DIR/*cond2.bed`  && \
 	touch .${JOBUID}.status.${STEP}.aggregate_beds
 STEP=$((STEP+1))
+
+##############################
+# draw direct mapping figure #
+##############################
+DIRECT_BS_A=$SAMPLE_A_DIR/direct_mapping/*sorted.unique.bigWig.summary
+DIRECT_BS_B=$SAMPLE_B_DIR/direct_mapping/*sorted.unique.bigWig.summary
+DEPTH_A=`cat $SAMPLE_A_DIR/.NormScale`
+DEPTH_B=`cat $SAMPLE_B_DIR/.NormScale`
+[ ! -f .${JOBUID}.status.${STEP}.draw_bigWig_summary ] && \
+	paste $DIRECT_BS_A $DIRECT_BS_B | cut -f1,2,3,4,7,8 > $DIRECT_MAPPING/${SAMPLE_A_NAME}_${SAMPLE_B_NAME}.direct_mapping.sum && \
+	Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_summaryN.R $DIRECT_MAPPING/${SAMPLE_A_NAME}_${SAMPLE_B_NAME}.direct_mapping.sum $DIRECT_MAPPING/${SAMPLE_A_NAME}_${SAMPLE_B_NAME}.direct_mapping.sum $CPU ${DEPTH_A},${DEPTH_A},${DEPTH_B},${DEPTH_B} ${SAMPLE_A_NAME} ${SAMPLE_B_NAME} 1>&2 && \
+	PDFs=$DIRECT_MAPPING/*pdf && \
+	gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=$PDF_DIR/${SAMPLE_A_NAME}_${SAMPLE_B_NAME}.direct_mapping.unique.pdf ${PDFs} && \
+	rm -rf ${PDFs} && \
+touch .${JOBUID}.status.${STEP}.draw_bigWig_summary
+
