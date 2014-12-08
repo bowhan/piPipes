@@ -806,25 +806,40 @@ STEP=$((STEP+1))
 # Joining Pdfs #
 ################
 echo2 "Merging pdfs"
-[ ! -f .${JOBUID}.status.${STEP}.merge_pdfs ] && \
-	gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=$PDF_DIR/${PREFIX}.${PACKAGE_NAME}.small_RNA_pipeline.${SMALLRNA_VERSION}.pdf \
-		$PDF_DIR/${PREFIX}.pie.pdf \
-		$PDF_DIR/${PREFIX}.siRNA.pie.pdf \
-		$PDF_DIR/${PREFIX}.piRNA.pie.pdf \
-		$PDF_DIR/`basename ${GENOME_UNIQUEMAP_BED2}`.+hairpin.lendis.pdf \
-		$PDF_DIR/`basename ${GENOME_ALLMAP_BED2}`.+hairpin.lendis.pdf \
-		$PDF_DIR/`basename ${GENOME_UNIQUEMAP_BED2}`.x_hairpin.lendis.pdf \
-		$PDF_DIR/`basename ${GENOME_ALLMAP_BED2}`.x_hairpin.lendis.pdf  \
-		$PDF_DIR/${PREFIX}.features.pdf  && \
-	rm -rf $PDF_DIR/`basename ${GENOME_UNIQUEMAP_BED2}`.+hairpin.lendis.pdf \
-		$PDF_DIR/`basename ${GENOME_ALLMAP_BED2}`.+hairpin.lendis.pdf \
-		$PDF_DIR/`basename ${GENOME_UNIQUEMAP_BED2}`.x_hairpin.lendis.pdf \
-		$PDF_DIR/`basename ${GENOME_ALLMAP_BED2}`.x_hairpin.lendis.pdf  \
-		$PDF_DIR/${PREFIX}.pie.pdf \
-		$PDF_DIR/${PREFIX}.siRNA.pie.pdf \
-		$PDF_DIR/${PREFIX}.piRNA.pie.pdf \
-		$PDF_DIR/${PREFIX}.features.pdf && \
-	touch .${JOBUID}.status.${STEP}.merge_pdfs
+if [ -f $PDF_DIR/${PREFIX}.features.pdf ]
+then
+	[ ! -f .${JOBUID}.status.${STEP}.merge_pdfs ] && \
+		gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=$PDF_DIR/${PREFIX}.${PACKAGE_NAME}.small_RNA_pipeline.${SMALLRNA_VERSION}.pdf \
+			$PDF_DIR/${PREFIX}.pie.pdf \
+			$PDF_DIR/${PREFIX}.siRNA.pie.pdf \
+			$PDF_DIR/${PREFIX}.piRNA.pie.pdf \
+			$PDF_DIR/`basename ${GENOME_UNIQUEMAP_BED2}`.+hairpin.lendis.pdf \
+			$PDF_DIR/`basename ${GENOME_ALLMAP_BED2}`.+hairpin.lendis.pdf \
+			$PDF_DIR/`basename ${GENOME_UNIQUEMAP_BED2}`.x_hairpin.lendis.pdf \
+			$PDF_DIR/`basename ${GENOME_ALLMAP_BED2}`.x_hairpin.lendis.pdf  \
+			$PDF_DIR/${PREFIX}.features.pdf  && \
+		rm -rf $PDF_DIR/`basename ${GENOME_UNIQUEMAP_BED2}`.+hairpin.lendis.pdf \
+			$PDF_DIR/`basename ${GENOME_ALLMAP_BED2}`.+hairpin.lendis.pdf \
+			$PDF_DIR/`basename ${GENOME_UNIQUEMAP_BED2}`.x_hairpin.lendis.pdf \
+			$PDF_DIR/`basename ${GENOME_ALLMAP_BED2}`.x_hairpin.lendis.pdf  \
+			$PDF_DIR/${PREFIX}.pie.pdf \
+			$PDF_DIR/${PREFIX}.siRNA.pie.pdf \
+			$PDF_DIR/${PREFIX}.piRNA.pie.pdf \
+			$PDF_DIR/${PREFIX}.features.pdf && \
+		touch .${JOBUID}.status.${STEP}.merge_pdfs
+else
+	[ ! -f .${JOBUID}.status.${STEP}.merge_pdfs ] && \
+		gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=$PDF_DIR/${PREFIX}.${PACKAGE_NAME}.small_RNA_pipeline.${SMALLRNA_VERSION}.pdf \
+			$PDF_DIR/`basename ${GENOME_UNIQUEMAP_BED2}`.+hairpin.lendis.pdf \
+			$PDF_DIR/`basename ${GENOME_ALLMAP_BED2}`.+hairpin.lendis.pdf \
+			$PDF_DIR/`basename ${GENOME_UNIQUEMAP_BED2}`.x_hairpin.lendis.pdf \
+			$PDF_DIR/`basename ${GENOME_ALLMAP_BED2}`.x_hairpin.lendis.pdf  && \
+		rm -rf $PDF_DIR/`basename ${GENOME_UNIQUEMAP_BED2}`.+hairpin.lendis.pdf \
+			$PDF_DIR/`basename ${GENOME_ALLMAP_BED2}`.+hairpin.lendis.pdf \
+			$PDF_DIR/`basename ${GENOME_UNIQUEMAP_BED2}`.x_hairpin.lendis.pdf \
+			$PDF_DIR/`basename ${GENOME_ALLMAP_BED2}`.x_hairpin.lendis.pdf  && \
+		touch .${JOBUID}.status.${STEP}.merge_pdfs
+fi
 STEP=$((STEP+1))
 
 #############
@@ -834,7 +849,6 @@ if [[ "$CLEAN" == 1 ]]; then
 	rm -f $GENOMIC_MAPPING_DIR/*bed2
 	rm -f $TRN_OUTDIR/*bed2
 fi
-
 echo2 "Finished running ${PACKAGE_NAME} small RNA pipeline version $SMALLRNA_VERSION"
 echo2 "---------------------------------------------------------------------------------"
 touch .${GENOME}.SMALLRNA_VERSION.${SMALLRNA_VERSION}

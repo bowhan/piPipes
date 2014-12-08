@@ -57,6 +57,8 @@ print_header $piRNA_SUM
 para_file=$INTERSECT_OUTDIR/${SEED}.intersect.para
 for t in ${TARGETS[@]}
 do \
+	[   -z ${!t} ] && echo2 "variable ${t} was not defined, please exam your $COMMON_FOLDER/genomic_features file" "error"
+	[ ! -f ${!t} ] && echo2 "${!t} cannot be found for ${t}, please exam your $COMMON_FOLDER/genomic_features file" "error"
 	echo "bash $DEBUG piPipes_smallRNA_intersect.sh $INTERSECT_OUTDIR/${ALL_BED}  ${t} ${!t} $INTERSECT_OUTDIR/.stats" >> $para_file
 done
 ParaFly -c $para_file -CPU $CPU -failed_cmds ${para_file}.failedCommands 1>&2 && \
