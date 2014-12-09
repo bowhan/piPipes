@@ -19,7 +19,7 @@
 ##########
 # Config #
 ##########
-export CHIPSEQ_VERSION=1.2.0
+export CHIPSEQ_VERSION=1.2.1
 
 #########
 # USAGE #
@@ -110,16 +110,16 @@ while getopts "hf:l:r:L:R:c:o:g:Bvx:i:I:M:umeD" OPTION; do
 	case $OPTION in
 		h)	usage && exit 0 ;;
 		v)	echo2 "CHIPSEQ_VERSION: v$CHIPSEQ_VERSION" && exit 0 ;;
-		l)	LEFT_IP_FASTQ=`readlink -f $OPTARG`; PE_MODE=1 ;;
-		r)	RIGHT_IP_FASTQ=`readlink -f $OPTARG`; PE_MODE=1 ;;
-		L)	LEFT_INPUT_FASTQ=`readlink -f $OPTARG`; PE_MODE=1 ;;
-		R)	RIGHT_INPUT_FASTQ=`readlink -f $OPTARG`; PE_MODE=1 ;;
-		i)	IP_FASTQ=`readlink -f $OPTARG`; SE_MODE=1 ;;
-		I)	INPUT_FASTQ=`readlink -f $OPTARG`; SE_MODE=1 ;;
-		o)	OUTDIR=`readlink -f $OPTARG` ;;
+		l)	LEFT_IP_FASTQ=`readlink -f ${OPTARG}`; PE_MODE=1 ;;
+		r)	RIGHT_IP_FASTQ=`readlink -f ${OPTARG}`; PE_MODE=1 ;;
+		L)	LEFT_INPUT_FASTQ=`readlink -f ${OPTARG}`; PE_MODE=1 ;;
+		R)	RIGHT_INPUT_FASTQ=`readlink -f ${OPTARG}`; PE_MODE=1 ;;
+		i)	IP_FASTQ=`readlink -f ${OPTARG}`; SE_MODE=1 ;;
+		I)	INPUT_FASTQ=`readlink -f ${OPTARG}`; SE_MODE=1 ;;
+		o)	OUTDIR=`readlink -f ${OPTARG}` ;;
 		f)	SE_TLEN=$OPTARG ;;
 		M)	export USER_DEFINED_BED_FILES=$OPTARG ;;
-		c)	export CPU=$OPTARG ;;
+		c)	export CPU=${OPTARG} ;;
 		g)	export GENOME=${OPTARG};;
 		B)	export MACS2_BROAD_OPT="--broad" ;;
 		u)  export USE_MULTIREADS=$((USE_MULTIREADS+1));; # USE_MULTIREADS==1
@@ -135,26 +135,24 @@ if [[ -z $PE_MODE && -z $SE_MODE ]]; then usage ; echo2 "Please specify the inpu
 if [[ -n $PE_MODE && -n $SE_MODE ]]; then usage ; echo2 "Please only choose single-end OR paired-end, but not both" "error"; fi
 
 if [[ -n $PE_MODE ]]; then
-	[[ -z $LEFT_IP_FASTQ ]] && usage && echo2 "Missing option -l for IP fastq of left file, or file does not exist " "error"
-	[[ -z $RIGHT_IP_FASTQ ]] && usage && echo2 "Missing option -r for IP fastq of right file, or file does not exist " "error"
-	[[ -z $LEFT_INPUT_FASTQ ]] && usage && echo2 "Missing option -L for INPUT fastq of left file, or file does not exist " "error"
-	[[ -z $RIGHT_INPUT_FASTQ ]] && usage && echo2 "Missing option -R for INPUT fastq of right file, or file does not exist " "error"
-	[[ ! -f $LEFT_IP_FASTQ ]] && usage && echo2 "Missing option -l for IP fastq of left file, or file does not exist " "error"
-	[[ ! -f $RIGHT_IP_FASTQ ]] && usage && echo2 "Missing option -r for IP fastq of right file, or file does not exist " "error"
-	[[ ! -f $LEFT_INPUT_FASTQ ]] && usage && echo2 "Missing option -L for INPUT fastq of left file, or file does not exist " "error"
-	[[ ! -f $RIGHT_INPUT_FASTQ ]] && usage && echo2 "Missing option -R for INPUT fastq of right file, or file does not exist " "error"
+	[[ -z "${LEFT_IP_FASTQ}" ]] && usage && echo2 "Missing option -l for IP fastq of left file, or file does not exist " "error"
+	[[ -z "${RIGHT_IP_FASTQ}" ]] && usage && echo2 "Missing option -r for IP fastq of right file, or file does not exist " "error"
+	[[ -z "${LEFT_INPUT_FASTQ}" ]] && usage && echo2 "Missing option -L for INPUT fastq of left file, or file does not exist " "error"
+	[[ -z "${RIGHT_INPUT_FASTQ}" ]] && usage && echo2 "Missing option -R for INPUT fastq of right file, or file does not exist " "error"
+	[[ ! -f "${LEFT_IP_FASTQ}" ]] && usage && echo2 "Missing option -l for IP fastq of left file, or file does not exist " "error"
+	[[ ! -f "${RIGHT_IP_FASTQ}" ]] && usage && echo2 "Missing option -r for IP fastq of right file, or file does not exist " "error"
+	[[ ! -f "${LEFT_INPUT_FASTQ}" ]] && usage && echo2 "Missing option -L for INPUT fastq of left file, or file does not exist " "error"
+	[[ ! -f "${RIGHT_INPUT_FASTQ}" ]] && usage && echo2 "Missing option -R for INPUT fastq of right file, or file does not exist " "error"
 fi
 
 if [[ -n $SE_MODE ]]; then
-	[[ -z $IP_FASTQ ]] && usage && echo2 "Missing option -i for IP fastq, or file does not exist " "error"
-	[[ -z $INPUT_FASTQ ]] && usage && echo2 "Missing option -I for IP fastq, or file does not exist " "error"
-	[[ ! -f $IP_FASTQ ]] && usage && echo2 "Missing option -i for IP fastq, or file does not exist " "error"
-	[[ ! -f $INPUT_FASTQ ]] && usage && echo2 "Missing option -I for IP fastq, or file does not exist " "error"
+	[[ -z "${IP_FASTQ}" ]] && usage && echo2 "Missing option -i for IP fastq, or file does not exist " "error"
+	[[ -z "${INPUT_FASTQ}" ]] && usage && echo2 "Missing option -I for IP fastq, or file does not exist " "error"
+	[[ ! -f "${IP_FASTQ}" ]] && usage && echo2 "Missing option -i for IP fastq, or file does not exist " "error"
+	[[ ! -f "${INPUT_FASTQ}" ]] && usage && echo2 "Missing option -I for IP fastq, or file does not exist " "error"
 fi
 
 [[ -z $GENOME ]] && usage && echo2 "Missing option -g for specifying which genome assembly to use" "error"
-[ ! -z $OUTDIR ] || OUTDIR=$PWD # if -o is not specified, use current directory
-[ "$OUTDIR" != `readlink -f $PWD` ] && (mkdir -p "${OUTDIR}" || echo2 "Cannot create directory ${OUTDIR}" "warning")
 
 # check whether the this genome is supported or not
 check_genome $GENOME
@@ -173,7 +171,8 @@ case $USE_MULTIREADS in
 	*) echo2 "USE_MULTIREADS: $USE_MULTIREADS" "error";;
 esac
 [ ! -z "${EXT_LEN##*[!0-9]*}" ] || EXT_LEN=1000; export EXT_LEN
-[ ! -z $OUTDIR ] || OUTDIR=$PWD # if -o is not specified, use current directory
+[ ! -z "${OUTDIR}" ] || OUTDIR=$PWD # if -o is not specified, use current directory
+[ "$OUTDIR" != `readlink -f $PWD` ] && (mkdir -p "${OUTDIR}" || echo2 "Cannot create directory ${OUTDIR}" "warning")
 cd ${OUTDIR} || (echo2 "Cannot access directory ${OUTDIR}... Exiting..." "error")
 touch .writting_permission && rm -rf .writting_permission || (echo2 "Cannot write in directory ${OUTDIR}... Exiting..." "error")
 
@@ -213,14 +212,14 @@ checkBin "macs2"
 STEP=1
 if [[ -n $SE_MODE ]]; then
 	JOBUID=`echo $IP_FASTQ | md5sum | cut -d" " -f1`
-	IP_FASTQ_NAME=`basename $IP_FASTQ`
-	INPUT_FASTQ_NAME=`basename $INPUT_FASTQ`
+	IP_FASTQ_NAME=`basename "${IP_FASTQ}"`
+	INPUT_FASTQ_NAME=`basename "${INPUT_FASTQ}"`
 	export PREFIX=`echo -e "${IP_FASTQ_NAME}\n${INPUT_FASTQ_NAME}" | sed -e 'N;s/^\(.*\).*\n\1.*$/\1/'` # && export PREFIX=${PREFIX%.*}
 	[ -z "${PREFIX}" ] && export PREFIX=${IP_FASTQ_NAME%.f[aq]*}
 else
-	JOBUID=`echo ${LEFT_IP_FASTQ} | md5sum | cut -d" " -f1`
-	LEFT_IP_FASTQ_NAME=`basename $LEFT_IP_FASTQ`
-	RIGHT_IP_FASTQ_NAME=`basename $RIGHT_IP_FASTQ`
+	JOBUID=`echo "${LEFT_IP_FASTQ}" | md5sum | cut -d" " -f1`
+	LEFT_IP_FASTQ_NAME=`basename "${LEFT_IP_FASTQ}"`
+	RIGHT_IP_FASTQ_NAME=`basename "${RIGHT_IP_FASTQ}"`
 	export PREFIX=`echo -e "${LEFT_IP_FASTQ_NAME}\n${RIGHT_IP_FASTQ_NAME}" | sed -e 'N;s/^\(.*\).*\n\1.*$/\1/'` # && export PREFIX=${PREFIX%.*}
 	[ -z "${PREFIX}" ] && export PREFIX=${LEFT_FASTQ_NAME%.f[aq]*} # if $LEFT and $RIGHT does not have any PREFIX, use the name of $LEFT
 fi
@@ -260,7 +259,7 @@ if [[ -n $SE_MODE ]]; then
 	READ_LEN=`$RD_CMD $IP_FASTQ | head -2 | tail -1 | awk '{print length($1)}'`
 else
 	if [[ $LEFT_IP_FASTQ == *.gz ]] ; then RD_CMD=zcat ; else RD_CMD=cat; fi
-	PHRED_SCORE=`perl $PIPELINE_DIRECTORY/bin/SolexaQA_piPipes.pl ${LEFT_IP_FASTQ}`
+	PHRED_SCORE=`perl $PIPELINE_DIRECTORY/bin/SolexaQA_piPipes.pl "${LEFT_IP_FASTQ}"`
 	READ_LEN=`$RD_CMD $LEFT_IP_FASTQ | head -2 | tail -1 | awk '{print length($1)}'`
 fi
 echo $READ_LEN > .READ_LEN
@@ -297,8 +296,8 @@ case $USE_MULTIREADS in
 	else
 		[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_bowtie2IP ] && \
 		bowtie2 -x genome \
-			-1 ${LEFT_IP_FASTQ} \
-			-2 ${RIGHT_IP_FASTQ} \
+			-1 "${LEFT_IP_FASTQ}" \
+			-2 "${RIGHT_IP_FASTQ}" \
 			-q \
 			$bowtie2PhredOption \
 			--very-sensitive-local \
@@ -337,8 +336,8 @@ case $USE_MULTIREADS in
 	else
 		[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_bowtie2Input ] && \
 		bowtie2 -x genome \
-			-1 ${LEFT_INPUT_FASTQ} \
-			-2 ${RIGHT_INPUT_FASTQ} \
+			-1 "${LEFT_INPUT_FASTQ}" \
+			-2 "${RIGHT_INPUT_FASTQ}" \
 			-q \
 			$bowtie2PhredOption \
 			-X 800 \
@@ -380,8 +379,8 @@ case $USE_MULTIREADS in
 	else
 		[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_bowtie2IP ] && \
 		bowtie2 -x genome \
-			-1 ${LEFT_IP_FASTQ} \
-			-2 ${RIGHT_IP_FASTQ} \
+			-1 "${LEFT_IP_FASTQ}" \
+			-2 "${RIGHT_IP_FASTQ}" \
 			-q \
 			$bowtie2PhredOption \
 			--very-sensitive-local \
@@ -420,8 +419,8 @@ case $USE_MULTIREADS in
 	else
 		[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_bowtie2Input ] && \
 		bowtie2 -x genome \
-			-1 ${LEFT_INPUT_FASTQ} \
-			-2 ${RIGHT_INPUT_FASTQ} \
+			-1 "${LEFT_INPUT_FASTQ}" \
+			-2 "${RIGHT_INPUT_FASTQ}" \
 			-q \
 			$bowtie2PhredOption \
 			-X 800 \
@@ -466,8 +465,8 @@ case $USE_MULTIREADS in
 			-a -m 100 --best --strata \
 			-p $CPU \
 			genome \
-			-1 ${LEFT_IP_FASTQ} \
-			-2 ${RIGHT_IP_FASTQ} \
+			-1 "${LEFT_IP_FASTQ}" \
+			-2 "${RIGHT_IP_FASTQ}" \
 			2> ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.log | \
 			samtools view -uS -f 0x2 - > ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.bam && \
 			samtools view -f0x40 ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.IP.bam | awk '{v=($9>0?$9:-$9); ++t1; t2+=v;}END{printf "%d", t2/t1}' > ${GENOMIC_MAPPING_DIR}.IP.average_TLEN && \
@@ -507,8 +506,8 @@ case $USE_MULTIREADS in
 			-a -m 100 --best --strata \
 			-p $CPU \
 			genome \
-			-1 ${LEFT_INPUT_FASTQ} \
-			-2 ${RIGHT_INPUT_FASTQ} \
+			-1 "${LEFT_INPUT_FASTQ}" \
+			-2 "${RIGHT_INPUT_FASTQ}" \
 			2> ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.log | \
 			samtools view -uS -f 0x2 - > ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.bam && \
 			samtools view -f0x40 ${GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.Input.bam | awk '{v=($9>0?$9:-$9); ++t1; t2+=v;}END{printf "%d", t2/t1}' > ${GENOMIC_MAPPING_DIR}.Input.average_TLEN && \
@@ -614,18 +613,18 @@ fi
 if [[ -n $SE_MODE ]]; then
 	[ ! -f .${JOBUID}.status.${STEP}.direct_mapping_eXpress_quantification ] && \
 	bash $DEBUG piPipes_direct_bowtie2_mapping_ChIP.sh \
-		-i ${IP_FASTQ} \
-		-I ${INPUT_FASTQ} \
+		-i "${IP_FASTQ}" \
+		-I "${INPUT_FASTQ}" \
 		-x $DIRECTMAPPING_INX \
 		-o $DIRECTMAPPING_DIR && \
 	touch .${JOBUID}.status.${STEP}.direct_mapping_eXpress_quantification
 else
 	[ ! -f .${JOBUID}.status.${STEP}.direct_mapping_eXpress_quantification ] && \
 	bash $DEBUG piPipes_direct_bowtie2_mapping_ChIP.sh \
-		-l ${LEFT_IP_FASTQ} \
-		-r ${RIGHT_IP_FASTQ} \
-		-L ${LEFT_INPUT_FASTQ} \
-		-R ${RIGHT_INPUT_FASTQ} \
+		-l "${LEFT_IP_FASTQ}" \
+		-r "${RIGHT_IP_FASTQ}" \
+		-L "${LEFT_INPUT_FASTQ}" \
+		-R "${RIGHT_INPUT_FASTQ}" \
 		-x $DIRECTMAPPING_INX \
 		-o $DIRECTMAPPING_DIR && \
 	touch .${JOBUID}.status.${STEP}.direct_mapping_eXpress_quantification

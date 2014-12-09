@@ -103,21 +103,21 @@ if [[ -n $PE_MODE && -n $SE_MODE ]]; then usage ; echo2 "Please only choose sing
 
 # if INPUT_FASTQ or GENOME is undefined, print out usage and exit
 if [[ -n $PE_MODE ]]; then
-	[[ -z $LEFT_FASTQ ]] && usage && echo2 "Missing option -l for input fastq of left file, or file does not exist " "error"
-	[[ -z $RIGHT_FASTQ ]] && usage && echo2 "Missing option -r for input fastq of right file, or file does not exist " "error"
-	[ ! -f $LEFT_FASTQ ] && echo2 "Cannot find input file $LEFT_FASTQ" "error"
-	[ ! -f $RIGHT_FASTQ ] && echo2 "Cannot find input file $RIGHT_FASTQ" "error"
+	[[ -z "${LEFT_FASTQ}" ]] && usage && echo2 "Missing option -l for input fastq of left file, or file does not exist " "error"
+	[[ -z "${RIGHT_FASTQ}" ]] && usage && echo2 "Missing option -r for input fastq of right file, or file does not exist " "error"
+	[ ! -f "${LEFT_FASTQ}" ] && echo2 "Cannot find input file "${LEFT_FASTQ}"" "error"
+	[ ! -f "${RIGHT_FASTQ}" ] && echo2 "Cannot find input file "${RIGHT_FASTQ}"" "error"
 fi
 if [[ -n $SE_MODE ]]; then
-	[[ -z $INPUT_FASTQ ]] && usage && echo2 "Missing option -i for input fastq, or file does not exist " "error"
-	[ ! -f $INPUT_FASTQ ] && echo2 "Cannot find input file $INPUT_FASTQ" "error"
+	[[ -z "${INPUT_FASTQ}" ]] && usage && echo2 "Missing option -i for input fastq, or file does not exist " "error"
+	[ ! -f "${INPUT_FASTQ}" ] && echo2 "Cannot find input file "${INPUT_FASTQ}"" "error"
 fi
 [[ -z $GENOME ]]  && usage && echo2 "Missing option -g for specifying which genome assembly to use" "error"
 
 # check whether the this genome is supported or not
 check_genome $GENOME
 [ ! -z "${CPU##*[!0-9]*}" ] || CPU=8
-[ ! -z $OUTDIR ] || OUTDIR=$PWD # if -o is not specified, use current directory
+[ ! -z "$OUTDIR" ] || OUTDIR=$PWD # if -o is not specified, use current directory
 [ "$OUTDIR" != `readlink -f $PWD` ] && (mkdir -p "${OUTDIR}" || echo2 "Cannot create directory ${OUTDIR}" "warning")
 cd ${OUTDIR} || (echo2 "Cannot access directory ${OUTDIR}... Exiting..." "error")
 touch .writting_permission && rm -rf .writting_permission || (echo2 "Cannot write in directory ${OUTDIR}... Exiting..." "error")
@@ -177,24 +177,24 @@ checkBin "piPipes_filter_CIGAR"
 # step counter
 STEP=1
 # determine 
-if [[ $LEFT_FASTQ == *gz ]]; then
+if [[ "${LEFT_FASTQ}" == *gz ]]; then
 	CAT="zcat";
 else
 	CAT="cat"
 fi
 # job uid
 if [[ -n $PE_MODE ]]; then
-	JOBUID=`echo $LEFT_FASTQ | md5sum | cut -d" " -f1`
-	LEFT_FASTQ_NAME=`basename $LEFT_FASTQ`
-	RIGHT_FASTQ_NAME=`basename $RIGHT_FASTQ`
+	JOBUID=`echo "${LEFT_FASTQ}" | md5sum | cut -d" " -f1`
+	LEFT_FASTQ_NAME=`basename "${LEFT_FASTQ}"`
+	RIGHT_FASTQ_NAME=`basename "${RIGHT_FASTQ}"`
 	PREFIX=`echo -e "${LEFT_FASTQ_NAME}\n${RIGHT_FASTQ_NAME}" | sed -e 'N;s/^\(.*\).*\n\1.*$/\1/'` && export PREFIX=${PREFIX%.*}
 	[ -z "${PREFIX}" ] && export PREFIX=${LEFT_FASTQ_NAME%.f[aq]} # if $LEFT and $RIGHT does not have any PREFIX, use the name of $LEFT
-	READLEN=`$CAT $LEFT_FASTQ | head -2 | awk '{getline; print length($0)}'`
+	READLEN=`$CAT "${LEFT_FASTQ}" | head -2 | awk '{getline; print length($0)}'`
 else
-	JOBUID=`echo $INPUT_FASTQ | md5sum | cut -d" " -f1`
-	INPUT_FASTQ_NAME=`basename $INPUT_FASTQ`
+	JOBUID=`echo "${INPUT_FASTQ}" | md5sum | cut -d" " -f1`
+	INPUT_FASTQ_NAME=`basename "${INPUT_FASTQ}"`
 	export PREFIX=${INPUT_FASTQ_NAME%.f[aq]} # if $LEFT and $RIGHT does not have any PREFIX, use the name of $LEFT
-	READLEN=`$CAT $INPUT_FASTQ | head -2 | awk '{getline; print length($0)}'`
+	READLEN=`$CAT "${INPUT_FASTQ}" | head -2 | awk '{getline; print length($0)}'`
 fi
 
 # table to store the basic statistics of the library (genomic mappability)
@@ -227,9 +227,9 @@ echo2 "Beginning running [${PACKAGE_NAME}] Degradome-Seq pipeline version $DEG_V
 echo2 "Determining the version of fastQ using SolexaQA"
 # determine version of fastq used, using a modified SolexaQA.pl
 if [[ -n $PE_MODE ]]; then
-	PHRED_SCORE=`perl $PIPELINE_DIRECTORY/bin/SolexaQA_piPipes.pl $LEFT_FASTQ`
+	PHRED_SCORE=`perl $PIPELINE_DIRECTORY/bin/SolexaQA_piPipes.pl "${LEFT_FASTQ}"`
 else
-	PHRED_SCORE=`perl $PIPELINE_DIRECTORY/bin/SolexaQA_piPipes.pl $INPUT_FASTQ`
+	PHRED_SCORE=`perl $PIPELINE_DIRECTORY/bin/SolexaQA_piPipes.pl "${INPUT_FASTQ}"`
 fi
 case ${PHRED_SCORE} in
 solexa)		bowtie2PhredOption="--solexa-quals" && STARoutQSconversionAdd="-31" ;; # Solexa+64, raw reads typically (-5, 40)
@@ -246,8 +246,8 @@ if [[ -n $PE_MODE ]]; then
 	[ ! -f .${JOBUID}.status.${STEP}.rRNA_mapping ] && \
 	bowtie2 \
 		-x rRNA \
-		-1 $LEFT_FASTQ \
-		-2 $RIGHT_FASTQ \
+		-1 "${LEFT_FASTQ}" \
+		-2 "${RIGHT_FASTQ}" \
 		-q \
 		$bowtie2PhredOption \
 		--very-fast \
@@ -263,7 +263,7 @@ else
 	[ ! -f .${JOBUID}.status.${STEP}.rRNA_mapping ] && \
 	bowtie2 \
 		-x rRNA \
-		-U $INPUT_FASTQ \
+		-U "${INPUT_FASTQ}" \
 		-q \
 		$bowtie2PhredOption \
 		--very-fast \
