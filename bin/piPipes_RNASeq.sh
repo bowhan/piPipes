@@ -623,7 +623,7 @@ else # Single-End
 	echo2 "Mapping to genes and transposon directly with Bowtie2"
 	. $COMMON_FOLDER/genomic_features
 	# for fly genome, the transcripts from piRNA cluster are usually undetectable. including them in eXpress will actually have negative influence.
-	if [ "$GENOME" == "dm3" ]; then
+	if [ "$GENOME" == "dm3" -o "$GENOME" == "dm6" ]; then
 		TRANSCRIPTOME_INDEX="gene+transposon"
 	else
 		TRANSCRIPTOME_INDEX="gene+cluster+repBase"

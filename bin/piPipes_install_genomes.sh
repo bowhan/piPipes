@@ -49,6 +49,18 @@ ${OPTIONAL}[ optional ]
 	-D      Only do downloading but not other computation
 	        This is designed be used when the user wants to separate downloading and other works. For instance, only the head node on a hpcc has internet access but it is not appropriate to be used to build index.
 	-c      Number of CPU to use
+	-C      Custom genome installation. The user will need to create a folder $PIPELINE_DIRECTORY/common/GENOME and provide the following files:
+			$PIPELINE_DIRECTORY/common/GENOME/GENOME.fa --> genome sequence in fasta format
+			$PIPELINE_DIRECTORY/common/GENOME/GENOME.transposon.fa --> transposon sequence in fasta format
+			$PIPELINE_DIRECTORY/common/GENOME/GENOME.piRNAcluster.bed --> piRNA cluster in bed format
+			$PIPELINE_DIRECTORY/common/GENOME/GENOME.genes.gtf --> genes annotation in gtf format
+			$PIPELINE_DIRECTORY/common/GENOME/GENOME.hairpin.fa --> miRNA hairpin sequence in fasta format
+			$PIPELINE_DIRECTORY/common/GENOME/GENOME.mature.fa --> miRNA sequence in fasta format
+	      *Note that if you obtain hairpin and mature sequences from miRBase, you can extract the sequences corresponding to your genome using $PIPELINE_DIRECTORY/bin/piPipes_extract_organiam_from_fa.py:
+			$PIPELINE_DIRECTORY/bin/piPipes_extract_organiam_from_fa.py hairpin.fa dme > $PIPELINE_DIRECTORY/common/dm3/dm3.hairpin.fa
+			$PIPELINE_DIRECTORY/bin/piPipes_extract_organiam_from_fa.py mature.fa  dme > $PIPELINE_DIRECTORY/common/dm3/dm3.mature.fa
+	      Then run: piPipes install -g GENOME -C
+	
 EOF
 echo -e "${COLOR_END}"
 }
@@ -56,7 +68,7 @@ echo -e "${COLOR_END}"
 #############################
 # ARGS reading and checking #
 #############################
-while getopts "hg:c:l:vD" OPTION; do
+while getopts "hg:c:l:vDC" OPTION; do
 	case $OPTION in
 		h)	usage && exit 1 ;;
 		g)	export GENOME=$OPTARG  ;;
@@ -64,6 +76,7 @@ while getopts "hg:c:l:vD" OPTION; do
 		v)	echo2 "GENOME_INSTALL_VERSION: v$GENOME_INSTALL_VERSION" && exit 0 ;;
 		l)	LINK=$OPTARG  ;;
 		D)	DOWNLOAD_ONLY=1 ;;
+		C)	CUSTOM_INSTALL=1 ;;
 		*)	usage && exit 1 ;;
 	esac
 done
@@ -109,6 +122,10 @@ checkBin "Rscript"
 ######################################
 echo2 "Reading iGenome URL"
 . $PIPELINE_DIRECTORY/common/iGenome_URL.txt
+if [ -z "${!GENOME}" -a ! -z "${CUSTOM_INSTALL}" ]; then
+	bash $DEBUG piPipes_install_custom_genome.sh $GENOME
+	exit $?
+fi
 [ -z "${!GENOME}" -a -z "$LINK" ] && echo2 "It appeared that $GENOME is not in piPipes's record. Please provide the link to download the iGenome file with -l options" "error"
 echo2 "$GENOME is in the record!"
 
