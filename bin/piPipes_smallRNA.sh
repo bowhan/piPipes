@@ -80,31 +80,31 @@ echo -e "${COLOR_END}"
 while getopts "hi:c:o:g:vN:F:P:O:D" OPTION; do
 	case $OPTION in
 		h)	usage && exit 0 ;;
-		i)	INPUT_FASTQ=`readlink -f $OPTARG` ;;
-		o)	OUTDIR=`readlink -f $OPTARG` ;;
+		i)	INPUT_FASTQ=`readlink -f "${OPTARG}"` ;;
+		o)	OUTDIR=`readlink -f "${OPTARG}"` ;;
 		c)	CPU=$OPTARG ;;
 		v)	echo2 "SMALLRNA_VERSION: v$SMALLRNA_VERSION" && exit 0 ;;
 		g)	export GENOME=${OPTARG};;
-		N) 	export NORMMETHOD=`echo ${OPTARG} | tr '[A-Z]' '[a-z]'` ;;
-		F)  FILTER_MAPPING_FILE_LIST=$OPTARG ;;
-		P)	PRE_GENOME_MAPPING_FILE_LIST=$OPTARG ;;
-		O)	POST_GENOME_MAPPING_FILE_LIST=$OPTARG ;;
+		N) 	export NORMMETHOD=`echo "${OPTARG}" | tr '[A-Z]' '[a-z]'` ;;
+		F)  FILTER_MAPPING_FILE_LIST="${OPTARG}" ;;
+		P)	PRE_GENOME_MAPPING_FILE_LIST="${OPTARG}" ;;
+		O)	POST_GENOME_MAPPING_FILE_LIST="${OPTARG}" ;;
 		D)	CLEAN=1;;
 		*)	usage && exit 1 ;;
 	esac
 done
 # if INPUT_FASTQ or GENOME is undefined, print out usage and exit
-[[ -z "$INPUT_FASTQ" ]] && usage && echo2 "Missing option -i for input fastq file or file does not exist" "error"
-[[ -z "$GENOME" ]]  && usage && echo2 "Missing option -g for specifying which genome assembly to use" "error"
+[[ -z "${INPUT_FASTQ}" ]] && usage && echo2 "Missing option -i for input fastq file or file does not exist" "error"
+[[ -z ${GENOME} ]]  && usage && echo2 "Missing option -g for specifying which genome assembly to use" "error"
 # check whether the this genome is supported or not
-check_genome $GENOME
-[ ! -f $INPUT_FASTQ ] && echo2 "Cannot find input file $INPUT_FASTQ" "error"
-FQ_NAME=`basename $INPUT_FASTQ` && export PREFIX=${FQ_NAME%.f[qa]*}
+check_genome > $GENOME
+[ ! -f "${INPUT_FASTQ}" ] && echo2 "Cannot find input file $INPUT_FASTQ" "error"
+FQ_NAME=`basename "${INPUT_FASTQ}"` && export PREFIX=${FQ_NAME%.f[qa]*}
 [[ -z $NORMMETHOD ]] && export NORMMETHOD="unique";
 [ ! -z "${CPU##*[!0-9]*}" ] || CPU=8
 [ ! -z "${eXpressBATCH##*[!0-9]*}" ] || eXpressBATCH=21
 [ ! -z "$OUTDIR" ] || OUTDIR=$PWD # if -o is not specified, use current directory
-[ "$OUTDIR" != `readlink -f $PWD` ] && (mkdir -p "${OUTDIR}" || echo2 "Cannot create directory ${OUTDIR}" "warning")
+[ "$OUTDIR" != `readlink -f "${PWD}"` ] && (mkdir -p "${OUTDIR}" || echo2 "Cannot create directory ${OUTDIR}" "warning")
 cd ${OUTDIR} || (echo2 "Cannot access directory ${OUTDIR}... Exiting..." "error")
 touch .writting_permission && rm -rf .writting_permission || (echo2 "Cannot write in directory ${OUTDIR}... Exiting..." "error")
 
@@ -151,7 +151,7 @@ checkBin "piPipes_insertBed_to_bed2"
 # step counter
 STEP=1
 # job uid
-JOBUID=`echo ${INPUT_FASTQ} | md5sum | cut -d" " -f1`
+JOBUID=`echo "${INPUT_FASTQ}" | md5sum | cut -d" " -f1`
 # directories storing the common files for this organism
 export COMMON_FOLDER=$PIPELINE_DIRECTORY/common/$GENOME
 # assign different values to the generalized variables (same name for different GENOMEs) according to which GENOME fed
@@ -176,7 +176,7 @@ echo2 "Beginning running [${PACKAGE_NAME}] small RNA pipeline single library mod
 echo2 "Converting fastq format into insert format"
 INSERT=$READS_DIR/${PREFIX}.insert # insert file, a format with two fields delimited by a tab. Sequence and number of times it was read, used to save time/space; quality information is lost
 [ ! -f .${JOBUID}.status.${STEP}.fq2insert ] && \
-	piPipes_fastq_to_insert ${INPUT_FASTQ} ${INSERT} && \
+	piPipes_fastq_to_insert "${INPUT_FASTQ}" ${INSERT} && \
 	touch .${JOBUID}.status.${STEP}.fq2insert
 [ ! -f .${JOBUID}.status.${STEP}.fq2insert ] && echo2 "fq2insert failed" "error"
 STEP=$((STEP+1))

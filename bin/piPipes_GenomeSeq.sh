@@ -81,16 +81,16 @@ while getopts "hl:r:c:o:g:d:ve:M" OPTION; do
 	esac
 done
 # if INPUT_FASTQ or GENOME is undefined, print out usage and exit
-[[ -z $LEFT_FASTQ ]] && usage && echo2 "Missing option -l for input fastq of left file, or file does not exist " "error" 
-[[ -z $RIGHT_FASTQ ]] && usage && echo2 "Missing option -r for input fastq of right file, or file does not exist " "error" 
+[[ -z "${LEFT_FASTQ}" ]] && usage && echo2 "Missing option -l for input fastq of left file, or file does not exist " "error" 
+[[ -z "${RIGHT_FASTQ}" ]] && usage && echo2 "Missing option -r for input fastq of right file, or file does not exist " "error" 
 [[ -z $GENOME ]]  && usage && echo2 "Missing option -g for specifying which genome assembly to use" "error" 
 # check whether the this genome is supported or not
 check_genome $GENOME
-[ ! -f $LEFT_FASTQ ] && echo2 "Cannot find input file $LEFT_FASTQ" "error"
-[ ! -f $RIGHT_FASTQ ] && echo2 "Cannot find input file $RIGHT_FASTQ" "error"
+[ ! -f "${LEFT_FASTQ}" ] && echo2 "Cannot find input file "${LEFT_FASTQ}"" "error"
+[ ! -f "${RIGHT_FASTQ}" ] && echo2 "Cannot find input file "${RIGHT_FASTQ}"" "error"
 [ ! -z "${CPU##*[!0-9]*}" ] || CPU=8
 [ ! -z $VCFFILTER_DEPTH ] || VCFFILTER_DEPTH=100 # 
-[ ! -z $OUTDIR ] || OUTDIR=$PWD # if -o is not specified, use current directory
+[ ! -z "${OUTDIR}" ] || OUTDIR=$PWD # if -o is not specified, use current directory
 [ "$OUTDIR" != `readlink -f $PWD` ] && (mkdir -p "${OUTDIR}" || echo2 "Cannot create directory ${OUTDIR}" "warning")
 cd ${OUTDIR} || (echo2 "Cannot access directory ${OUTDIR}... Exiting..." "error")
 touch .writting_permission && rm -rf .writting_permission || (echo2 "Cannot write in directory ${OUTDIR}... Exiting..." "error")
@@ -132,12 +132,12 @@ checkBin "VH"
 #############
 STEP=1
 JOBUID=`echo ${LEFT_FASTQ} | md5sum | cut -d" " -f1`
-LEFT_FASTQ_NAME=`basename $LEFT_FASTQ`
-RIGHT_FASTQ_NAME=`basename $RIGHT_FASTQ`
+LEFT_FASTQ_NAME=`basename "${LEFT_FASTQ}"`
+RIGHT_FASTQ_NAME=`basename "${RIGHT_FASTQ}"`
 PREFIX=`echo -e "${LEFT_FASTQ_NAME}\n${RIGHT_FASTQ_NAME}" | sed -e 'N;s/^\(.*\).*\n\1.*$/\1/'` && export PREFIX=${PREFIX%.*}
 [ -z "${PREFIX}" ] && export PREFIX=${LEFT_FASTQ_NAME%.f[aq]} # if $LEFT and $RIGHT does not have any PREFIX, use the name of $LEFT
 # read lengtg
-READ_LEN=`head -2 $LEFT_FASTQ | awk '{getline; printf "%d", length($1)}'`
+READ_LEN=`head -2 "${LEFT_FASTQ}" | awk '{getline; printf "%d", length($1)}'`
 # directories storing the common files for this organism
 export COMMON_FOLDER=$PIPELINE_DIRECTORY/common/$GENOME
 # assign different values to the generalized variables (same name for different GENOMEs) according to which GENOME fed
@@ -235,8 +235,8 @@ echo2 "Mapping to genome ${GENOME} with BWA-MEM and calling varation by bcftools
 		-t $CPU \
 		-c 1000000 \
 		$BWA_GENOME_INDEX \
-		$LEFT_FASTQ \
-		$RIGHT_FASTQ \
+		"${LEFT_FASTQ}" \
+		"${RIGHT_FASTQ}" \
 		2> $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.${GENOME}.bwa-mem.log | \
 	samtools view -bS - > ${BWA_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.bwa-mem.bam && \
 	samtools sort -@ $CPU ${BWA_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.bwa-mem.bam ${BWA_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.bwa-mem.sorted && \
@@ -254,9 +254,9 @@ STEP=$((STEP+1))
 
 echo2 "Mapping to genome ${GENOME} with BWA ALN"
 [ ! -f .${JOBUID}.status.${STEP}.genome_mapping_bwa_aln ] && \
-	bwa aln -t $CPU -n $((READ_LEN/20)) -l 255 -R 10000 $BWA_GENOME_INDEX $LEFT_FASTQ  -f $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.1_sequence.sai && \
-	bwa aln -t $CPU -n $((READ_LEN/20)) -l 255 -R 10000 $BWA_GENOME_INDEX $RIGHT_FASTQ -f $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.2_sequence.sai && \
-	bwa sampe -P $BWA_GENOME_INDEX $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.1_sequence.sai $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.2_sequence.sai $LEFT_FASTQ $RIGHT_FASTQ | \
+	bwa aln -t $CPU -n $((READ_LEN/20)) -l 255 -R 10000 $BWA_GENOME_INDEX "${LEFT_FASTQ}"  -f $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.1_sequence.sai && \
+	bwa aln -t $CPU -n $((READ_LEN/20)) -l 255 -R 10000 $BWA_GENOME_INDEX "${RIGHT_FASTQ}" -f $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.2_sequence.sai && \
+	bwa sampe -P $BWA_GENOME_INDEX $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.1_sequence.sai $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.2_sequence.sai "${LEFT_FASTQ}" "${RIGHT_FASTQ}" | \
 	samtools view -bS - > $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.bwa-aln.bam && \
 	samtools sort -@ $CPU $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.bwa-aln.bam  $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.bwa-aln.sorted && \
 	samtools index $BWA_GENOMIC_MAPPING_DIR/${PREFIX}.bwa-aln.sorted.bam && \
@@ -369,7 +369,7 @@ if [[ ! -z $USE_MRFAST ]]; then
 	mrFast_min=0
 	mrFast_max=800
 	[ ! -f .${JOBUID}.status.${STEP}.genome_mapping_mrFast ] && \
-		mrfast --search $MRFAST_INDEX/${GENOME}.fa --pe --discordant-vh --seq1 $LEFT_FASTQ --seq2 $RIGHT_FASTQ --min $mrFast_min --max $mrFast_max -o ${MRFAST_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.mrFast.sam 1>&2 && \
+		mrfast --search $MRFAST_INDEX/${GENOME}.fa --pe --discordant-vh --seq1 "${LEFT_FASTQ}" --seq2 "${RIGHT_FASTQ}" --min $mrFast_min --max $mrFast_max -o ${MRFAST_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.mrFast.sam 1>&2 && \
 		samtools view -uS -f0x2 ${MRFAST_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.mrFast.sam > ${MRFAST_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.mrFast.bam && \
 		samtools sort -@ $CPU ${MRFAST_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.mrFast.bam ${MRFAST_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.mrFast.sorted && \
 		samtools index ${MRFAST_GENOMIC_MAPPING_DIR}/${PREFIX}.${GENOME}.mrFast.sorted.bam && \
