@@ -35,7 +35,7 @@ piRNA_SUM=${SUMMARY_PREFIX}.piRNA.sum # summary for piRNA
 CPU=$3 # CPU to use
 INTERSECT_OUTDIR=$4 # output directory to store files
 SEED=${RANDOM}${RANDOM}${RANDOM}${RANDOM} # random name
-[ ! -s $COMMON_FOLDER/genomic_features ] && echo2 "Missing or empty $COMMON_FOLDER/genomic_features file, cannot proceed with genomic struture intersecting..." "error"
+[ ! -s $COMMON_FOLDER/genomic_features ] && echo2 "Missing or empty $COMMON_FOLDER/genomic_features file, cannot proceed with genomic structure intersecting..." "error"
 . $COMMON_FOLDER/genomic_features # reading the information to intersect with, as well as some other annotation files
 ALL_BED=`basename ${GENOME_ALLMAP_BED2%bed2}x_rpmk_MASK.bed2` # names for the file genernated here
 # get rid of tRNA, rRNA, snoRNA...

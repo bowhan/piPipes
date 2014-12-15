@@ -97,7 +97,7 @@ done
 [[ -z "${INPUT_FASTQ}" ]] && usage && echo2 "Missing option -i for input fastq file or file does not exist" "error"
 [[ -z ${GENOME} ]]  && usage && echo2 "Missing option -g for specifying which genome assembly to use" "error"
 # check whether the this genome is supported or not
-check_genome > $GENOME
+check_genome $GENOME
 [ ! -f "${INPUT_FASTQ}" ] && echo2 "Cannot find input file $INPUT_FASTQ" "error"
 FQ_NAME=`basename "${INPUT_FASTQ}"` && export PREFIX=${FQ_NAME%.f[qa]*}
 [[ -z $NORMMETHOD ]] && export NORMMETHOD="unique";
