@@ -31,7 +31,6 @@ public:
 	threadSafeQueue<T,C> () { }
 	
 	bool empty () const {
-		std::lock_guard<std::mutex> lock (_mx);
 		return _quene.empty ();
 	}
 	
