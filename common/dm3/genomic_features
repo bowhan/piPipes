@@ -23,6 +23,7 @@
 	flyBase_3UTR=$COMMON_FOLDER/UCSC.flyBase.3UTR.bed.gz # flyBase 3' UTR
 	cisNATs=$COMMON_FOLDER/cisNATs.bed.gz # cis-NATs
 	structural_loci=$COMMON_FOLDER/structured_loci.bed.gz # structural loci
+	hpRNA=$COMMON_FOLDER/hpRNA.bed.gz # hpRNAs described in J. Wen et al, Mol Cell (2014).
 	lincRNA=$COMMON_FOLDER/lincRNA.Young.bed6.gz # linc RNA identified in 'Identification and properties of 1,119 candidate lincRNA loci in the Drosophila melanogaster genome. Genome Biol Evol. 2012;4(4):427-42.'
 	unannotated=$COMMON_FOLDER/unannotated_genome.bed.gz
 	declare -a TARGETS=( \
@@ -50,6 +51,7 @@
 	"cisNATs" \
 	"structural_loci" \
 	"lincRNA" \
+	"hpRNA" \
 	"unannotated" \
 	)
 
