@@ -42,6 +42,10 @@ $PIPELINE_DIRECTORY/common/$GENOME/${GENOME}.hairpin.fa --> miRNA hairpin sequen
 $PIPELINE_DIRECTORY/common/$GENOME/${GENOME}.mature.fa --> miRNA sequence in fasta format
 $PIPELINE_DIRECTORY/common/$GENOME/${GENOME}.piRNAcluster.bed --> piRNA cluster in bed format
 
+optional file:
+
+$PIPELINE_DIRECTORY/common/$GENOME/${GENOME}.rRNA.fa --> ribosomal RNA sequence in fasta format; highlly recommend for RNA-seq analysis
+
 EOF
 echo -e "${COLOR_END}"
 }
@@ -142,8 +146,8 @@ STAR --runMode genomeGenerate --runThreadN ${CPU:-8} --genomeDir STARIndex --gen
 # mrFast index for the genome
 echo2 "Building mrFast index for genome"
 if [ ! -s mrFastIndex/${GENOME}.fa.index ]; then
-	[ ! -s ${GENOME}.fa ] && ln -st mrFastIndex/ ../${GENOME}.fa 
-	[ ! -s ${GENOME}.fa.fai ] && ln -st mrFastIndex/ ../${GENOME}.fa.fai
+	ln -st mrFastIndex/ ../${GENOME}.fa 
+	ln -st mrFastIndex/ ../${GENOME}.fa.fai
 	mrfast --index mrFastIndex/${GENOME}.fa
 fi
 
@@ -151,7 +155,11 @@ fi
 echo2 "Building Bowtie/Bowtie2 index for rRNA"
 
 # rRNA.fa has been included in the Github
-[ ! -s ${GENOME}.rRNA.fa ] && echo2 "please provide rRNA sequence in file $PWD/${GENOME}.rRNA.fa" "error"
+if [ ! -s ${GENOME}.rRNA.fa ]; then 
+	echo2 "missing rRNA sequence in file $PWD/${GENOME}.rRNA.fa; will use a dummy sequence!" "warning"
+	echo -e ">dummy_rRNA\nAAAAAAAAAA" > ${GENOME}.rRNA.fa
+	echo2 "if you can provide a rRNA sequence and put it in $PWD/${GENOME}.rRNA.fa, please delete ${GENOME}.rRNA.fa BowtieIndex/rRNA* Bowtie2Index/rRNA* and re-run the installation pipeline" "warning"
+fi
 [ ! -s BowtieIndex/rRNA.sizes ] && bowtie-build ${GENOME}.rRNA.fa BowtieIndex/rRNA && faSize -tab -detailed ${GENOME}.rRNA.fa > BowtieIndex/rRNA.sizes
 [ ! -s Bowtie2Index/rRNA.sizes ] && bowtie2-build ${GENOME}.rRNA.fa Bowtie2Index/rRNA && faSize -tab -detailed ${GENOME}.rRNA.fa > Bowtie2Index/rRNA.sizes
 

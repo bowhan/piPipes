@@ -56,7 +56,7 @@ Due to the limitation on the size of files by github, piPipes does not ship with
 sequences and annotation. Thus we provide this pipeline to download genome assemly files
 from illumina iGenome project. Please make sure internet is available during this process. 
 This pipeline will also install R packages that are unavaiable in your current system.
-At the end of the installation pipeline, the user 
+
 Most hpcc limits the Internet access to the head node, which is only supposed to used for submiting
 jobs but not for heavy computation including building index. piPipes provide -D option to separate 
 downloading and other works to solve this issue.
@@ -73,6 +73,8 @@ to retrieve the sequences for one organism correctly. The user will have to retr
 The user might also want to provide a list of BED files to be used for detailed analysis on genomic features,
 such as genes, exons, introns, UTRs. Due to the inconsistent naming of UCSC mySQL TABLEs, we found it very 
 hard to download those information automatically. 
+For genomes without iGenome support, piPipes also provide custom installation pipeline to install 
+the genome with at least five files.
 Please visit our github wiki for detailed instructions. 
 '
 

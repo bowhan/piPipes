@@ -745,18 +745,18 @@ STEP=$((STEP+1))
 ##############################################
 echo2 "Direct mapping to transposon and piRNA cluster and make distribution plot"
 . $COMMON_FOLDER/genomic_features
-INSERT=`basename $INPUT`
+INSERT=`basename $x_rRNA_INSERT`
 [ ! -f .${JOBUID}.status.${STEP}.direct_mapping_normalized_by_$NORMMETHOD ] && \
 for t in "${DIRECT_MAPPING[@]}"; do \
 	bowtie -r -v ${transposon_MM} -a --best --strata -p $CPU \
 		-S \
 		${t} \
-		${INPUT} \
+		${x_rRNA_INSERT} \
 		2> ${TRN_OUTDIR}/${t}.log | \
 	samtools view -uS -F0x4 - 2>/dev/null | \
 	samtools sort -o -@ $CPU - foo | \
 	bedtools_piPipes bamtobed -i - > $TRN_OUTDIR/${INSERT%.insert}.${t}.a${transposon_MM}.insert.bed && \
-	piPipes_insertBed_to_bed2 $INPUT $TRN_OUTDIR/${INSERT%.insert}.${t}.a${transposon_MM}.insert.bed > $TRN_OUTDIR/${INSERT%.insert}.${t}.a${transposon_MM}.insert.bed2 && \
+	piPipes_insertBed_to_bed2 $x_rRNA_INSERT $TRN_OUTDIR/${INSERT%.insert}.${t}.a${transposon_MM}.insert.bed > $TRN_OUTDIR/${INSERT%.insert}.${t}.a${transposon_MM}.insert.bed2 && \
 	piPipes_bed2Summary -5 -i $TRN_OUTDIR/${INSERT%.insert}.${t}.a${transposon_MM}.insert.bed2 -c $COMMON_FOLDER/BowtieIndex/${t}.sizes -o $TRN_OUTDIR/${INSERT%.insert}.${t}.a${transposon_MM}.summary && \
 	Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_summary.R $TRN_OUTDIR/${INSERT%.insert}.${t}.a${transposon_MM}.summary $TRN_OUTDIR/${INSERT%.insert}.${t}.a${transposon_MM}.normalized_by_$NORMMETHOD $CPU $NormScale 1>&2 && \
 	PDFs=$TRN_OUTDIR/${INSERT%.insert}.${t}.a${transposon_MM}.normalized_by_${NORMMETHOD}*pdf && \
