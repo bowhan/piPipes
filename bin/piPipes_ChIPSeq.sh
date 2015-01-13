@@ -214,14 +214,14 @@ if [[ -n $SE_MODE ]]; then
 	JOBUID=`echo $IP_FASTQ | md5sum | cut -d" " -f1`
 	IP_FASTQ_NAME=`basename "${IP_FASTQ}"`
 	INPUT_FASTQ_NAME=`basename "${INPUT_FASTQ}"`
-	export PREFIX=`echo -e "${IP_FASTQ_NAME}\n${INPUT_FASTQ_NAME}" | sed -e 'N;s/^\(.*\).*\n\1.*$/\1/'` # && export PREFIX=${PREFIX%.*}
-	[ -z "${PREFIX}" ] && export PREFIX=${IP_FASTQ_NAME%.f[aq]*}
+	# export PREFIX=`echo -e "${IP_FASTQ_NAME}\n${INPUT_FASTQ_NAME}" | sed -e 'N;s/^\(.*\).*\n\1.*$/\1/'` # && export PREFIX=${PREFIX%.*}
+	export PREFIX=${IP_FASTQ_NAME%.f[aq]*}
 else
 	JOBUID=`echo "${LEFT_IP_FASTQ}" | md5sum | cut -d" " -f1`
 	LEFT_IP_FASTQ_NAME=`basename "${LEFT_IP_FASTQ}"`
 	RIGHT_IP_FASTQ_NAME=`basename "${RIGHT_IP_FASTQ}"`
-	export PREFIX=`echo -e "${LEFT_IP_FASTQ_NAME}\n${RIGHT_IP_FASTQ_NAME}" | sed -e 'N;s/^\(.*\).*\n\1.*$/\1/'` # && export PREFIX=${PREFIX%.*}
-	[ -z "${PREFIX}" ] && export PREFIX=${LEFT_FASTQ_NAME%.f[aq]*} # if $LEFT and $RIGHT does not have any PREFIX, use the name of $LEFT
+	# export PREFIX=`echo -e "${LEFT_IP_FASTQ_NAME}\n${RIGHT_IP_FASTQ_NAME}" | sed -e 'N;s/^\(.*\).*\n\1.*$/\1/'` # && export PREFIX=${PREFIX%.*}
+	export PREFIX=${LEFT_FASTQ_NAME%.f[aq]*} # if $LEFT and $RIGHT does not have any PREFIX, use the name of $LEFT
 fi
 
 # table to store the basic statistics of the library (genomic mappability)
@@ -572,7 +572,7 @@ fi
 STEP=$((STEP+1))
 
 
-# readling the depth
+# reading the depth
 if [[ -n $SE_MODE ]]; then MACS2_f="BAM"; TN="tags"; else MACS2_f="BAMPE"; TN="fragments"; fi
 
 export EFFECTIVE_DEPTH_IP=`grep "$TN after filtering in treatment" $PEAKS_CALLING_DIR/*_peaks.xls | awk 'BEGIN{FS=" "}{print $NF}'`
