@@ -402,7 +402,7 @@ if [[ -n $PE_MODE ]]; then
 
 	echo2 "Making summary graph"
 	[ ! -f .${JOBUID}.status.${STEP}.make_direct_mapping_sum ] && \
-	grep -v 'NM_' $TRANSCRIPTOME_SIZES | grep -v 'NR_' > ${DIRECTMAPPING_DIR}/transposon.sizes && \
+	grep -v 'NM_' $TRANSCRIPTOME_SIZES | grep -v 'NR_' | grep -v 'FBtr' > ${DIRECTMAPPING_DIR}/transposon.sizes && \
 	bedtools_piPipes genomecov -i ${DIRECTMAPPING_DIR}/${PREFIX}.${TRANSCRIPTOME_INDEX}.sorted.unique.bed -g $TRANSCRIPTOME_SIZES -strand + -bg \
 		> ${DIRECTMAPPING_DIR}/${PREFIX}.${TRANSCRIPTOME_INDEX}.sorted.unique.plus.bedGraph && \
 	bedtools_piPipes genomecov -i ${DIRECTMAPPING_DIR}/${PREFIX}.${TRANSCRIPTOME_INDEX}.sorted.unique.bed -g $TRANSCRIPTOME_SIZES -strand - -bg \
@@ -654,7 +654,7 @@ else # Single-End
 
 	echo2 "Making summary graph"
 	[ ! -f .${JOBUID}.status.${STEP}.make_direct_mapping_sum ] && \
-	grep -v 'NM_' $TRANSCRIPTOME_SIZES | grep -v 'NR_' > ${DIRECTMAPPING_DIR}/transposon.sizes && \
+	grep -v 'NM_' $TRANSCRIPTOME_SIZES | grep -v 'NR_' | grep -v 'FBtr' > ${DIRECTMAPPING_DIR}/transposon.sizes && \
 	bedtools_piPipes genomecov -i ${DIRECTMAPPING_DIR}/${PREFIX}.${TRANSCRIPTOME_INDEX}.sorted.unique.bed -g $TRANSCRIPTOME_SIZES -strand + -bg \
 		> ${DIRECTMAPPING_DIR}/${PREFIX}.${TRANSCRIPTOME_INDEX}.sorted.unique.plus.bedGraph && \
 	bedtools_piPipes genomecov -i ${DIRECTMAPPING_DIR}/${PREFIX}.${TRANSCRIPTOME_INDEX}.sorted.unique.bed -g $TRANSCRIPTOME_SIZES -strand - -bg \
