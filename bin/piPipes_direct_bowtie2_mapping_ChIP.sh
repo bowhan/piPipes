@@ -104,7 +104,7 @@ else
 fi
 
 echo2 "Making summary graph"
-grep -v 'NM_' $TRANSCRIPTOME_SIZES | grep -v 'NR_' > ${dDIRECTMAPPING_DIR}/transposon.sizes && \
+grep -v 'NM_' $TRANSCRIPTOME_SIZES | grep -v 'NR_' | grep -v 'FBtr' > ${dDIRECTMAPPING_DIR}/transposon.sizes && \
 bedtools_piPipes genomecov -i ${dDIRECTMAPPING_DIR}/${PREFIX}.IP.${dDIRECTMAPPING_INDEX}.sorted.unique.bed    -g $TRANSCRIPTOME_SIZES -bg -scale $NormScaleIP    > ${dDIRECTMAPPING_DIR}/${PREFIX}.IP.${dDIRECTMAPPING_INDEX}.sorted.unique.bedGraph && \
 bedtools_piPipes genomecov -i ${dDIRECTMAPPING_DIR}/${PREFIX}.input.${dDIRECTMAPPING_INDEX}.sorted.unique.bed -g $TRANSCRIPTOME_SIZES -bg -scale $NormScaleINPUT > ${dDIRECTMAPPING_DIR}/${PREFIX}.input.${dDIRECTMAPPING_INDEX}.sorted.unique.bedGraph && \
 bedGraphToBigWig ${dDIRECTMAPPING_DIR}/${PREFIX}.IP.${dDIRECTMAPPING_INDEX}.sorted.unique.bedGraph    $TRANSCRIPTOME_SIZES ${dDIRECTMAPPING_DIR}/${PREFIX}.IP.${dDIRECTMAPPING_INDEX}.sorted.unique.bigWig && \

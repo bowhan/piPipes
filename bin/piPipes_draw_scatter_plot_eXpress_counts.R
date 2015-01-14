@@ -34,7 +34,8 @@ main = paste (strwrap(main, width = 80), collapse = "\n")
 
 sample = merge (sample1, sample2, by="target_id")
 lim = roundUp (10*(max (sample$eff_counts.x, sample$eff_counts.y)))/10
-Group = ifelse (startsWith(sample[,1],"NM_"), "NM", ifelse (startsWith(sample[,1], "NR_"), "NR", "Transposon"))
+# for fly dm6 genome, NM and NR annotation is current unavailable; so flybase annotation is used here. FBtr includes both mRNA and ncRNA...
+Group = ifelse ( startsWith(sample[,1],"NM_") | startsWith(sample[,1],"FBtr") , "NM", ifelse (startsWith(sample[,1], "NR_"), "NR", "Transposon"))
 sample_trn = sample[Group == "Transposon",]
 
 write.csv (sample, file=paste (argv[5],".csv", sep=""))

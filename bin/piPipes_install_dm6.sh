@@ -150,13 +150,11 @@ echo2 "Building STAR index for genome"
 STAR --runMode genomeGenerate --runThreadN $CPU --genomeDir STARIndex --genomeFastaFiles ${GENOME}.fa --sjdbGTFfile ${GENOME}.genes.gtf --sjdbOverhang 99 # TODO: this 99 is not really optimized...
 
 # mrFast index for the genome
-echo2 "Building mrFast index for genome"
-# TODO: seems that mrfast does not like the fasta...
-if [ ! -s mrFastIndex/${GENOME}.fa.index ]; then
-	[ ! -s ${GENOME}.fa ] && ln -st mrFastIndex/ ../${GENOME}.fa 
-	[ ! -s ${GENOME}.fa.fai ] && ln -st mrFastIndex/ ../${GENOME}.fa.fai
-	mrfast --index mrFastIndex/${GENOME}.fa
-fi
+# echo2 "Building mrFast index for genome"
+# [ ! -s mrFastIndex/${GENOME}.fa.index ] && \
+	# ln -st mrFastIndex/ ../${GENOME}.fa && \
+	# ln -st mrFastIndex/ ../${GENOME}.fa.fai
+# mrfast --index mrFastIndex/${GENOME}.fa
 
 # rRNA index
 echo2 "Building Bowtie/Bowtie2 index for rRNA"
