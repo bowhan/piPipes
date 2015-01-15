@@ -43,7 +43,7 @@ draw_summaryN = function (p, pdfPrefix, normScales, name1, name2) {
 	for (i in 3:ncol(p)) {
 		p[,i] = p[,i] * normScales[i-2]
 	}
-	plot (p$V2,p$V3, xlim=c(0,nrow(p)), ylim=c(1.4*min(p$V4), 1.4*max(p$V3)) , type='n', xlab=paste("Gene body", nrow(p), sep=" "), ylab="Signal", tck=0.01, main=p[1,1])
+	plot (p$V2,p$V3, xlim=c(0,nrow(p)), ylim=c(0, 1.2*max(p[,c(3,4,5,6)])) , type='n', xlab=paste("Gene body", nrow(p), sep=" "), ylab="Signal", tck=0.01, main=p[1,1])
 	for (i in seq(3, ncol(p)-1, 2)) {
 		points (p$V2, p[,i], col=my_colors[i-2], type="s", lwd=3)
 	}
