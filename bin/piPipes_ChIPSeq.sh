@@ -78,6 +78,7 @@ ${REQUIRED}[ required ]
 ${OPTIONAL}[ optional ]
 	-f      Fragment length for the library. The size of DNA after shearing. It will only be used for Single-End library. For Paired-End, it will be calculated from the alignments. default: 200
 	-B      Use "Broader" peak calling algorithm in MACS2; should be used for library like H3K9me3. default: off
+	-d      Turn off "removing duplicates" and use "auto" for MACS2, default: off (removing duplicates)  
 	-x      Length to extend up/downstream of each genomic features to draw the metagene plot. default: 1000
 	-M      Path to BED files for meta-plot analysis on user-defined regions. One plot for each BED file and different BED files should be delimited by comma.
         	Do not use ~ to represent the home directory as ~ is expanded before passed into piPipes and it will not be expanded correctly unless present at the beginning of a string.
@@ -106,7 +107,7 @@ SE_TLEN=200 # average fragment length for single-end sample
 # ARGS reading and checking #
 #############################
 USE_MULTIREADS=0
-while getopts "hf:l:r:L:R:c:o:g:Bvx:i:I:M:umeD" OPTION; do
+while getopts "hf:l:r:L:R:c:o:g:Bvx:i:I:M:umeDd" OPTION; do
 	case $OPTION in
 		h)	usage && exit 0 ;;
 		v)	echo2 "CHIPSEQ_VERSION: v$CHIPSEQ_VERSION" && exit 0 ;;
@@ -120,6 +121,7 @@ while getopts "hf:l:r:L:R:c:o:g:Bvx:i:I:M:umeD" OPTION; do
 		f)	SE_TLEN=$OPTARG ;;
 		M)	export USER_DEFINED_BED_FILES=$OPTARG ;;
 		c)	export CPU=${OPTARG} ;;
+		d)	export KEEP_DUP_OPTION="--keep-dup" ;;
 		g)	export GENOME=${OPTARG};;
 		B)	export MACS2_BROAD_OPT="--broad" ;;
 		u)  export USE_MULTIREADS=$((USE_MULTIREADS+1));; # USE_MULTIREADS==1
@@ -539,7 +541,7 @@ if [[ -n $SE_MODE ]]; then
 			$MACS2_BROAD_OPT \
 			--outdir $PEAKS_CALLING_DIR \
 			-n ${PREFIX} \
-			-B --SPMR \
+			-B --SPMR ${KEEP_DUP_OPTION} \
 			2> $PEAKS_CALLING_DIR/${PREFIX}.callpeak.SPMR.log && \
 		macs2 bdgcmp -t $PEAKS_CALLING_DIR/${PREFIX}_treat_pileup.bdg -c $PEAKS_CALLING_DIR/${PREFIX}_control_lambda.bdg -o ${PEAKS_CALLING_DIR}/${PREFIX}.ppois.bdg -m ppois 1> ${PEAKS_CALLING_DIR}/${PREFIX}.ppois.stdout 2> ${PEAKS_CALLING_DIR}/${PREFIX}.ppois.stderr && \
 		bedGraphToBigWig ${PEAKS_CALLING_DIR}/${PREFIX}.ppois.bdg $CHROM $BW_OUTDIR/${PREFIX}.ppois.bigWig && \
@@ -558,7 +560,7 @@ else
 			$MACS2_BROAD_OPT \
 			--outdir $PEAKS_CALLING_DIR \
 			-n ${PREFIX} \
-			-B --SPMR \
+			-B --SPMR ${KEEP_DUP_OPTION} \
 			2> $PEAKS_CALLING_DIR/${PREFIX}.callpeak.SPMR.log && \
 		macs2 bdgcmp -t $PEAKS_CALLING_DIR/${PREFIX}_treat_pileup.bdg -c $PEAKS_CALLING_DIR/${PREFIX}_control_lambda.bdg -o ${PEAKS_CALLING_DIR}/${PREFIX}.ppois.bdg -m ppois 1> ${PEAKS_CALLING_DIR}/${PREFIX}.ppois.stdout 2> ${PEAKS_CALLING_DIR}/${PREFIX}.ppois.stderr && \
 		bedGraphToBigWig ${PEAKS_CALLING_DIR}/${PREFIX}.ppois.bdg $CHROM $BW_OUTDIR/${PREFIX}.ppois.bigWig && \
@@ -603,7 +605,7 @@ STEP=$((STEP+1))
 ######################################
 echo2 "Mapping to genes and transposon directly with Bowtie2"
 . $COMMON_FOLDER/genomic_features
-if [ "$GENOME" == "dm3" ]; then
+if [ "$GENOME" == "dm3" -o "$GENOME" == "dm6" ]; then
 	# for fly genome, the transcripts from piRNA cluster are usually undetectable. including them in eXpress will actually have negative influence.
 	DIRECTMAPPING_INX="transposon"
 else
