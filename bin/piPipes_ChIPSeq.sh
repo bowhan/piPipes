@@ -223,7 +223,7 @@ else
 	LEFT_IP_FASTQ_NAME=`basename "${LEFT_IP_FASTQ}"`
 	RIGHT_IP_FASTQ_NAME=`basename "${RIGHT_IP_FASTQ}"`
 	# export PREFIX=`echo -e "${LEFT_IP_FASTQ_NAME}\n${RIGHT_IP_FASTQ_NAME}" | sed -e 'N;s/^\(.*\).*\n\1.*$/\1/'` # && export PREFIX=${PREFIX%.*}
-	export PREFIX=${LEFT_FASTQ_NAME%.f[aq]*} # if $LEFT and $RIGHT does not have any PREFIX, use the name of $LEFT
+	export PREFIX=${LEFT_IP_FASTQ_NAME%.f[aq]*} # if $LEFT and $RIGHT does not have any PREFIX, use the name of $LEFT
 fi
 
 # table to store the basic statistics of the library (genomic mappability)
@@ -605,7 +605,7 @@ STEP=$((STEP+1))
 ######################################
 echo2 "Mapping to genes and transposon directly with Bowtie2"
 . $COMMON_FOLDER/genomic_features
-if [ "$GENOME" == "dm3" -o "$GENOME" == "dm6" ]; then
+if [ "$GENOME" == "dm3" ]; then
 	# for fly genome, the transcripts from piRNA cluster are usually undetectable. including them in eXpress will actually have negative influence.
 	DIRECTMAPPING_INX="transposon"
 else
