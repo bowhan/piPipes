@@ -121,7 +121,7 @@ while getopts "hf:l:r:L:R:c:o:g:Bvx:i:I:M:umeDd" OPTION; do
 		f)	SE_TLEN=$OPTARG ;;
 		M)	export USER_DEFINED_BED_FILES=$OPTARG ;;
 		c)	export CPU=${OPTARG} ;;
-		d)	export KEEP_DUP_OPTION="--keep-dup" ;;
+		d)	export KEEP_DUP_OPTION="--keep-dup auto" ;;
 		g)	export GENOME=${OPTARG};;
 		B)	export MACS2_BROAD_OPT="--broad" ;;
 		u)  export USE_MULTIREADS=$((USE_MULTIREADS+1));; # USE_MULTIREADS==1
