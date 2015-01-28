@@ -126,8 +126,8 @@ for i in `cut -f1 ${dDIRECTMAPPING_DIR}/transposon.sizes`; do \
            ${dDIRECTMAPPING_DIR}/${PREFIX}.IP.${dDIRECTMAPPING_INDEX}.sorted.unique.bigWig.$i.t \
            ${dDIRECTMAPPING_DIR}/${PREFIX}.input.${dDIRECTMAPPING_INDEX}.sorted.unique.bigWig.$i.t
 done
-
-Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_summary.R ${dDIRECTMAPPING_DIR}/${PREFIX}.${dDIRECTMAPPING_INDEX}.sorted.unique.bigWig.summary ${dDIRECTMAPPING_DIR}/${PREFIX}.${dDIRECTMAPPING_INDEX}.sorted.unique.bigWig.summary $CPU $NormScale 1>&2 && \
+# data has already been normalized
+Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_summary.R ${dDIRECTMAPPING_DIR}/${PREFIX}.${dDIRECTMAPPING_INDEX}.sorted.unique.bigWig.summary ${dDIRECTMAPPING_DIR}/${PREFIX}.${dDIRECTMAPPING_INDEX}.sorted.unique.bigWig.summary $CPU 1.0 1>&2 && \
 PDFs=${dDIRECTMAPPING_DIR}/${PREFIX}.${dDIRECTMAPPING_INDEX}.sorted*pdf && \
 gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=$PDF_DIR/${PREFIX}.${dDIRECTMAPPING_INDEX}.unique.pdf ${PDFs} && \
 rm -rf ${PDFs}
