@@ -578,10 +578,12 @@ STEP=$((STEP+1))
 if [[ -n $SE_MODE ]]; then MACS2_f="BAM"; TN="tags"; else MACS2_f="BAMPE"; TN="fragments"; fi
 
 export EFFECTIVE_DEPTH_IP=`grep "$TN after filtering in treatment" $PEAKS_CALLING_DIR/*_peaks.xls | awk 'BEGIN{FS=" "}{print $NF}'`
-export NormScaleIP=`echo $EFFECTIVE_DEPTH_IP | awk '{printf "%f\n", 1000000/$1}'`
+export           DEPTH_IP=`grep "$TN in treatment"                 $PEAKS_CALLING_DIR/*_peaks.xls | awk 'BEGIN{FS=" "}{print $NF}'`
+export NormScaleIP=`echo $DEPTH_IP | awk '{printf "%f\n", 1000000/$1}'`
 
 export EFFECTIVE_DEPTH_INPUT=`grep "$TN after filtering in control" $PEAKS_CALLING_DIR/*_peaks.xls | awk 'BEGIN{FS=" "}{print $NF}'`
-export NormScaleINPUT=`echo $EFFECTIVE_DEPTH_INPUT | awk '{printf "%f\n", 1000000/$1}'`
+export           DEPTH_INPUT=`grep "$TN in control"                 $PEAKS_CALLING_DIR/*_peaks.xls | awk 'BEGIN{FS=" "}{print $NF}'`
+export NormScaleINPUT=`echo $DEPTH_INPUT | awk '{printf "%f\n", 1000000/$1}'`
 
 # the effective depth is the larger
 export EFFECTIVE_DEPTH=`grep "$TN after filtering in" $PEAKS_CALLING_DIR/*_peaks.xls | awk 'BEGIN{FS=" "; getline;m=$NF}{if (m>$NF) {m=$NF}} END{print m}'`

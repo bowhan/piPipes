@@ -79,7 +79,6 @@ else
         -q \
         $bowtie2PhredOption \
         -a \
-        --quiet \
         -p $CPU \
         2> ${dDIRECTMAPPING_DIR}/${PREFIX}.IP.${dDIRECTMAPPING_INDEX}.log | \
     samtools view -bS - > ${dDIRECTMAPPING_DIR}/${PREFIX}.IP.${dDIRECTMAPPING_INDEX}.bam && \
@@ -94,7 +93,6 @@ else
         -q \
         $bowtie2PhredOption \
         -a \
-        --quiet \
         -p $CPU \
         2> ${dDIRECTMAPPING_DIR}/${PREFIX}.input.${dDIRECTMAPPING_INDEX}.log | \
     samtools view -bS - > ${dDIRECTMAPPING_DIR}/${PREFIX}.input.${dDIRECTMAPPING_INDEX}.bam && \
@@ -113,15 +111,15 @@ rm -f ${dDIRECTMAPPING_DIR}/*.bedGraph && \
 paraFile=${dDIRECTMAPPING_DIR}/${RANDOM}${RANDOM}.para && \
 bgP=${dDIRECTMAPPING_DIR}/${PREFIX}.IP.${dDIRECTMAPPING_INDEX}.sorted.unique.bigWig && \
 bgM=${dDIRECTMAPPING_DIR}/${PREFIX}.input.${dDIRECTMAPPING_INDEX}.sorted.unique.bigWig && \
-awk -v bgP=${bgP} -v bgM=${bgM} -v binSize=${BINSIZE} '{print "bigWigSummary", bgP, $1, 0, $2, binSize, "| sed -e \x27s/n\\/a/0/g\x27 >", bgP"."$1; print "bigWigSummary", bgM, $1, 0, $2, binSize, "| sed -e \x27s/n\\/a/0/g\x27 >", bgM"."$1;}' ${dDIRECTMAPPING_DIR}/transposon.sizes > $paraFile && \
+awk -v bgP=${bgP} -v bgM=${bgM} -v binSize=${BINSIZE} '{print "bigWigSummary", bgP, $1, 0, $2, $2, "| sed -e \x27s/n\\/a/0/g\x27 >", bgP"."$1; print "bigWigSummary", bgM, $1, 0, $2, $2, "| sed -e \x27s/n\\/a/0/g\x27 >", bgM"."$1;}' ${dDIRECTMAPPING_DIR}/transposon.sizes > $paraFile && \
 ParaFly -c $paraFile -CPU $CPU && \
 paraFile=${OUTDIR}/drawFigures && \
 rm -f ${dDIRECTMAPPING_DIR}/${PREFIX}.${dDIRECTMAPPING_INDEX}.sorted.unique.bigWig.summary
 for i in `cut -f1 ${dDIRECTMAPPING_DIR}/transposon.sizes`; do \
     [ ! -s ${dDIRECTMAPPING_DIR}/${PREFIX}.IP.${dDIRECTMAPPING_INDEX}.sorted.unique.bigWig.$i  ] && echo | awk -v binSize=${BINSIZE} 'BEGIN{for (i=0;i<binSize-1;++i){printf "%d\t", 0} print 0;}' > ${dDIRECTMAPPING_DIR}/${PREFIX}.IP.${dDIRECTMAPPING_INDEX}.sorted.unique.bigWig.$i
     [ ! -s ${dDIRECTMAPPING_DIR}/${PREFIX}.input.${dDIRECTMAPPING_INDEX}.sorted.unique.bigWig.$i ] && echo | awk -v binSize=${BINSIZE} 'BEGIN{for (i=0;i<binSize-1;++i){printf "%d\t", 0} print 0;}' > ${dDIRECTMAPPING_DIR}/${PREFIX}.input.${dDIRECTMAPPING_INDEX}.sorted.unique.bigWig.$i
-    awk -v name=$i '{for (i=1;i<=NF;++i){printf "%s\t%d\t%d\n", name, i, $i}}' ${dDIRECTMAPPING_DIR}/${PREFIX}.IP.${dDIRECTMAPPING_INDEX}.sorted.unique.bigWig.$i    > ${dDIRECTMAPPING_DIR}/${PREFIX}.IP.${dDIRECTMAPPING_INDEX}.sorted.unique.bigWig.$i.t
-    awk -v name=$i '{for (i=1;i<=NF;++i){printf "%s\t%d\t%d\n", name, i, $i}}' ${dDIRECTMAPPING_DIR}/${PREFIX}.input.${dDIRECTMAPPING_INDEX}.sorted.unique.bigWig.$i > ${dDIRECTMAPPING_DIR}/${PREFIX}.input.${dDIRECTMAPPING_INDEX}.sorted.unique.bigWig.$i.t
+    awk -v name=$i '{for (i=1;i<=NF;++i){printf "%s\t%d\t%.7f\n", name, i, $i}}' ${dDIRECTMAPPING_DIR}/${PREFIX}.IP.${dDIRECTMAPPING_INDEX}.sorted.unique.bigWig.$i    > ${dDIRECTMAPPING_DIR}/${PREFIX}.IP.${dDIRECTMAPPING_INDEX}.sorted.unique.bigWig.$i.t
+    awk -v name=$i '{for (i=1;i<=NF;++i){printf "%s\t%d\t%.7f\n", name, i, $i}}' ${dDIRECTMAPPING_DIR}/${PREFIX}.input.${dDIRECTMAPPING_INDEX}.sorted.unique.bigWig.$i > ${dDIRECTMAPPING_DIR}/${PREFIX}.input.${dDIRECTMAPPING_INDEX}.sorted.unique.bigWig.$i.t
     paste ${dDIRECTMAPPING_DIR}/${PREFIX}.IP.${dDIRECTMAPPING_INDEX}.sorted.unique.bigWig.$i.t ${dDIRECTMAPPING_DIR}/${PREFIX}.input.${dDIRECTMAPPING_INDEX}.sorted.unique.bigWig.$i.t | cut -f1,2,3,6 >> ${dDIRECTMAPPING_DIR}/${PREFIX}.${dDIRECTMAPPING_INDEX}.sorted.unique.bigWig.summary
     rm -rf ${dDIRECTMAPPING_DIR}/${PREFIX}.IP.${dDIRECTMAPPING_INDEX}.sorted.unique.bigWig.$i \
            ${dDIRECTMAPPING_DIR}/${PREFIX}.input.${dDIRECTMAPPING_INDEX}.sorted.unique.bigWig.$i \
