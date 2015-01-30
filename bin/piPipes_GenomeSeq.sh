@@ -284,7 +284,7 @@ echo2 "Discovering transposon insert by TEMP"
 	fi
 
 if [ ! -z $TRANSGENE_FA ]; then
-	echo2 "Mapping transgenen insertion by TEMP"
+	echo2 "Mapping transgene insertion by TEMP"
 	[ ! -f .${JOBUID}.status.${STEP}.TEMP_transgene ] && \
 	bowtie2 -x genome -U $TRANSGENE_FA -f | \
 	samtools view -bS - | \
