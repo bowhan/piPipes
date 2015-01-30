@@ -245,7 +245,7 @@ DEPTH_A=`cat $SAMPLE_A_DIR/.NormScale`
 DEPTH_B=`cat $SAMPLE_B_DIR/.NormScale`
 [ ! -f .${JOBUID}.status.${STEP}.draw_bigWig_summary ] && \
 	paste $DIRECT_BS_A $DIRECT_BS_B | cut -f1,2,3,4,7,8 > $DIRECT_MAPPING/${SAMPLE_A_NAME}_${SAMPLE_B_NAME}.direct_mapping.sum && \
-	Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_summaryN.R $DIRECT_MAPPING/${SAMPLE_A_NAME}_${SAMPLE_B_NAME}.direct_mapping.sum $DIRECT_MAPPING/${SAMPLE_A_NAME}_${SAMPLE_B_NAME}.direct_mapping.sum $CPU ${DEPTH_A},${DEPTH_A},${DEPTH_B},${DEPTH_B} ${SAMPLE_A_NAME} ${SAMPLE_B_NAME} 1>&2 && \
+	Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_summaryN.R $DIRECT_MAPPING/${SAMPLE_A_NAME}_${SAMPLE_B_NAME}.direct_mapping.sum $DIRECT_MAPPING/${SAMPLE_A_NAME}_${SAMPLE_B_NAME}.direct_mapping.sum $CPU 1,1,1,1 ${SAMPLE_A_NAME} ${SAMPLE_B_NAME} 1>&2 && \
 	PDFs=$DIRECT_MAPPING/*pdf && \
 	gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=$PDF_DIR/${SAMPLE_A_NAME}_${SAMPLE_B_NAME}.direct_mapping.unique.pdf ${PDFs} && \
 	rm -rf ${PDFs} && \
