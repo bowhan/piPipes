@@ -135,7 +135,7 @@ mkdir -p BWAIndex
 
 # converting gtf to bed and extract the fasta
 [ ! -s ${GENOME}.genes.gtf ] && echo2 "please provide gene annotation in file $PWD/${GENOME}.genes.gtf" "error"
-[ ! -s ${GENOME}.genes.bed12 ] && gtfToGenePred ${GENOME}.genes.gtf ${GENOME}.genes.gp && genePredToBed ${GENOME}.genes.gp ${GENOME}.genes.bed12
+[ ! -s ${GENOME}.genes.bed12 ] && gtfToGenePred -ignoreGroupsWithoutExons ${GENOME}.genes.gtf ${GENOME}.genes.gp && genePredToBed ${GENOME}.genes.gp ${GENOME}.genes.bed12
 [ ! -s ${GENOME}.genes.fa ] && bedtools_piPipes getfasta -fi ${GENOME}.fa -bed ${GENOME}.genes.bed12 -fo ${GENOME}.genes.fa -name -split -s
 
 # STAR index for the genome
