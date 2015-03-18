@@ -292,10 +292,10 @@ if [[ -n $PE_MODE ]]; then
 	MultiReads=`grep 'Number of reads mapped to multiple loci' $GENOMIC_MAPPING_DIR/${PREFIX}.x_rRNA.${GENOME}.Log.final.out | awk '{print $NF}'`
 	AllMapReads=$((UniquReads+MultiReads))
 	UnMapReads=$((InputReads-UniquReads-MultiReads))
-	echo -e "genomie_mapper_reads:\t${AllMapReads}" >> $TABLE
-	echo -e "genomie_unique_mapper_reads:\t${UniquReads}" >> $TABLE
-	echo -e "genomie_multiple_mapper_reads:\t${MultiReads}" >> $TABLE
-	echo -e "genomie_unmappable_reads:\t${UnMapReads}" >> $TABLE
+	echo -e "genomic_mapper_reads:\t${AllMapReads}" >> $TABLE
+	echo -e "genomic_unique_mapper_reads:\t${UniquReads}" >> $TABLE
+	echo -e "genomic_multiple_mapper_reads:\t${MultiReads}" >> $TABLE
+	echo -e "genomic_unmappable_reads:\t${UnMapReads}" >> $TABLE
 
 	#######################
 	# Processing sam file #
