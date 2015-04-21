@@ -200,8 +200,7 @@ TRANSCRIPTOME_GTF=$COMMON_FOLDER/${GENOME}.genes.gtf
 export BOWTIE2_INDEXES=$COMMON_FOLDER/Bowtie2Index
 # STAR index for the genome
 STARINDEX=$COMMON_FOLDER/STARIndex
-# bin size for graph
-export BINSIZE=1000
+
 ##############################
 # beginning running pipeline #
 ##############################
@@ -414,18 +413,18 @@ if [[ -n $PE_MODE ]]; then
 	paraFile=${DIRECTMAPPING_DIR}/bigWigSummary.para && \
 	bgP=${DIRECTMAPPING_DIR}/${PREFIX}.${TRANSCRIPTOME_INDEX}.sorted.unique.plus.bigWig && \
 	bgM=${DIRECTMAPPING_DIR}/${PREFIX}.${TRANSCRIPTOME_INDEX}.sorted.unique.minus.bigWig && \
-	awk -v bgP=${bgP} -v bgM=${bgM} -v binSize=${BINSIZE} '{print "bigWigSummary", bgP, $1, 0, $2, $2, "| sed -e \x27s/n\\/a/0/g\x27 >", bgP"."$1; print "bigWigSummary", bgM, $1, 0, $2, $2, "| sed -e \x27s/n\\/a/0/g\x27 >", bgM"."$1;}' ${DIRECTMAPPING_DIR}/transposon.sizes > $paraFile && \
+	awk -v bgP=${bgP} -v bgM=${bgM} '{print "bigWigSummary", bgP, $1, 0, $2, $2, "| sed -e \x27s/n\\/a/0/g\x27 >", bgP"."$1; print "bigWigSummary", bgM, $1, 0, $2, $2, "| sed -e \x27s/n\\/a/0/g\x27 >", bgM"."$1;}' ${DIRECTMAPPING_DIR}/transposon.sizes > $paraFile && \
 	ParaFly -c $paraFile -CPU $CPU && \
 	paraFile=${OUTDIR}/drawFigures && \
 	rm -rf ${DIRECTMAPPING_DIR}/${PREFIX}.${TRANSCRIPTOME_INDEX}.sorted.unique.bigWig.summary && \
-	for i in `cut -f1 ${DIRECTMAPPING_DIR}/transposon.sizes`; do \
+	while read i BINSIZE; do
 		[ ! -s ${DIRECTMAPPING_DIR}/${PREFIX}.${TRANSCRIPTOME_INDEX}.sorted.unique.plus.bigWig.$i  ] && awk -v binSize=${BINSIZE} 'BEGIN{for (i=0;i<binSize-1;++i){printf "%d\t", 0} print 0;}' > ${DIRECTMAPPING_DIR}/${PREFIX}.${TRANSCRIPTOME_INDEX}.sorted.unique.plus.bigWig.$i
 		[ ! -s ${DIRECTMAPPING_DIR}/${PREFIX}.${TRANSCRIPTOME_INDEX}.sorted.unique.minus.bigWig.$i ] && awk -v binSize=${BINSIZE} 'BEGIN{for (i=0;i<binSize-1;++i){printf "%d\t", 0} print 0;}' > ${DIRECTMAPPING_DIR}/${PREFIX}.${TRANSCRIPTOME_INDEX}.sorted.unique.minus.bigWig.$i
 		awk -v name=$i '{for (i=1;i<=NF;++i){printf "%s\t%d\t%.7f\n", name, i, $i}}' ${DIRECTMAPPING_DIR}/${PREFIX}.${TRANSCRIPTOME_INDEX}.sorted.unique.plus.bigWig.$i  > ${DIRECTMAPPING_DIR}/${PREFIX}.${TRANSCRIPTOME_INDEX}.sorted.unique.plus.bigWig.$i.t
 		awk -v name=$i '{for (i=1;i<=NF;++i){printf "%s\t%d\t%.7f\n", name, i, $i}}' ${DIRECTMAPPING_DIR}/${PREFIX}.${TRANSCRIPTOME_INDEX}.sorted.unique.minus.bigWig.$i > ${DIRECTMAPPING_DIR}/${PREFIX}.${TRANSCRIPTOME_INDEX}.sorted.unique.minus.bigWig.$i.t
 		paste ${DIRECTMAPPING_DIR}/${PREFIX}.${TRANSCRIPTOME_INDEX}.sorted.unique.plus.bigWig.$i.t ${DIRECTMAPPING_DIR}/${PREFIX}.${TRANSCRIPTOME_INDEX}.sorted.unique.minus.bigWig.$i.t | cut -f1,2,3,6 >> ${DIRECTMAPPING_DIR}/${PREFIX}.${TRANSCRIPTOME_INDEX}.sorted.unique.bigWig.summary
 		rm -rf ${DIRECTMAPPING_DIR}/${PREFIX}.${TRANSCRIPTOME_INDEX}.sorted.unique.plus.bigWig.$i ${DIRECTMAPPING_DIR}/${PREFIX}.${TRANSCRIPTOME_INDEX}.sorted.unique.plus.bigWig.$i.t ${DIRECTMAPPING_DIR}/${PREFIX}.${TRANSCRIPTOME_INDEX}.sorted.unique.minus.bigWig.$i ${DIRECTMAPPING_DIR}/${PREFIX}.${TRANSCRIPTOME_INDEX}.sorted.unique.minus.bigWig.$i.t
-	done && \
+	done < ${DIRECTMAPPING_DIR}/transposon.sizes && \
 	Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_summary.R ${DIRECTMAPPING_DIR}/${PREFIX}.${TRANSCRIPTOME_INDEX}.sorted.unique.bigWig.summary ${DIRECTMAPPING_DIR}/${PREFIX}.${TRANSCRIPTOME_INDEX}.sorted.unique.bigWig.summary $CPU $NormScale 1>&2 && \
 	PDFs=${DIRECTMAPPING_DIR}/${PREFIX}.${TRANSCRIPTOME_INDEX}.sorted*pdf && \
 	gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=$PDF_DIR/${PREFIX}.${TRANSCRIPTOME_INDEX}.sorted.unique.pdf ${PDFs} && \
@@ -666,18 +665,18 @@ else # Single-End
 	paraFile=${DIRECTMAPPING_DIR}/bigWigSummary.para && \
 	bgP=${DIRECTMAPPING_DIR}/${PREFIX}.${TRANSCRIPTOME_INDEX}.sorted.unique.plus.bigWig && \
 	bgM=${DIRECTMAPPING_DIR}/${PREFIX}.${TRANSCRIPTOME_INDEX}.sorted.unique.minus.bigWig && \
-	awk -v bgP=${bgP} -v bgM=${bgM} -v binSize=${BINSIZE} '{print "bigWigSummary", bgP, $1, 0, $2, binSize, "| sed -e \x27s/n\\/a/0/g\x27 >", bgP"."$1; print "bigWigSummary", bgM, $1, 0, $2, binSize, "| sed -e \x27s/n\\/a/0/g\x27 >", bgM"."$1;}' ${DIRECTMAPPING_DIR}/transposon.sizes > $paraFile && \
+	awk -v bgP=${bgP} -v bgM=${bgM} '{print "bigWigSummary", bgP, $1, 0, $2, $2, "| sed -e \x27s/n\\/a/0/g\x27 >", bgP"."$1; print "bigWigSummary", bgM, $1, 0, $2, $2, "| sed -e \x27s/n\\/a/0/g\x27 >", bgM"."$1;}' ${DIRECTMAPPING_DIR}/transposon.sizes > $paraFile && \
 	ParaFly -c $paraFile -CPU $CPU && \
 	paraFile=${OUTDIR}/drawFigures && \
 	rm -rf ${DIRECTMAPPING_DIR}/${PREFIX}.${TRANSCRIPTOME_INDEX}.sorted.unique.bigWig.summary && \
-	for i in `cut -f1 ${DIRECTMAPPING_DIR}/transposon.sizes`; do \
+	while read i BINSIZE; do
 		[ ! -s ${DIRECTMAPPING_DIR}/${PREFIX}.${TRANSCRIPTOME_INDEX}.sorted.unique.plus.bigWig.$i  ] && awk -v binSize=${BINSIZE} 'BEGIN{for (i=0;i<binSize-1;++i){printf "%d\t", 0} print 0;}' > ${DIRECTMAPPING_DIR}/${PREFIX}.${TRANSCRIPTOME_INDEX}.sorted.unique.plus.bigWig.$i
 		[ ! -s ${DIRECTMAPPING_DIR}/${PREFIX}.${TRANSCRIPTOME_INDEX}.sorted.unique.minus.bigWig.$i ] && awk -v binSize=${BINSIZE} 'BEGIN{for (i=0;i<binSize-1;++i){printf "%d\t", 0} print 0;}' > ${DIRECTMAPPING_DIR}/${PREFIX}.${TRANSCRIPTOME_INDEX}.sorted.unique.minus.bigWig.$i
 		awk -v name=$i '{for (i=1;i<=NF;++i){printf "%s\t%d\t%d\n", name, i, $i}}' ${DIRECTMAPPING_DIR}/${PREFIX}.${TRANSCRIPTOME_INDEX}.sorted.unique.plus.bigWig.$i  > ${DIRECTMAPPING_DIR}/${PREFIX}.${TRANSCRIPTOME_INDEX}.sorted.unique.plus.bigWig.$i.t
 		awk -v name=$i '{for (i=1;i<=NF;++i){printf "%s\t%d\t%d\n", name, i, $i}}' ${DIRECTMAPPING_DIR}/${PREFIX}.${TRANSCRIPTOME_INDEX}.sorted.unique.minus.bigWig.$i > ${DIRECTMAPPING_DIR}/${PREFIX}.${TRANSCRIPTOME_INDEX}.sorted.unique.minus.bigWig.$i.t
 		paste ${DIRECTMAPPING_DIR}/${PREFIX}.${TRANSCRIPTOME_INDEX}.sorted.unique.plus.bigWig.$i.t ${DIRECTMAPPING_DIR}/${PREFIX}.${TRANSCRIPTOME_INDEX}.sorted.unique.minus.bigWig.$i.t | cut -f1,2,3,6 >> ${DIRECTMAPPING_DIR}/${PREFIX}.${TRANSCRIPTOME_INDEX}.sorted.unique.bigWig.summary
 		rm -rf ${DIRECTMAPPING_DIR}/${PREFIX}.${TRANSCRIPTOME_INDEX}.sorted.unique.plus.bigWig.$i ${DIRECTMAPPING_DIR}/${PREFIX}.${TRANSCRIPTOME_INDEX}.sorted.unique.plus.bigWig.$i.t ${DIRECTMAPPING_DIR}/${PREFIX}.${TRANSCRIPTOME_INDEX}.sorted.unique.minus.bigWig.$i ${DIRECTMAPPING_DIR}/${PREFIX}.${TRANSCRIPTOME_INDEX}.sorted.unique.minus.bigWig.$i.t
-	done && \
+	done < ${DIRECTMAPPING_DIR}/transposon.sizes && \
 	Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_summary.R ${DIRECTMAPPING_DIR}/${PREFIX}.${TRANSCRIPTOME_INDEX}.sorted.unique.bigWig.summary ${DIRECTMAPPING_DIR}/${PREFIX}.${TRANSCRIPTOME_INDEX}.sorted.unique.bigWig.summary $CPU $NormScale 1>&2 && \
 	PDFs=${DIRECTMAPPING_DIR}/${PREFIX}.${TRANSCRIPTOME_INDEX}.sorted*pdf && \
 	gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=$PDF_DIR/${PREFIX}.${TRANSCRIPTOME_INDEX}.sorted.unique.pdf ${PDFs} && \
