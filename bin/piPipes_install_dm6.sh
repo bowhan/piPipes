@@ -55,9 +55,9 @@ function download_dm6 {
 	DM6_TRANSCRIPTS_FA='ftp://ftp.flybase.net/releases/FB2014_06/dmel_r6.03/fasta/dmel-all-transcript-r6.03.fasta.gz'
 	DM6_TRNA_FA='ftp://ftp.flybase.net/releases/FB2014_06/dmel_r6.03/fasta/dmel-all-tRNA-r6.03.fasta.gz'
 	DM6_NCRNA_FA='ftp://ftp.flybase.net/releases/FB2014_06/dmel_r6.03/fasta/dmel-all-ncRNA-r6.03.fasta.gz'
-	DM6_TRANSPOSON_FA='ftp://ftp.flybase.net/releases/FB2014_06/dmel_r6.03/fasta/dmel-all-transposon-r6.03.fasta.gz'
+	# DM6_TRANSPOSON_FA='ftp://ftp.flybase.net/releases/FB2014_06/dmel_r6.03/fasta/dmel-all-transposon-r6.03.fasta.gz'
 	DM6_GTF='ftp://ftp.flybase.net/releases/FB2014_06/dmel_r6.03/gtf/dmel-all-r6.03.gtf.gz'
-	declare -a DOWNLOAD_=("DM6_GENOME_FA" "DM6_GENE_FA" "DM6_TRANSCRIPTS_FA" "DM6_TRNA_FA" "DM6_NCRNA_FA" "DM6_TRANSPOSON_FA" "DM6_GTF")
+	declare -a DOWNLOAD_=("DM6_GENOME_FA" "DM6_GENE_FA" "DM6_TRANSCRIPTS_FA" "DM6_TRNA_FA" "DM6_NCRNA_FA" "DM6_GTF")
 	for i in "${DOWNLOAD_[@]}"; do
 		[ ! -f $i ] && wget --continue -O - ${!i} | gunzip > $i 
 	done
