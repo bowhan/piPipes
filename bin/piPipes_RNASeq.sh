@@ -67,6 +67,7 @@ ${REQUIRED}[ required ]
 	        Use "install" to install new genome
 ${OPTIONAL}[ optional ]
 	-L      Ligation based library preperation method; Left reads (\1) being in the same direction as the transcripts. default: off (dUTR based, \2 reads being in the same direction)
+	-x      Turn on "--no-length-correction " option of cufflinks; use if library is made without fragmentation, PAS-seq for example.		
 	-o      Output directory, default: current directory $PWD
 	-c      Number of CPUs to use, default: 8
 	-B      How many rounds of batch algorithm to run for eXpress, default: 21
@@ -78,13 +79,14 @@ echo -e "${COLOR_END}"
 #############################
 # ARGS reading and checking #
 #############################
-while getopts "hl:r:i:c:o:g:B:vLD" OPTION; do
+while getopts "hl:r:i:c:o:g:B:xvLD" OPTION; do
 	case $OPTION in
 		h)	usage && exit 0 ;;
 		l)	LEFT_FASTQ=`readlink -f ${OPTARG}`;  PE_MODE=1 ;;
 		r)	RIGHT_FASTQ=`readlink -f ${OPTARG}`; PE_MODE=1 ;;
 		i)	INPUT_FASTQ=`readlink -f ${OPTARG}`; SE_MODE=1 ;;
 		o)	OUTDIR=`readlink -f ${OPTARG}` ;;
+		x)	NO_LEN_CORRECTION="--no-length-correction" ;;
 		c)	CPU=$OPTARG ;;
 		g)	export GENOME=${OPTARG};;
 		v)	echo2 "RNASEQ_VERSION: v$RNASEQ_VERSION" && exit 0 ;;
@@ -319,6 +321,7 @@ if [[ -n $PE_MODE ]]; then
 	cufflinks \
 		-o $CUFFLINKS_DIR \
 		-p $CPU \
+		$NO_LEN_CORRECTION \
 		-G ${TRANSCRIPTOME_GTF} \
 		-b $GENOME_FA \
 		-u \
@@ -562,6 +565,7 @@ else # Single-End
 	cufflinks \
 		-o $CUFFLINKS_DIR \
 		-p $CPU \
+		$NO_LEN_CORRECTION \
 		-G ${TRANSCRIPTOME_GTF} \
 		-b $GENOME_FA \
 		-u \

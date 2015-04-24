@@ -54,6 +54,7 @@ ${REQUIRED}[ required ]
 ${OPTIONAL}[ optional ]
 	-c      Number of CPUs to use, default: 8
 	-o      Output directory, default: current directory $PWD
+	-x      Turn on "--no-length-correction " option of cuffdiff; use if library is made without fragmentation, PAS-seq for example.
 	-A      Name to use for Sample A, default: using the basename of -a
 	-B      Name to use for Sample B, default: using the basename of -b
 	-n      The top n genes to draw heatmap and bar plot in cummeRbund, sorted by q-value and fold-change, default: 50
@@ -67,7 +68,7 @@ echo -e "${COLOR_END}"
 #############################
 # ARGS reading and checking #
 #############################
-while getopts "hva:b:g:c:o:A:B:n:" OPTION; do
+while getopts "hva:b:g:c:o:A:B:n:x" OPTION; do
 	case $OPTION in
 		h)	usage && exit 0 ;;
 		v)	echo2 "SMALLRNA2_VERSION: v$SMALLRNA2_VERSION" && exit 0 ;;
@@ -75,6 +76,7 @@ while getopts "hva:b:g:c:o:A:B:n:" OPTION; do
 		b)	SAMPLE_Bs=$OPTARG ;;
 		o)	OUTDIR=`readlink -f $OPTARG` ;;
 		c)	CPU=$OPTARG ;;
+		x)	NO_LEN_CORRECTION="--no-length-correction" ;;
 		g)	export GENOME=${OPTARG};;
 		A)  SAMPLE_A_NAME=$OPTARG ;;
 		B)  SAMPLE_B_NAME=$OPTARG ;;
@@ -114,10 +116,10 @@ for DIR in "${SAMPLE_A_DIR[@]}" "${SAMPLE_B_DIR[@]}"; do
 	[[ -z $VERSION ]] && echo2 "RNASeq single sample pipeline not finished in $DIR" "error"
 	echo $VERSION >> .RNASEQ_VERSION
 done
-case `sort -u .RNASEQ_VERSION | wc -l` in 
-	1) ;;
-	*) echo2 "Not all the directories were ran under the same version or condition of the single sample pipeline" "error";;
-esac
+# case `sort -u .RNASEQ_VERSION | wc -l` in 
+# 	1) ;;
+# 	*) echo2 "Not all the directories were ran under the same version or condition of the single sample pipeline" "error";;
+# esac
 
 ########################
 # running binary check #
@@ -176,6 +178,25 @@ done
 echo2 "---------------------------------------------------------------------------------"
 echo2 "Beginning running [${PACKAGE_NAME}] RNASeq pipeline dual library mode version $RNASEQ2_VERSION"
 
+############################################
+# count transposon & piRNA cluster & genes #
+############################################
+echo2 "Drawing scatterplot for eXpress counting of mRNA, transposon for flies"
+[ ! -f .${JOBUID}.status.${STEP}.draw_eXpress ] && \
+echo -e "target_id\teff_counts" > ${SAMPLE_A_NAME}.results.xprs && \
+echo -e "target_id\teff_counts" > ${SAMPLE_B_NAME}.results.xprs && \
+cat $SAMPLE_A_EXPRESS | cut -f2,8 | grep -v id | sort -k1,1 | bedtools_piPipes groupby -i stdin -g 1 -c 2 -o mean >> ${SAMPLE_A_NAME}.results.xprs && \
+cat $SAMPLE_B_EXPRESS | cut -f2,8 | grep -v id | sort -k1,1 | bedtools_piPipes groupby -i stdin -g 1 -c 2 -o mean >> ${SAMPLE_B_NAME}.results.xprs && \
+Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_scatter_plot_eXpress_counts.R \
+	${SAMPLE_A_NAME}.results.xprs \
+	${SAMPLE_B_NAME}.results.xprs \
+	$SAMPLE_A_NAME \
+	$SAMPLE_B_NAME \
+	$PDF_DIR/${SAMPLE_A_NAME}_vs_${SAMPLE_B_NAME}.gene_transposon.abundance && \
+	touch .${JOBUID}.status.${STEP}.draw_eXpress
+STEP=$((STEP+1))
+
+
 ###################################################
 # using cuffdiff to perform differential analysis #
 ###################################################
@@ -185,6 +206,7 @@ cuffdiff \
 	-o $CUFFDIFF_DIR \
 	-L ${SAMPLE_A_NAME},${SAMPLE_B_NAME} \
 	-p $CPU \
+	$NO_LEN_CORRECTION \
 	-u \
 	--compatible-hits-norm \
 	-b $GENOME_FA \
@@ -211,20 +233,3 @@ Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_cummeRbund.R \
 touch .${JOBUID}.status.${STEP}.cummeRbund
 STEP=$((STEP+1))
 
-############################################
-# count transposon & piRNA cluster & genes #
-############################################
-echo2 "Drawing scatterplot for eXpress counting of mRNA, transposon for flies"
-[ ! -f .${JOBUID}.status.${STEP}.draw_eXpress ] && \
-echo -e "target_id\teff_counts" > ${SAMPLE_A_NAME}.results.xprs && \
-echo -e "target_id\teff_counts" > ${SAMPLE_B_NAME}.results.xprs && \
-cat $SAMPLE_A_EXPRESS | cut -f2,8 | grep -v id | sort -k1,1 | bedtools_piPipes groupby -i stdin -g 1 -c 2 -o mean >> ${SAMPLE_A_NAME}.results.xprs && \
-cat $SAMPLE_B_EXPRESS | cut -f2,8 | grep -v id | sort -k1,1 | bedtools_piPipes groupby -i stdin -g 1 -c 2 -o mean >> ${SAMPLE_B_NAME}.results.xprs && \
-Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_scatter_plot_eXpress_counts.R \
-	${SAMPLE_A_NAME}.results.xprs \
-	${SAMPLE_B_NAME}.results.xprs \
-	$SAMPLE_A_NAME \
-	$SAMPLE_B_NAME \
-	$PDF_DIR/${SAMPLE_A_NAME}_vs_${SAMPLE_B_NAME}.gene_transposon.abundance && \
-	touch .${JOBUID}.status.${STEP}.draw_eXpress
-STEP=$((STEP+1))

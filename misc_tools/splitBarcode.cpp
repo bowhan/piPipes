@@ -71,18 +71,8 @@ int main (int argc, char** argv)
 	int maxMM;
 	boost::program_options::options_description opts (R"(
 This program split barcode from TruSeq barcoded library in fastq format, in paired end format
-Currently, it support eight barcodes currently used in the Zamore Lab (2013/05):
-	id1=ATCACG
-	id2=CGATGT
-	id3=TTAGGC
-	id4=TGACCA
-	id5=ACAGTG
-	id6=GCCAAT
-	id7=CAGATC
-	id8=ACTTGA
-
-updated on 11/2014: support gzip/bzip2 as input and output gzip
-												
+Currently, it support 18 (R701-R718) barcodes currently used in the Zamore Lab (2015/04):
+It also supports gzip/bzip2 as input and output gzip.
 Please contact bo.han@Umassmed.edu for any questions.
 )" 	);
 	opts.add_options ()
@@ -133,6 +123,16 @@ Please contact bo.han@Umassmed.edu for any questions.
 		,"ACAGTG"
 		,"CAGATC"
 		,"ACTTGA"
+		,"GATCAG"
+		,"TAGCTT"
+		,"GGCTAC"
+		,"CTTGTA"
+		,"AGTCAA"
+		,"AGTTCC"
+		,"ATGTCA"
+		,"CCGTCC"
+		,"GTAGAG"
+		,"GTCCGC"
 	};
 	unordered_map<string, boost::iostreams::filtering_ostream*> bar2out;
 	for (const auto bar: barcodes) {
@@ -142,7 +142,6 @@ Please contact bo.han@Umassmed.edu for any questions.
 		iter->second->push(boost::iostreams::file_sink(prefix+bar+".fq.gz"));
 	}
 	vector<unique_ptr<std::thread> > threads;
-	clog << "offset: " << offset << endl;
 	for (const auto & bar : barcodes) {
 		switch(offset) {
 			case 0: threads.emplace_back (new std::thread {parseOneAdaptor<0>, inputFile, bar, bar2out[bar], maxMM}); break;
