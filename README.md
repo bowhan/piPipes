@@ -190,7 +190,7 @@ A more detailed explanation can be found [here](https://github.com/bowhan/piPipe
 
 ##CITATION
 
-Han, B. W., Wang, W., Zamore, P. D. & Weng, Z. piPipes: a set of pipelines for piRNA and transposon analysis via small RNA-seq, RNA-seq, degradome- and CAGE-seq, ChIP-seq and genomic DNA sequencing. Bioinformatics [(Advance Access)](http://bioinformatics.oxfordjournals.org/content/early/2014/10/16/bioinformatics.btu647.abstract).
+Han, B. W., Wang, W., Zamore, P. D., and Weng, Z. (2015). [piPipes: a set of pipelines for piRNA and transposon analysis via small RNA-seq, RNA-seq, degradome- and CAGE-seq, ChIP-seq and genomic DNA sequencing. Bioinformatics 31, 593-595.](http://bioinformatics.oxfordjournals.org/content/31/4/593)
 
 ##CONTACT
 	
