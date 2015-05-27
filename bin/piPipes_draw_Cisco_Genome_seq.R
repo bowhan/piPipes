@@ -22,10 +22,12 @@ source (paste (Sys.getenv ("PIPELINE_DIRECTORY"),"/bin/piPipes.R",sep=""))
 pkgTest ("RCircos")
 argv  = commandArgs (TRUE)
 cyto.info = read.table (argv[1],F)
-piRNA_cluster = read.table(gzfile(argv[2]), header=F)
-TEMP.out = read.table (argv[3],T)
-retroSeq.out = read.table (argv[4],T)
-BrD.out = read.table (argv[5],T)
+piRNA_cluster = read.table(gzfile(argv[2]), header=F) # make sure the second argument, the piRNA cluster bed file, is gzipped
+
+tryCatch({TEMP.out = read.table (argv[3],T)}, error = function(e) { print(paste(argv[3], "is empty"))})
+tryCatch({retroSeq.out = read.table (argv[4],T)}, error = function(e) { print(paste(argv[4], "is empty"))})
+tryCatch({BrD.out = read.table (argv[5],T)}, error = function(e) { print(paste(argv[5], "is empty"))})
+
 pdf (argv[6], heigh=10, width=10)
 tracks.inside  = 6
 tracks.outside = 0
@@ -36,7 +38,8 @@ plot.window(c(-2,2), c(-2, 2))
 RCircos.Chromosome.Ideogram.Plot()
 RCircos.Gene.Connector.Plot (piRNA_cluster, 1 ,"in")
 RCircos.Gene.Name.Plot (piRNA_cluster, 4, 2 ,"in")
-RCircos.Tile.Plot (TEMP.out, 4 ,"in")
-RCircos.Tile.Plot (retroSeq.out, 5 ,"in")
-RCircos.Link.Plot (BrD.out, 6, "in")
+head(TEMP.out)
+if (exists("TEMP.out")) { RCircos.Tile.Plot (TEMP.out, 4 ,"in") }
+if (exists("retroSeq.out")) { RCircos.Tile.Plot (retroSeq.out, 5 ,"in") }
+if (exists("BrD.out")) { RCircos.Link.Plot (BrD.out, 6, "in") }
 gc = dev.off ()

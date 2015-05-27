@@ -22,7 +22,6 @@ unique_reads=`cut -f1 $total_lib_stats_file`
 all_reads=`cut -f2 $total_lib_stats_file`
 unique_species=`cut -f3 $total_lib_stats_file`
 all_species=`cut -f4 $total_lib_stats_file`
-
 export ext_len=30 # extend 30nt up/downstream // static const ...
 
 # intersect with the bed without strand information, using a modified version of bedtools
@@ -265,10 +264,16 @@ awk 'BEGIN{FS=OFS="\t"}\
 awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$7])) {printed[$7]=1; if ($2>=ext_len) { for (i=1;i<=1;++i) { if ($6=="+") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}' ${bed}.intersect_with_${feature_name} | bedtools_piPipes getfasta -fi $GENOME_FA -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${bed}.intersect_with_${feature_name}.species.5end_60.percentage && \
 awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$7])) {printed[$7]=1; if ($2>=ext_len) { for (i=1;i<=1;++i) { if ($6=="+") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}' ${bed}.intersect_with_${feature_name}.siRNA | bedtools_piPipes getfasta -fi $GENOME_FA -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${bed}.intersect_with_${feature_name}.siRNA.species.5end_60.percentage && \
 awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$7])) {printed[$7]=1; if ($2>=ext_len) { for (i=1;i<=1;++i) { if ($6=="+") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}' ${bed}.intersect_with_${feature_name}.piRNA | bedtools_piPipes getfasta -fi $GENOME_FA -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${bed}.intersect_with_${feature_name}.piRNA.species.5end_60.percentage && \
+awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$7])) {printed[$7]=1; if ($2>=ext_len) { for (i=1;i<=1;++i) { if ($6=="-") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}' ${bed}.intersect_with_${feature_name} | bedtools_piPipes getfasta -fi $GENOME_FA -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${bed}.intersect_with_${feature_name}.species.3end_60.percentage && \
+awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$7])) {printed[$7]=1; if ($2>=ext_len) { for (i=1;i<=1;++i) { if ($6=="-") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}' ${bed}.intersect_with_${feature_name}.siRNA | bedtools_piPipes getfasta -fi $GENOME_FA -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${bed}.intersect_with_${feature_name}.siRNA.species.3end_60.percentage && \
+awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$7])) {printed[$7]=1; if ($2>=ext_len) { for (i=1;i<=1;++i) { if ($6=="-") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}' ${bed}.intersect_with_${feature_name}.piRNA | bedtools_piPipes getfasta -fi $GENOME_FA -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${bed}.intersect_with_${feature_name}.piRNA.species.3end_60.percentage
 # reads
 awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$7])) {printed[$7]=1; if ($2>=ext_len) { for (i=1;i<=$4;++i) { if ($6=="+") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}' ${bed}.intersect_with_${feature_name} | bedtools_piPipes getfasta -fi $GENOME_FA -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${bed}.intersect_with_${feature_name}.reads.5end_60.percentage && \
 awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$7])) {printed[$7]=1; if ($2>=ext_len) { for (i=1;i<=$4;++i) { if ($6=="+") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}' ${bed}.intersect_with_${feature_name}.siRNA | bedtools_piPipes getfasta -fi $GENOME_FA -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${bed}.intersect_with_${feature_name}.siRNA.reads.5end_60.percentage && \
 awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$7])) {printed[$7]=1; if ($2>=ext_len) { for (i=1;i<=$4;++i) { if ($6=="+") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}' ${bed}.intersect_with_${feature_name}.piRNA | bedtools_piPipes getfasta -fi $GENOME_FA -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${bed}.intersect_with_${feature_name}.piRNA.reads.5end_60.percentage && \
+awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$7])) {printed[$7]=1; if ($2>=ext_len) { for (i=1;i<=$4;++i) { if ($6=="-") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}' ${bed}.intersect_with_${feature_name} | bedtools_piPipes getfasta -fi $GENOME_FA -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${bed}.intersect_with_${feature_name}.reads.3end_60.percentage && \
+awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$7])) {printed[$7]=1; if ($2>=ext_len) { for (i=1;i<=$4;++i) { if ($6=="-") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}' ${bed}.intersect_with_${feature_name}.siRNA | bedtools_piPipes getfasta -fi $GENOME_FA -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${bed}.intersect_with_${feature_name}.siRNA.reads.3end_60.percentage && \
+awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$7])) {printed[$7]=1; if ($2>=ext_len) { for (i=1;i<=$4;++i) { if ($6=="-") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}' ${bed}.intersect_with_${feature_name}.piRNA | bedtools_piPipes getfasta -fi $GENOME_FA -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${bed}.intersect_with_${feature_name}.piRNA.reads.3end_60.percentage
 
 # running ping-pong
 bedtools_piPipes intersect -u -wa -f 0.5 -a $bed -b $feature_bed | tee ${bed}.intersect_with_${feature_name} | awk '$5==1' > ${bed}.intersect_with_${feature_name}.uniqueMappers
@@ -282,6 +287,7 @@ piPipes_local_ping_pong -a ${bed}.intersect_with_${feature_name}.siRNA.uniqueMap
 awk -v l=$piRNA_bot -v h=$piRNA_top '$3-$2>=l&&$3-$2<=h' ${bed}.intersect_with_${feature_name} | tee ${bed}.intersect_with_${feature_name}.piRNA | awk '$5==1' > ${bed}.intersect_with_${feature_name}.piRNA.uniqueMappers
 piPipes_local_ping_pong -a ${bed}.intersect_with_${feature_name}.piRNA -b ${bed}.intersect_with_${feature_name}.piRNA -p 1 > ${bed}.intersect_with_${feature_name}.piRNA.pp
 piPipes_local_ping_pong -a ${bed}.intersect_with_${feature_name}.piRNA.uniqueMappers -b ${bed}.intersect_with_${feature_name}.piRNA.uniqueMappers -p 1 > ${bed}.intersect_with_${feature_name}.piRNA.uniqueMappers.pp
+
 
 Rscript $PIPELINE_DIRECTORY/bin/piPipes_draw_smallRNA_features.R \
 	${bed}.intersect_with_${feature_name}.unique_species \
@@ -308,5 +314,18 @@ Rscript $PIPELINE_DIRECTORY/bin/piPipes_draw_smallRNA_features.R \
 	${bed}.intersect_with_${feature_name}.siRNA.pp \
 	${bed}.intersect_with_${feature_name}.piRNA.reads.5end_60.percentage \
 	${bed}.intersect_with_${feature_name}.piRNA.pp \
+1>&2 && \
+Rscript $PIPELINE_DIRECTORY/bin/piPipes_draw_smallRNA_features_3p.R \
+	${bed}.intersect_with_${feature_name}.3p \
+	${bed}.intersect_with_${feature_name}.lendis \
+	${bed}.intersect_with_${feature_name}.siRNA.lendis \
+	${bed}.intersect_with_${feature_name}.piRNA.lendis \
+	${ext_len} \
+	${bed}.intersect_with_${feature_name}.species.5end_60.percentage \
+	${bed}.intersect_with_${feature_name}.species.3end_60.percentage \
+	${bed}.intersect_with_${feature_name}.siRNA.species.5end_60.percentage \
+	${bed}.intersect_with_${feature_name}.siRNA.species.3end_60.percentage \
+	${bed}.intersect_with_${feature_name}.piRNA.species.5end_60.percentage \
+	${bed}.intersect_with_${feature_name}.piRNA.species.3end_60.percentage \
 1>&2 && \
 rm -rf ${bed}.intersect_with_${feature_name} ${bed}.intersect_with_${feature_name}.siRNA ${bed}.intersect_with_${feature_name}.piRNA

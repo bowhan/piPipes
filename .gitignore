@@ -3,6 +3,10 @@ common
 bin/htseq-count
 bin/htseq-qa
 bin/macs2
+bin/R
+bin/Rscript
+lib64
+share
 lib
 piper
 piper_debug

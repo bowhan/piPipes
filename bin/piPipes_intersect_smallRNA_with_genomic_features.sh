@@ -69,6 +69,7 @@ for t in ${TARGETS[@]}
 do \
 	[ -s $INTERSECT_OUTDIR/${ALL_BED}.intersect_with_${t}.unique_species.pdf ] && PDFs=${PDFs}" "$INTERSECT_OUTDIR/${ALL_BED}.intersect_with_${t}.unique_species.pdf
 	[ -s $INTERSECT_OUTDIR/${ALL_BED}.intersect_with_${t}.all_reads.pdf ] && PDFs=${PDFs}" "$INTERSECT_OUTDIR/${ALL_BED}.intersect_with_${t}.all_reads.pdf
+	[ -s $INTERSECT_OUTDIR/${ALL_BED}.intersect_with_${t}.3p.pdf ] && PDFs=${PDFs}" "$INTERSECT_OUTDIR/${ALL_BED}.intersect_with_${t}.3p.pdf
 	echo -ne "${t}\t" >> $smRNA_SUM
 	cat $INTERSECT_OUTDIR/.stats.${t}.smRNA >> $smRNA_SUM
 	echo -ne "${t}\t" >> $siRNA_SUM
