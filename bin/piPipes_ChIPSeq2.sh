@@ -217,10 +217,45 @@ macs2 bdgdiff \
 	--outdir $BDGDIFF_DIR \
 	--o-prefix ${PREFIX}.${SAMPLE_A_NAME}_vs_${SAMPLE_B_NAME} \
 	2> $BDGDIFF_DIR/${PREFIX}.${SAMPLE_A_NAME}_vs_${SAMPLE_B_NAME}.bdgdiff.log && \
+	TO_BE_FIX=`ls $BDGDIFF_DIR/*common.bed` && awk 'BEGIN{FS=OFS="\t";getline}{$5=int($5);print $0,"+"}' $TO_BE_FIX > ${TO_BE_FIX}1 && mv ${TO_BE_FIX}1 ${TO_BE_FIX} && \
 	TO_BE_FIX=`ls $BDGDIFF_DIR/*_cond1.bed` && awk 'BEGIN{FS=OFS="\t";getline}{$5=int($5);print $0,"+"}' $TO_BE_FIX > ${TO_BE_FIX}1 && mv ${TO_BE_FIX}1 ${TO_BE_FIX} && \
 	TO_BE_FIX=`ls $BDGDIFF_DIR/*_cond2.bed` && awk 'BEGIN{FS=OFS="\t";getline}{$5=int($5);print $0,"+"}' $TO_BE_FIX > ${TO_BE_FIX}1 && mv ${TO_BE_FIX}1 ${TO_BE_FIX} && \
 	touch .${JOBUID}.status.${STEP}.bdgdiff
 STEP=$((STEP+1))
+
+###########################################
+# Annotate peaks; count transposon copies #
+###########################################
+echo2 "Annotating peaks and counting transposon copies"
+if [ ! -f .${JOBUID}.status.${STEP}.annotate_peaks ]; then
+	COMMON_PEAKS_BED=`ls $BDGDIFF_DIR/*common.bed`
+	COND1_PEAKS_BED=`ls $BDGDIFF_DIR/*_cond1.bed`
+	COND2_PEAKS_BED=`ls $BDGDIFF_DIR/*_cond2.bed`
+	. $COMMON_FOLDER/genomic_features
+	if [[ "$GENOME" == "dm3" ]]; then 
+		TRANSPOSON_BED=$COMMON_FOLDER/dm3.transposon.rm.bed #TODO renew $Trn and Zamore groups...
+		GENE_BED=$flyBase_Gene
+	elif [[ "$GENOME" == "dm6" ]]; then
+		TRANSPOSON_BED=$flyBase_repeatMasker
+		GENE_BED=$Genes
+	elif [[ "$GENOME" == "mm9" ]]; then
+		TRANSPOSON_BED=$repeatMasker
+		GENE_BED=$refSeq_GENE
+	fi
+	
+	for i in COMMON_PEAKS_BED COND1_PEAKS_BED COND2_PEAKS_BED; do
+		BED=${!i}
+		bedtools_piPipes intersect -wa -u -a ${BED} -b $TRANSPOSON_BED | \
+			bedtools_piPipes intersect -v -a stdin -b $MASK  | \
+			bedtools_piPipes intersect -v -a stdin -b $GENE_BED > ${BED%bed}trn-no-gene.bed && \
+		bedtools_piPipes intersect -wo -a ${BED%bed}trn-no-gene.bed -b $TRANSPOSON_BED | \
+			sort -k1,1 -k2,2 -k3,3 -k4,4 -k6,6 | \
+			bedtools_piPipes groupby -i stdin -g 1,2,3,4,6 -c 10 -o distinct | \
+			awk '{OFS="\t"; print $1,$2,$3,$4,$6,$5}' > \
+		${BED%bed}trn-no-gene.annotated.bed
+	done
+	touch .${JOBUID}.status.${STEP}.annotate_peaks
+fi
 
 ############################################
 # draw figures for genomic features (mega) #

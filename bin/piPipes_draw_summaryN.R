@@ -22,6 +22,7 @@ source (paste (Sys.getenv ("PIPELINE_DIRECTORY"),"/bin/piPipes.R",sep=""))
 pkgTest ("parallel")
 pkgTest ("RColorBrewer")
 pkgTest ("ggplot2")
+pkgTest ("grid")
 
 # https://github.com/mylesmharrison/colorRampPaletteAlpha/blob/master/colorRampPaletteAlpha.R
 addalpha <- function(colors, alpha=1.0) {

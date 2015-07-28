@@ -20,6 +20,7 @@
 source (paste (Sys.getenv ("PIPELINE_DIRECTORY"),"/bin/piPipes.R",sep=""))
 pkgTest ("gdata")
 pkgTest ("ggplot2")
+pkgTest ("grid")
 pkgTest ("ggthemes")
 pkgTest ("scales")
 pkgTest ("gridExtra")

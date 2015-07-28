@@ -19,6 +19,7 @@
 source (paste (Sys.getenv ("PIPELINE_DIRECTORY"),"/bin/piPipes.R",sep=""))
 
 pkgTest ("ggplot2")
+pkgTest ("grid")
 pkgTest ("scales")
 
 argv = commandArgs (TRUE)
