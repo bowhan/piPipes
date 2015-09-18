@@ -106,7 +106,7 @@ RETROSEQ=retroSeq_discovering && mkdir -p $RETROSEQ
 MRFAST_GENOMIC_MAPPING_DIR=mrFast_VariationHunter_output && mkdir -p $MRFAST_GENOMIC_MAPPING_DIR
 BREAKDANCER_DIR=break_dancer_out && mkdir -p $BREAKDANCER_DIR
 BW_OUTDIR=bigWig && mkdir -p $BW_OUTDIR
-# TRANSGENE_MAPPING_DIR=transgene_mapping && mkdir -p $TRANSGENE_MAPPING_DIR
+TRANSGENE_MAPPING_DIR=transgene_mapping && mkdir -p $TRANSGENE_MAPPING_DIR
 
 ########################
 # running binary check #

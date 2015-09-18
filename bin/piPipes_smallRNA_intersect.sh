@@ -24,8 +24,10 @@ unique_species=`cut -f3 $total_lib_stats_file`
 all_species=`cut -f4 $total_lib_stats_file`
 export ext_len=30 # extend 30nt up/downstream // static const ...
 
+
 # intersect with the bed without strand information, using a modified version of bedtools
-bedtools_piPipes intersect -wo -f 0.5 -a $bed -b $feature_bed > ${bed}.intersect_with_${feature_name} && \
+bedtools_piPipes intersect -wo -f 0.5 -a $bed -b $feature_bed > ${bed}.intersect_with_${feature_name}
+[ ! -s ${bed}.intersect_with_${feature_name} ] && echo "no reads at ${feature_name} " && exit
 awk -v lib_uniq_reads=$unique_reads \
 	-v lib_all_reads=$all_reads \
 	-v lib_unique_species=$unique_species \
