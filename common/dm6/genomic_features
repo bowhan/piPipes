@@ -51,6 +51,15 @@
 	"ThreeUTR" \
  	)
 	
+	declare -a TARGETS_EXCLUSIVE=(\
+	"piRNA_Cluster" \
+	"CDS" \
+	"FiveUTR" \
+	"ThreeUTR" \
+	"Introns" \
+	"flyBase_repeatMasker" \
+	)
+	
 # variables for small RNA direct mapping
 	declare -a DIRECT_MAPPING=( "repBase" "piRNAcluster" )
 	

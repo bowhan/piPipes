@@ -20,7 +20,7 @@
 ##########
 # Config #
 ##########
-export GENOME_INSTALL_VERSION=1.1.0
+export GENOME_INSTALL_VERSION=1.1.1
 
 #########
 # USAGE #
@@ -48,15 +48,14 @@ mkdir -p $PIPELINE_DIRECTORY/Rlib
 mkdir -p STARIndex
 mkdir -p mrFastIndex
 
-# download function for dm6, 6.03
+# download function for dm6, 6.07
 function download_dm6 {
-	DM6_GENOME_FA='ftp://ftp.flybase.net/releases/FB2014_06/dmel_r6.03/fasta/dmel-all-chromosome-r6.03.fasta.gz'
-	DM6_GENE_FA='ftp://ftp.flybase.net/releases/FB2014_06/dmel_r6.03/fasta/dmel-all-gene-r6.03.fasta.gz'
-	DM6_TRANSCRIPTS_FA='ftp://ftp.flybase.net/releases/FB2014_06/dmel_r6.03/fasta/dmel-all-transcript-r6.03.fasta.gz'
-	DM6_TRNA_FA='ftp://ftp.flybase.net/releases/FB2014_06/dmel_r6.03/fasta/dmel-all-tRNA-r6.03.fasta.gz'
-	DM6_NCRNA_FA='ftp://ftp.flybase.net/releases/FB2014_06/dmel_r6.03/fasta/dmel-all-ncRNA-r6.03.fasta.gz'
-	# DM6_TRANSPOSON_FA='ftp://ftp.flybase.net/releases/FB2014_06/dmel_r6.03/fasta/dmel-all-transposon-r6.03.fasta.gz'
-	DM6_GTF='ftp://ftp.flybase.net/releases/FB2014_06/dmel_r6.03/gtf/dmel-all-r6.03.gtf.gz'
+	DM6_GENOME_FA='ftp://ftp.flybase.net/releases/FB2015_04/dmel_r6.07/fasta/dmel-all-chromosome-r6.07.fasta.gz'
+	DM6_GENE_FA='ftp://ftp.flybase.net/releases/FB2015_04/dmel_r6.07/fasta/dmel-all-gene-r6.07.fasta.gz'
+	DM6_TRANSCRIPTS_FA='ftp://ftp.flybase.net/releases/FB2015_04/dmel_r6.07/fasta/dmel-all-transcript-r6.07.fasta.gz'
+	DM6_TRNA_FA='ftp://ftp.flybase.net/releases/FB2015_04/dmel_r6.07/fasta/dmel-all-tRNA-r6.07.fasta.gz'
+	DM6_NCRNA_FA='ftp://ftp.flybase.net/releases/FB2015_04/dmel_r6.07/fasta/dmel-all-ncRNA-r6.07.fasta.gz'
+	DM6_GTF='ftp://ftp.flybase.net/releases/FB2015_04/dmel_r6.07/gtf/dmel-all-r6.07.gtf.gz'
 	declare -a DOWNLOAD_=("DM6_GENOME_FA" "DM6_GENE_FA" "DM6_TRANSCRIPTS_FA" "DM6_TRNA_FA" "DM6_NCRNA_FA" "DM6_GTF")
 	for i in "${DOWNLOAD_[@]}"; do
 		[ ! -f $i ] && wget --continue -O - ${!i} | gunzip > $i 
