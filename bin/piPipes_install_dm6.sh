@@ -140,7 +140,7 @@ mkdir -p BWAIndex
 
 # converting gtf to bed and extract the fasta
 [ ! -s ${GENOME}.genes.gtf ] && grep -v mdg4 DM6_GTF > ${GENOME}.genes.gtf # ln -s DM6_GTF ${GENOME}.genes.gtf
-[ ! -s ${GENOME}.genes.bed12 ] && gtfToGenePred ${GENOME}.genes.gtf ${GENOME}.genes.gp && genePredToBed ${GENOME}.genes.gp ${GENOME}.genes.bed12
+[ ! -s ${GENOME}.genes.bed12 ] && gtfToGenePred -ignoreGroupsWithoutExons ${GENOME}.genes.gtf ${GENOME}.genes.gp && genePredToBed ${GENOME}.genes.gp ${GENOME}.genes.bed12
 [ ! -s ${GENOME}.genes.fa ] && bedtools_piPipes getfasta -fi ${GENOME}.fa -bed ${GENOME}.genes.bed12 -fo ${GENOME}.genes.fa -name -split -s
 
 # STAR index for the genome
@@ -165,8 +165,8 @@ echo2 "Building Bowtie/Bowtie2 index for rRNA"
 # microRNA and hairpin index
 echo2 "Building index for microRNA hairpin, still using fasta from mirBase"
 [ ! -s BowtieIndex/hairpin.sizes ] && bowtie-build ${GENOME}.hairpin.fa BowtieIndex/hairpin && faSize -tab -detailed ${GENOME}.hairpin.fa > BowtieIndex/hairpin.sizes
-[ ! -s mature2hairpin.uniq.bed ]  && bowtie -S -f -v 0 -m 1 --best --strata --max ${GENOME}.mature.multiMapper.fa BowtieIndex/hairpin ${GENOME}.mature.fa 1> /dev/stdout 2> /dev/null | samtools view -uS - | bedtools_piPipes bamtobed -i - | awk '$6=="+"' > mature2hairpin.uniq.bed
-[ ! -s mature2hairpin.multi.bed ] && bowtie -S -f -v 0 -a   --best --strata BowtieIndex/hairpin ${GENOME}.mature.multiMapper.fa 1> /dev/stdout 2> /dev/null | samtools view -uS - | bedtools_piPipes bamtobed -i - | awk '$6=="+"' > mature2hairpin.multi.bed
+[ ! -s mature2hairpin.uniq.bed ]  && bowtie --norc -S -f -v 0 -m 1 --best --strata --max ${GENOME}.mature.multiMapper.fa BowtieIndex/hairpin ${GENOME}.mature.fa 1> /dev/stdout 2> /dev/null | samtools view -uS - | bedtools_piPipes bamtobed -i - > mature2hairpin.uniq.bed
+[ ! -s mature2hairpin.multi.bed ] && bowtie --norc -S -f -v 0 -a   --best --strata BowtieIndex/hairpin ${GENOME}.mature.multiMapper.fa 1> /dev/stdout 2> /dev/null | samtools view -uS - | bedtools_piPipes bamtobed -i - > mature2hairpin.multi.bed
 [ ! -s mature2hairpin.allMapper.bed ] && cat mature2hairpin.uniq.bed mature2hairpin.multi.bed > mature2hairpin.allMapper.bed
 
 # repBase | transposon indexes # the pipiline should include the repBase.fa

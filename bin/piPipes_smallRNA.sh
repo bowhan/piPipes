@@ -251,14 +251,14 @@ x_rRNA_HAIRPIN_BED2_LENDIS=$MIRNA_DIR/${PREFIX}.x_rRNA.hairpin.v${hairpin_MM}m1.
 x_rRNA_HAIRPIN_GENOME_BED2=$GENOMIC_MAPPING_DIR/${PREFIX}.x_rRNA.hairpin.${GENOME}v${genome_MM}a.bed2 # bed2 format with hairpin mapper, with genome as reference
 x_rRNA_HAIRPIN_GENOME_LOG=$GENOMIC_MAPPING_DIR/${PREFIX}.x_rRNA.hairpin.${GENOME}v${genome_MM}a.log # log file for hairpin mapping
 [ ! -f .${JOBUID}.status.${STEP}.hairpin_mapping ] && \
-	bowtie -r -v $hairpin_MM -m 1 --best --strata -p $CPU -S \
+	bowtie -r --norc -v $hairpin_MM -m 1 --best --strata -p $CPU -S \
 		--al $x_rRNA_HAIRPIN_INSERT \
 		--un $x_rRNA_x_hairpin_INSERT \
 		hairpin \
 		$x_rRNA_INSERT \
 		  | \
 	samtools view -bSF 0x4 - 2>/dev/null | \
-	bedtools_piPipes bamtobed -i - | awk '$6=="+"' > ${PREFIX}.x_rRNA.hairpin.v${hairpin_MM}m1.bed && \
+	bedtools_piPipes bamtobed -i - > ${PREFIX}.x_rRNA.hairpin.v${hairpin_MM}m1.bed && \
 	piPipes_insertBed_to_bed2 $x_rRNA_INSERT ${PREFIX}.x_rRNA.hairpin.v${hairpin_MM}m1.bed > $x_rRNA_HAIRPIN_BED2 && \
 	rm -rf ${PREFIX}.x_rRNA.hairpin.v${hairpin_MM}m1.bed && \
 	bed2lendis $x_rRNA_HAIRPIN_BED2 > $x_rRNA_HAIRPIN_BED2_LENDIS && \
