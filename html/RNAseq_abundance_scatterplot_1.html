@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <style>
+        body {
+            /*font-size: 1.5em;*/
+            font-family: "Helvetica Neue", Calibri, serif;
+        }
+
+        .axis path,
+        .axis line {
+            fill: none;
+            stroke: #000;
+            shape-rendering: crispEdges;
+        }
+
+        .dot {
+            stroke: #000;
+        }
+
+        .tooltip {
+            position: absolute;
+            font-weight: 2px;
+            width: 250px;
+            height: 100px;
+            pointer-events: none;
+            background-color: lightgrey;
+        }
+
+        .italics {
+            font-style: italic;
+        }
+
+        .off {
+            display: none;
+        }
+
+    </style>
+    <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+</head>
+<body>
+<pre id="csvdata" style="display: none">
