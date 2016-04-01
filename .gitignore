@@ -1,5 +1,6 @@
 Rlib
-common
+common/
+bin/bowtie-buildc
 bin/htseq-count
 bin/htseq-qa
 bin/macs2
