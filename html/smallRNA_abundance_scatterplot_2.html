@@ -1,0 +1,292 @@
+</pre>
+<div id="buttons">
+    <button id="sense">Sense On</button>
+    <button id="antisense">Antisense On</button>
+</div>
+
+<script>
+    var raw = d3.select("#csvdata").text();
+    var alldata = d3.csv.parseRows(raw);
+    var sampleNames = alldata[0].splice(2, 5);
+    /* piPipes specific */
+    var data = [];
+    var parsed = alldata.splice(1).forEach(function (line) {
+        data.push({
+            transposon: line[0],
+            type: parseInt(line[1]),
+            sample1sense: parseFloat(line[2]),
+            sample1antisense: parseFloat(line[3]),
+            sample2sense: parseFloat(line[4]),
+            sample2antisense: parseFloat(line[5])
+        });
+    });
+    var buttonIds = [
+        "sense",
+        "antisense"
+    ];
+    drawScatter(data);
+
+    function drawScatter(data) {
+        /* canvas */
+        var defaultOpacity = .75;
+        var defaultCircleSize = 5;
+        var canvasSize = {
+            width: 560,
+            height: 560
+        };
+        var margin = {
+            top: 20,
+            right: 20,
+            bottom: 80,
+            left: 80
+        };
+
+        var width = canvasSize.width - margin.left - margin.right;
+        var height = canvasSize.height - margin.top - margin.bottom;
+        var superscript = "⁰¹²³⁴⁵⁶⁷⁸⁹";
+        var formatPower = function (d) {
+            return (d + "").split("").map(function (c) {
+                return superscript[c];
+            }).join("");
+        };
+        var formatTick = function (d) {
+            return 10 + formatPower(Math.round(Math.log(d) / Math.LN10));
+        };
+
+        /* get the x/y lim */
+        var minValue = 1e20;
+        var maxValue = 0;
+        for (var i = 0; i < data.length; ++i) {
+            ["sample1sense", "sample1antisense",
+                "sample2sense", "sample2antisense"].forEach(function (lib) {
+                if (data[i][lib] > 0 && minValue > data[i][lib]) {
+                    minValue = data[i][lib];
+                }
+                if (maxValue < data[i][lib]) {
+                    maxValue = data[i][lib];
+                }
+            });
+        }
+        if (minValue == 0) minValue = 1;
+        var xyLim = [minValue, maxValue];
+
+        /* X axis */
+        var xScale = d3.scale.log().nice()
+                .domain(xyLim)
+                .range([0, width]);
+
+        var xAxis = d3.svg.axis()
+                .scale(xScale)
+                .orient("bottom")
+                .ticks(5, function (d) {
+                    return 10
+//                            + (d < 1 ? "\u207B" : 0)
+                            + formatPower(Math.round(Math.log(d) / Math.LN10));
+                })
+                ;
+
+        /* y axis */
+        var yScale = d3.scale.log().nice()
+                .domain(xyLim)
+                .range([height, 0]);
+
+        var yAxis = d3.svg.axis()
+                .scale(yScale)
+                .orient("left")
+                .ticks(5, function (d) {
+                    return 10
+//                            + (d < 1 ? "\u207B" : 0)
+                            + formatPower(Math.round(Math.log(d) / Math.LN10));
+                })
+                ;
+
+        /* color */
+        var color = d3.scale.category10();
+
+
+        /* set up the canvas */
+        var svg = d3.select("body").append("svg")
+                .attr("width", canvasSize.width)
+                .attr("height", canvasSize.height)
+                .append("g")
+                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+        /* show transposon name on mouseover */
+        var tooltip = d3.select("body").append("div")
+                .attr("class", "tooltip")
+                .style("opacity", 0);
+
+        /* x-axis */
+        svg.append("g")
+                .attr("class", "x axis")
+                .attr("transform", "translate(0," + height + ")") /* move to the bottom */
+                .call(xAxis)
+                .append("text")
+                .attr("class", "label")
+                .attr("x", width - 300)
+                .attr("y", 60)
+                .style("test-anchor", "end")
+                .text(sampleNames[0])
+                .attr("class", "xLabelName");
+
+        /* y axis */
+        svg.append("g")
+                .attr("class", "y axis")
+                .call(yAxis)
+                .append("text")
+                .attr("class", "label")
+                .attr("transform", "rotate(-90)")
+                .attr("x", -300)
+                .attr("y", -70)
+                .attr("dy", ".71em")
+                .style("test-anchor", "end")
+                .text(sampleNames[2])
+                .attr("class", "yLabelName");
+
+        /* draw dots */
+        ["sense", "antisense"].forEach(function (orientation) {
+            var xLib = "sample1" + orientation;
+            var yLib = "sample2" + orientation;
+            svg.selectAll("." + orientation)
+                    .data(data)
+                    .enter()
+                    .append("circle")
+                    .attr("class", function (x) {
+                        return "dot on " + orientation + " " + x.transposon;
+                    })
+                    .attr("r", defaultCircleSize)
+                    .attr("cx", function (d) {
+                        return d[xLib] > 0 ? xScale(d[xLib]) : 0;
+                    })
+                    .attr("cy", function (d) {
+                        return d[yLib] > 0 ? yScale(d[yLib]) : 0;
+                    })
+                    .style("fill", function (d) {
+                        return color(d.type);
+                    })
+                    .style("opacity", defaultOpacity)
+                    .on("mouseover", function (d) {
+                        if (d3.select(this).style("opacity") > 0) {
+                            var classes = d3.select(this).attr("class").split(" ");
+                            var transposon = classes[classes.length - 1];
+                            d3.selectAll("." + transposon)
+                                    .attr("r", defaultCircleSize * 3)
+                                    .style("opacity", 1)
+                                    .moveToFront();
+
+                            tooltip.transition().style("opacity", 1);
+                            tooltip.html(d.transposon + " "
+                                            + classes[2]
+                                            + "<br> ("
+                                            + Math.round(d[yLib]) + " / "
+                                            + Math.round(d[xLib]) + " = "
+                                            + Math.round(1000 * d[yLib] / d[xLib]) / 1000
+                                            + ")<br>"
+                                            + "<span class='italics'>group" + d.type + "</span>")
+                                    .style("left", (d3.event.pageX + 30) + "px")
+                                    .style("top", (d3.event.pageY - 30) + "px");
+                        }
+                    })
+                    .on("mouseout", function (d) {
+                        if (d3.select(this).style("opacity") > 0) {
+                            var classes = d3.select(this).attr("class").split(" ");
+                            var transposon = classes[classes.length - 1];
+                            d3.selectAll("." + transposon)
+                                    .attr("r", defaultCircleSize)
+                                    .style("opacity", defaultOpacity);
+                        }
+                        tooltip.transition().duration(500).style("opacity", 0);
+                    })
+        });
+
+        /* draw legend */
+        var legendRecSize = 18;
+        var legend = svg.selectAll(".legend")
+                .data(color.domain())
+                .enter()
+                .append("g")
+                .attr("class", "legend")
+                .attr("transform", function (d, i) {
+                    return "translate(0," + (i * (legendRecSize + 2) + 350) + ")";
+                });
+
+        /* draw legend colored rectangle */
+        legend.append("rect")
+                .attr("x", width - legendRecSize)
+                .attr("width", legendRecSize)
+                .attr("height", legendRecSize)
+                .style("fill", color)
+                .on("click", function (d) {
+                    if (d3.select(this).style("opacity") == 0.2) {
+                        /* turn back on */
+                        d3.select(this).style("opacity", 1.);
+                        d3.selectAll(".legend_text")
+                                .filter(function (t) {
+                                    return d == t;
+                                })
+                                .style("opacity", 1.)
+                        ;
+                        d3.selectAll("circle")
+                                .filter(function (c) {
+                                    return c.type == d;
+                                })
+                                .style("opacity", defaultOpacity);
+                    } else {
+                        /* turn off opacity */
+                        d3.select(this).style("opacity", 0.2);
+                        d3.selectAll(".legend_text")
+                                .filter(function (t) {
+                                    return d == t;
+                                })
+                                .style("opacity", .2)
+                        ;
+                        d3.selectAll("circle")
+                                .filter(function (c) {
+                                    return c.type == d;
+                                })
+                                .style("opacity", 0);
+                    }
+                });
+
+        /* draw legend text */
+        legend.append("text")
+                .attr("class", "legend_text")
+                .attr("x", width - 20)
+                .attr("y", legendRecSize / 2)
+                .attr("dy", ".35em")
+                .style("text-anchor", "end")
+                .text(function (d) {
+                    return "group " + d;
+                });
+
+        /* buttons */
+        d3.selection.prototype.moveToFront = function () {
+            return this.each(function () {
+                this.parentNode.appendChild(this);
+            });
+        };
+
+        buttonIds.forEach(function (id) {
+            d3.select('#' + id) /* select button */
+                    .on("click", function () {
+                        var t = d3.selectAll("." + id).filter("circle");
+                        if (t.classed("off")) {
+                            t.classed("off", false);
+                            this.textContent = this.textContent.replace("Off", "On");
+//                            d3.select(".xLabelName").text(sampleNames[0]);
+//                            d3.select(".yLabelName").text(sampleNames[2]);
+                        } else {
+                            t.classed("off", true);
+                            this.textContent = this.textContent.replace("On", "Off");
+//                            d3.select(".xLabelName").text("");
+//                            d3.select(".yLabelName").text("");
+                        }
+                    });
+        });
+    }
+</script>
+
+
+</body>
+</html>
+
