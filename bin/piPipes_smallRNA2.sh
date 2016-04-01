@@ -345,7 +345,7 @@ awk 'BEGIN{FS=OFS="\t"}{if(ARGIND==1){if(substr($1,1,3)=="pi-") t[$1]="prepachyt
 	$CLUSTER_DIR/${SAMPLE_A_NAME}.cluster.abundance.normalized_by_$NORMMETHOD \
 	$CLUSTER_DIR/${SAMPLE_B_NAME}.cluster.abundance.normalized_by_$NORMMETHOD \
 	>> $HTML_DIR/${SAMPLE_A_NAME}_vs_${SAMPLE_B_NAME}.piRNAcluster.abundance.normalized_by_${NORMMETHOD}.html && \
-cat ${PIPELINE_DIRECTORY}/html/smallRNA_abundance_scatterplot_2.html >> $HTML_DIR/${SAMPLE_A_NAME}_vs_${SAMPLE_B_NAME}.piRNAcluster.abundance.normalized_by_${NORMMETHOD}.html && \
+cat ${PIPELINE_DIRECTORY}/html/smallRNA_abundance_scatterplot_2.html >> $HTML_DIR/${SAMPLE_A_NAME}_vs_${SAMPLE_B_NAME}.piRNAcluster.abundance.normalized_by_${NORMMETHOD}.html
 ;;
 *)
 cat ${PIPELINE_DIRECTORY}/html/smallRNA_abundance_scatterplot_1.html > $HTML_DIR/${SAMPLE_A_NAME}_vs_${SAMPLE_B_NAME}.piRNAcluster.abundance.normalized_by_${NORMMETHOD}.html && \
@@ -353,7 +353,7 @@ awk 'BEGIN{FS=OFS="\t"}{if(ARGIND==1){t[$1]="1"; m[$1]=1; a[$1]=$2; b[$1]=$3}els
 	$CLUSTER_DIR/${SAMPLE_A_NAME}.cluster.abundance.normalized_by_$NORMMETHOD \
 	$CLUSTER_DIR/${SAMPLE_B_NAME}.cluster.abundance.normalized_by_$NORMMETHOD \
 	>> $HTML_DIR/${SAMPLE_A_NAME}_vs_${SAMPLE_B_NAME}.piRNAcluster.abundance.normalized_by_${NORMMETHOD}.html && \
-cat ${PIPELINE_DIRECTORY}/html/smallRNA_abundance_scatterplot_2.html >> $HTML_DIR/${SAMPLE_A_NAME}_vs_${SAMPLE_B_NAME}.piRNAcluster.abundance.normalized_by_${NORMMETHOD}.html && \
+cat ${PIPELINE_DIRECTORY}/html/smallRNA_abundance_scatterplot_2.html >> $HTML_DIR/${SAMPLE_A_NAME}_vs_${SAMPLE_B_NAME}.piRNAcluster.abundance.normalized_by_${NORMMETHOD}.html
 ;;
 esac
 
