@@ -198,22 +198,23 @@ Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_scatter_plot_eXpress_coun
 STEP=$((STEP+1))
 
 echo2 "Drawing interactive plot for eXpress counting of mRNA and transposon"
-cat RNAseq_abundance_scatterplot_1.html > $HTML_DIR/${SAMPLE_A_NAME}_vs_${SAMPLE_B_NAME}.gene_transposon.abundance.html 
+cat ${PIPELINE_DIRECTORY}/html/RNAseq_abundance_scatterplot_1.html > $HTML_DIR/${SAMPLE_A_NAME}_vs_${SAMPLE_B_NAME}.gene_transposon.abundance.html
+echo "transposon,type,$SAMPLE_A_NAME,$SAMPLE_B_NAME" >> $HTML_DIR/${SAMPLE_A_NAME}_vs_${SAMPLE_B_NAME}.gene_transposon.abundance.html
 case $GENOME in
 	dm3)
-	awk 'BEGIN{FS=OFS="\t"}{if(ARGIND==1){prefix=substr($1,1,2); if(prefix=="NM")t[$1]="mRNA"; else if(prefix=="NR")t[$1]="ncRNA"; else t[$1]="transposons"; a[$1]=$2; m[$1]=1} else{b[$1]=$2; m[$1]=1}}END{for(i in m) printf "%s,%s,%.3f,%.3f\n", i, t[i], a[i]?a[i]:0, b[i]?b[i]:0}' <(sed 1d ${SAMPLE_A_NAME}.results.xprs) <(sed 1d ${SAMPLE_B_NAME}.results.xprs) >> $HTML_DIR/${SAMPLE_A_NAME}_vs_${SAMPLE_B_NAME}.gene_transposon.abundance.html 
+	awk 'BEGIN{FS=OFS="\t"}{if(ARGIND==1){prefix=substr($1,1,2); if(prefix=="NM")t[$1]="mRNA"; else if(prefix=="NR")t[$1]="ncRNA"; else t[$1]="transposons"; a[$1]=$2; m[$1]=1} else{b[$1]=$2; m[$1]=1}}END{for(i in m) printf "%s,%s,%.3f,%.3f\n", i, t[i], a[i]?a[i]:0, b[i]?b[i]:0}' <(sed 1d ${SAMPLE_A_NAME}.results.xprs) <(sed 1d ${SAMPLE_B_NAME}.results.xprs) >> $HTML_DIR/${SAMPLE_A_NAME}_vs_${SAMPLE_B_NAME}.gene_transposon.abundance.html
 	
 	;;
 	mm9|mm10)	
-	awk 'BEGIN{FS=OFS="\t"}{if(ARGIND==1){prefix=substr($1,1,2); if(prefix=="NM")t[$1]="mRNA"; else if(prefix=="NR")t[$1]="ncRNA"; else if(prefix=="pi")t[$1]="prepachytene"; else if(substr($1,2,1)=="-" || substr($1,3,1)=="-")t[$1]="pachytene"; else t[$1]="transposon"; a[$1]=$2; m[$1]=1} else{b[$1]=$2; m[$1]=1}}END{for(i in m) printf "%s,%s,%.3f,%.3f\n", i, t[i], a[i]?a[i]:0, b[i]?b[i]:0}' <(sed 1d ${SAMPLE_A_NAME}.results.xprs) <(sed 1d ${SAMPLE_B_NAME}.results.xprs) >> $HTML_DIR/${SAMPLE_A_NAME}_vs_${SAMPLE_B_NAME}.gene_transposon.abundance.html 
+	awk 'BEGIN{FS=OFS="\t"}{if(ARGIND==1){prefix=substr($1,1,2); if(prefix=="NM")t[$1]="mRNA"; else if(prefix=="NR")t[$1]="ncRNA"; else if(prefix=="pi")t[$1]="prepachytene"; else if(substr($1,2,1)=="-" || substr($1,3,1)=="-")t[$1]="pachytene"; else t[$1]="transposon"; a[$1]=$2; m[$1]=1} else{b[$1]=$2; m[$1]=1}}END{for(i in m) printf "%s,%s,%.3f,%.3f\n", i, t[i], a[i]?a[i]:0, b[i]?b[i]:0}' <(sed 1d ${SAMPLE_A_NAME}.results.xprs) <(sed 1d ${SAMPLE_B_NAME}.results.xprs) >> $HTML_DIR/${SAMPLE_A_NAME}_vs_${SAMPLE_B_NAME}.gene_transposon.abundance.html
 	
 	;;
 	*)	
-	awk 'BEGIN{FS=OFS="\t"}{if(ARGIND==1){prefix=substr($1,1,2); if(prefix=="NM")t[$1]="mRNA"; else if(prefix=="NR")t[$1]="ncRNA"; else t[$1]="others"; a[$1]=$2; m[$1]=1} else{b[$1]=$2; m[$1]=1}}END{for(i in m) printf "%s,%s,%.3f,%.3f\n", i, t[i], a[i]?a[i]:0, b[i]?b[i]:0}' <(sed 1d ${SAMPLE_A_NAME}.results.xprs) <(sed 1d ${SAMPLE_B_NAME}.results.xprs) >> $HTML_DIR/${SAMPLE_A_NAME}_vs_${SAMPLE_B_NAME}.gene_transposon.abundance.html 
+	awk 'BEGIN{FS=OFS="\t"}{if(ARGIND==1){prefix=substr($1,1,2); if(prefix=="NM")t[$1]="mRNA"; else if(prefix=="NR")t[$1]="ncRNA"; else t[$1]="others"; a[$1]=$2; m[$1]=1} else{b[$1]=$2; m[$1]=1}}END{for(i in m) printf "%s,%s,%.3f,%.3f\n", i, t[i], a[i]?a[i]:0, b[i]?b[i]:0}' <(sed 1d ${SAMPLE_A_NAME}.results.xprs) <(sed 1d ${SAMPLE_B_NAME}.results.xprs) >> $HTML_DIR/${SAMPLE_A_NAME}_vs_${SAMPLE_B_NAME}.gene_transposon.abundance.html
 
 	;;
 esac
-cat RNAseq_abundance_scatterplot_2.html >> $HTML_DIR/${SAMPLE_A_NAME}_vs_${SAMPLE_B_NAME}.gene_transposon.abundance.html 
+cat ${PIPELINE_DIRECTORY}/html/RNAseq_abundance_scatterplot_2.html >> $HTML_DIR/${SAMPLE_A_NAME}_vs_${SAMPLE_B_NAME}.gene_transposon.abundance.html
 
 ###################################################
 # using cuffdiff to perform differential analysis #
