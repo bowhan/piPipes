@@ -282,6 +282,14 @@ awk 'BEGIN{FS=OFS="\t"}{if(ARGIND==1){t[$1]=$2; m[$1]=1; a[$1]=$3; b[$1]=$4}else
 	>> $HTML_DIR/${SAMPLE_A_NAME}_vs_${SAMPLE_B_NAME}.transposon.abundance.normalized_by_${NORMMETHOD}.html && \
 cat ${PIPELINE_DIRECTORY}/html/smallRNA_abundance_scatterplot_2.html >> $HTML_DIR/${SAMPLE_A_NAME}_vs_${SAMPLE_B_NAME}.transposon.abundance.normalized_by_${NORMMETHOD}.html
 
+cat ${PIPELINE_DIRECTORY}/html/smallRNA_menlen_scatterplot_1.html > $HTML_DIR/${SAMPLE_A_NAME}_vs_${SAMPLE_B_NAME}.transposon.mean_len.normalized_by_${NORMMETHOD}.html && \
+echo "transposon,type,${SAMPLE_A_NAME},${SAMPLE_A_NAME},${SAMPLE_B_NAME},${SAMPLE_B_NAME}" >> $HTML_DIR/${SAMPLE_A_NAME}_vs_${SAMPLE_B_NAME}.transposon.mean_len.normalized_by_${NORMMETHOD}.html && \
+awk 'BEGIN{FS=OFS="\t"}{if(ARGIND==1){t[$1]=$2; m[$1]=1; a[$1]=$3; b[$1]=$4}else{m[$1]=1; c[$1]=$3; d[$1]=$4}}END{for(i in m) printf "%s,%d,%.2f,%.2f,%.2f,%.2f\n", i, t[i], a[i]?a[i]:0, b[i]?b[i]:0, c[i]?c[i]:0, d[i]?d[i]:0}' \
+	$TRN_DIR/${SAMPLE_A_NAME}.transposon.mean_len.normalized_by_$NORMMETHOD \
+	$TRN_DIR/${SAMPLE_B_NAME}.transposon.mean_len.normalized_by_$NORMMETHOD \
+	>> $HTML_DIR/${SAMPLE_A_NAME}_vs_${SAMPLE_B_NAME}.transposon.mean_len.normalized_by_${NORMMETHOD}.html && \
+cat ${PIPELINE_DIRECTORY}/html/smallRNA_menlen_scatterplot_2.html >> $HTML_DIR/${SAMPLE_A_NAME}_vs_${SAMPLE_B_NAME}.transposon.mean_len.normalized_by_${NORMMETHOD}.html
+		
 ;;
 *)	
 if [ ! -f .${JOBUID}.status.${STEP}.transposon_abundance.normalized_by_$NORMMETHOD ]; then
