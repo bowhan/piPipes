@@ -341,6 +341,7 @@ echo2 "Making interactive HTML plot for transposon abundance and mean length"
 case $GENOME in
 mm9|mm10)
 cat ${PIPELINE_DIRECTORY}/html/smallRNA_abundance_scatterplot_1.html > $HTML_DIR/${SAMPLE_A_NAME}_vs_${SAMPLE_B_NAME}.piRNAcluster.abundance.normalized_by_${NORMMETHOD}.html && \
+echo "transposon,type,${SAMPLE_A_NAME},${SAMPLE_A_NAME},${SAMPLE_B_NAME},${SAMPLE_B_NAME}" >> $HTML_DIR/${SAMPLE_A_NAME}_vs_${SAMPLE_B_NAME}.piRNAcluster.abundance.normalized_by_${NORMMETHOD}.html && \
 awk 'BEGIN{FS=OFS="\t"}{if(ARGIND==1){if(substr($1,1,3)=="pi-") t[$1]="prepachytene"; else t[$1]="pachytene"; m[$1]=1; a[$1]=$2; b[$1]=$3}else{m[$1]=1; c[$1]=$2; d[$1]=$3}}END{for(i in m) printf "%s,%s,%.2f,%.2f,%.2f,%.2f\n", i, t[i], a[i]?a[i]:0, b[i]?b[i]:0, c[i]?c[i]:0, d[i]?d[i]:0}' \
 	$CLUSTER_DIR/${SAMPLE_A_NAME}.cluster.abundance.normalized_by_$NORMMETHOD \
 	$CLUSTER_DIR/${SAMPLE_B_NAME}.cluster.abundance.normalized_by_$NORMMETHOD \
@@ -349,6 +350,7 @@ cat ${PIPELINE_DIRECTORY}/html/smallRNA_abundance_scatterplot_2.html >> $HTML_DI
 ;;
 *)
 cat ${PIPELINE_DIRECTORY}/html/smallRNA_abundance_scatterplot_1.html > $HTML_DIR/${SAMPLE_A_NAME}_vs_${SAMPLE_B_NAME}.piRNAcluster.abundance.normalized_by_${NORMMETHOD}.html && \
+echo "transposon,type,${SAMPLE_A_NAME},${SAMPLE_A_NAME},${SAMPLE_B_NAME},${SAMPLE_B_NAME}" >> $HTML_DIR/${SAMPLE_A_NAME}_vs_${SAMPLE_B_NAME}.piRNAcluster.abundance.normalized_by_${NORMMETHOD}.html && \
 awk 'BEGIN{FS=OFS="\t"}{if(ARGIND==1){t[$1]="1"; m[$1]=1; a[$1]=$2; b[$1]=$3}else{m[$1]=1; c[$1]=$2; d[$1]=$3}}END{for(i in m) printf "%s,%s,%.2f,%.2f,%.2f,%.2f\n", i, t[i], a[i]?a[i]:0, b[i]?b[i]:0, c[i]?c[i]:0, d[i]?d[i]:0}' \
 	$CLUSTER_DIR/${SAMPLE_A_NAME}.cluster.abundance.normalized_by_$NORMMETHOD \
 	$CLUSTER_DIR/${SAMPLE_B_NAME}.cluster.abundance.normalized_by_$NORMMETHOD \
