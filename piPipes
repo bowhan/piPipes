@@ -18,7 +18,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 # https://github.com/bowhan/piPipes.git
-# A pipeline collection for piRNA and transposon analysis 
+# A pipeline collection for piRNA and transposon analysis
 # from small RNA seq, RNA-seq, CAGE/Degradome/RACE-seq, ChIP-seq and Genomic-seq
 # Wei Wang
 # Bo W Han
@@ -29,10 +29,8 @@
 
 cmd=`basename $0`
 dir=`dirname  $0`
-BASH=bash
 
 if [[ "${cmd}" == "piPipes_debug" ]]; then
-	echo "debug mode..."
 	export DEBUG='-x'
 	set -x
 fi
