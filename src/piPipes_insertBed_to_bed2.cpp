@@ -35,7 +35,7 @@ int main (int argc, char** argv) {
   mapped. the 6th column is the sequence itself.
   usage:
   istBed2Bed2  input.insert  mapped.bed  >  output.bed2
-  Please contact bowhan@me.com for any questions or bugs.
+  Please contact piPipesQ@gmail.com for any questions or bugs.
 )";
 	if (argc != 3) {
 		cerr << usage;

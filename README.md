@@ -13,7 +13,7 @@ For *small RNA-Seq*, *RNA-Seq* and *ChIP-Seq* pipelines, **piPipes** provides tw
 Visit our [Wiki Page](https://github.com/bowhan/piPipes/wiki) for more details on how to install the genome, run each pipeline, and interpretate the output.
 
 ##INSTALL   
-**piPipes** is written in Bash, C/C++, Perl, Python and R. It currently only works under Linux environment.
+**piPipes** is written in Bash, C/C++, Perl, Python, HTML/Javascript and R. It currently only works under Linux environment.
 
 ***
 ### C/C++
@@ -194,7 +194,8 @@ Han, B. W., Wang, W., Zamore, P. D., and Weng, Z. (2015). [piPipes: a set of pip
 
 ##CONTACT
 	
-piPipesQ@gmail.com
+Please send questions and bugs to piPipesQ@gmail.com.
+**For bugs reporting, please run `piPipes_debug` in a clean directory and paste stderr.**
     
 ##LICENSE
 **piPipes** is released under the [GNU General Public License version 3](https://www.gnu.org/licenses/gpl.html).		

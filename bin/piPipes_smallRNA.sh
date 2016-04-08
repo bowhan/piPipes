@@ -20,7 +20,7 @@
 ##########
 # Config #
 ##########
-export SMALLRNA_VERSION=1.0.3
+
 
 #########
 # USAGE #

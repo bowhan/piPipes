@@ -7,6 +7,7 @@ ce10=ftp://igenome:G3nom3s4u@ussd-ftp.illumina.com/Caenorhabditis_elegans/UCSC/c
 ce6=ftp://igenome:G3nom3s4u@ussd-ftp.illumina.com/Caenorhabditis_elegans/UCSC/ce6/Caenorhabditis_elegans_UCSC_ce6.tar.gz
 danRer7=ftp://igenome:G3nom3s4u@ussd-ftp.illumina.com/Danio_rerio/UCSC/danRer7/Danio_rerio_UCSC_danRer7.tar.gz
 dm3=ftp://igenome:G3nom3s4u@ussd-ftp.illumina.com/Drosophila_melanogaster/UCSC/dm3/Drosophila_melanogaster_UCSC_dm3.tar.gz
+dm6=ftp://igenome:G3nom3s4u@ussd-ftp.illumina.com/Drosophila_melanogaster/UCSC/dm6/Drosophila_melanogaster_UCSC_dm6.tar.gz
 equCab2=ftp://igenome:G3nom3s4u@ussd-ftp.illumina.com/Equus_caballus/UCSC/equCab2/Equus_caballus_UCSC_equCab2.tar.gz
 galGal4=ftp://igenome:G3nom3s4u@ussd-ftp.illumina.com/Gallus_gallus/UCSC/galGal4/Gallus_gallus_UCSC_galGal4.tar.gz
 hg18=ftp://igenome:G3nom3s4u@ussd-ftp.illumina.com/Homo_sapiens/UCSC/hg18/Homo_sapiens_UCSC_hg18.tar.gz

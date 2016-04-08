@@ -41,7 +41,7 @@ Second input is the bed file produced by mapping your library of interest to hai
 usage:
 	program mature2hairpin.bed library2hairpin.bed
 
-contact bowhan@me.com for bugs and questions.
+contact piPipesQ@gmail.com for bugs and questions.
 )";
 	if (argc != 3) {
 		cerr << usage;

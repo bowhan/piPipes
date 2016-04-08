@@ -20,7 +20,7 @@
 ##########
 # Config #
 ##########
-export GENOME_INSTALL_VERSION=1.0.0
+export GENOME_INSTALL_VERSION=2.0.0
 
 #########
 # USAGE #
@@ -83,11 +83,12 @@ done
 
 [ ! -z "${CPU##*[!0-9]*}" ] || CPU=8
 
-# use a different script for dm6
-if [[ "$GENOME" == "dm6" || "$GENOME" == "BDGP6" ]]; then 
-	echo2 "Installing new Drosophila melanogaster assembly 6" && bash $DEBUG piPipes_install_dm6.sh $CPU $DOWNLOAD_ONLY
-	exit
-fi
+# use a different script for dm6 
+# 04/03/2016 now that iGeonme include a dm6 annotation, we will begin to use that
+# if [[ "$GENOME" == "dm6" || "$GENOME" == "BDGP6" ]]; then
+# 	echo2 "Installing new Drosophila melanogaster assembly 6" && bash $DEBUG piPipes_install_dm6.sh $CPU $DOWNLOAD_ONLY
+# 	exit
+# fi
 
 [[ -z $GENOME ]] && usage && echo2 "Missing option -g for version of genome assembly to install" "error"
 mkdir -p $PIPELINE_DIRECTORY/common/$GENOME || echo2 "Cannot create directory $PIPELINE_DIRECTORY/common/$GENOME... Exiting..." "error"
@@ -349,7 +350,7 @@ echo2 "Building Bowtie/BWA index for piRNA cluster"
 if [ ! -s ${GENOME}.piRNAcluster.bed.gz ]; then
 	echo2 "Missing ${GENOME}.piRNAcluster.bed.gz, you are using a genome that is not optimized. Creating a dummpy ${GENOME}.piRNAcluster.bed.gz to keep pipeline running. Please update ${GENOME}.piRNAcluster.bed.gz with your piRNA cluster annotation!" "warning"
 	head -1 ${GENOME}.fa | tr -d '>' | awk '{printf "%s\t", $1}' > ${GENOME}.piRNAcluster.bed && \
-	echo -e "0\t1\tdummpy\t255\t+" >> ${GENOME}.piRNAcluster.bed && \
+	echo -e "0\t50\tdummpy\t255\t+" >> ${GENOME}.piRNAcluster.bed && \
 	gzip ${GENOME}.piRNAcluster.bed
 fi
 
@@ -385,7 +386,7 @@ echo2 "Building Bowtie/BWA index for repBase + piRNA cluster + genes"
 # making gtf files for htseq-count
 echo2 "Making GTF file for HTSeq-count"
 case $GENOME in	
-dm3)
+dm3|dm6)
 	echo2 "Nothing needs to be done for dm3: the gtf file for htseq-count is stored on github"
 ;;
 mm9)

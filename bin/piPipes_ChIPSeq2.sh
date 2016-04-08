@@ -18,7 +18,6 @@
 ##########
 # Config #
 ##########
-export CHIPSEQ2_VERSION=1.0.0
 
 #########
 # USAGE #

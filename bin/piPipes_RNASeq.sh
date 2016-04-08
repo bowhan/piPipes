@@ -18,7 +18,6 @@
 ##########
 # Config #
 ##########
-export RNASEQ_VERSION=1.0.4
 
 #########
 # USAGE #

@@ -20,7 +20,6 @@
 ##########
 # Config #
 ##########
-export GENOMESEQ_VERSION=1.0.1
 
 #########
 # USAGE #

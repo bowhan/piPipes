@@ -28,7 +28,7 @@ using namespace std;
 int main (int argc, char** argv) {
 	std::string usage = R"(
 This program filter the CIGAR field of a sam file; and is part of the piPipes package developped in the Zamore and Zlab in UMASS Med School. 
-Contact Bo.Han@umassmed.edu or bowhan@me.com for questions, suggestions and bugs. 
+Contact Bo.Han@umassmed.edu or piPipesQ@gmail.com for questions, suggestions and bugs. 
 Thank you!
 )";
 	/** options **/

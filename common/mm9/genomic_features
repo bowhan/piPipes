@@ -14,7 +14,7 @@
 	Zamore_NM=$COMMON_FOLDER/Zamore.NM.bed12.gz
 	Zamore_NM_EXON=$COMMON_FOLDER/Zamore.NM.bed6.gz
 	# NR transcripts annotated in Zamore lab, 2013
-	refSeq_GENE=$COMMON_FOLDER/UCSC.refSeq.Genes.bed6.gz
+	refSeq_GENE=$COMMON_FOLDER/UCSC.refSeq.Genes.bed12.gz
 	Zamore_NR=$COMMON_FOLDER/Zamore.NR.bed12.gz
 	Zamore_NR_EXON=$COMMON_FOLDER/Zamore.NR.bed6.gz
 	refSeq_EXON=$COMMON_FOLDER/UCSC.refSeq.Exon.bed.gz

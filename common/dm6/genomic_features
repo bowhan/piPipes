@@ -1,48 +1,60 @@
 # variables for small RNA pipeline intersecting
-	MASK=$COMMON_FOLDER/dm6.repBase.repeatMasker.rRNA.bed.gz # tRNA, rRNA, nonCoding RNA (flyBase) from UCSC table browser
-	piRNA_Cluster=$COMMON_FOLDER/Brennecke.piRNAcluster.bed6 # piRNA cluster defined in Brennecke, et al,. Cell, 2007; no strand information
-	piRNA_Cluster_42AB=$COMMON_FOLDER/Brennecke.piRNAcluster.42AB.bed6 # 42AB
-	piRNA_Cluster_20A=$COMMON_FOLDER/Brennecke.piRNAcluster.20A.bed6 # 20A
-	piRNA_Cluster_flam=$COMMON_FOLDER/Brennecke.piRNAcluster.flam.bed6 # flam
-	repBase_repeatMasker=$COMMON_FOLDER/dm6.repBase.repeatMasker.bed.gz # 
-	flyBase_repeatMasker=$COMMON_FOLDER/dm6.flyBase.repeatMasker.bed.gz # 
+	MASK=$COMMON_FOLDER/dm6.tRNA+rRNA.bed.gz # tRNA, rRNA, nonCoding RNA (flyBase) from UCSC table browser
+	
+	tRNA=$COMMON_FOLDER/dm6.tRNA.bed.gz
+	rRNA=$COMMON_FOLDER/dm6.rDNA.repeatMasker.bed.gz # run repeatMasker using rDNA sequence
+	RM_rRNA=$COMMON_FOLDER/dm6.repBase.repeatMasker.rRNA.bed.gz # run repeatMasker using repBase default and extract the ones classified as rRNA
+	
+	piRNA_Cluster=$COMMON_FOLDER/dm6.piRNAcluster.bed.gz
+	# piRNA_Cluster_42AB=$COMMON_FOLDER/Brennecke.piRNAcluster.42AB.bed6 # 42AB
+	# piRNA_Cluster_20A=$COMMON_FOLDER/Brennecke.piRNAcluster.20A.bed6 # 20A
+	# piRNA_Cluster_flam=$COMMON_FOLDER/Brennecke.piRNAcluster.flam.bed6 # flam
+
+	repeatMasker=$COMMON_FOLDER/dm6.repBase.repeatMasker.bed.gz # generate by RepeatMasker -pa 8 -s -low -species drosophila -gff dm6.fa
+	RM_ARTEFACT=$COMMON_FOLDER/dm6.repBase.repeatMasker.ARTEFACT.bed.gz
+	RM_DNA=$COMMON_FOLDER/dm6.repBase.repeatMasker.DNA.bed.gz
+	RM_LINE=$COMMON_FOLDER/dm6.repBase.repeatMasker.LINE.bed.gz
+	RM_Low_complexity=$COMMON_FOLDER/dm6.repBase.repeatMasker.Low_complexity.bed.gz
+	RM_LTR=$COMMON_FOLDER/dm6.repBase.repeatMasker.LTR.bed.gz
+	RM_Other=$COMMON_FOLDER/dm6.repBase.repeatMasker.Other.bed.gz
+	RM_RC=$COMMON_FOLDER/dm6.repBase.repeatMasker.RC.bed.gz
+	RM_RNA=$COMMON_FOLDER/dm6.repBase.repeatMasker.RNA.bed.gz
+	RM_Satellite=$COMMON_FOLDER/dm6.repBase.repeatMasker.Satellite.bed.gz
+	RM_Simple_repeat=$COMMON_FOLDER/dm6.repBase.repeatMasker.Simple_repeat.bed.gz
+	RM_Unknown=$COMMON_FOLDER/dm6.repBase.repeatMasker.Unknown.bed.gz
+	
 	# Trn=$COMMON_FOLDER/Zamore.transposon.bed.gz # transposon region used in Li, et al., Cell, 2009. More conserved than repeat masker
 	# Trn_GROUP0=$COMMON_FOLDER/Zamore.transposon.group0.bed.gz # transposons that failed to pass threshold in Li, et al., Cell, 2009. More conserved than repeat masker
 	# Trn_GROUP1=$COMMON_FOLDER/Zamore.transposon.group1.bed.gz # group 1 transposon in Li, et al., Cell, 2009, mainly germline
 	# Trn_GROUP2=$COMMON_FOLDER/Zamore.transposon.group2.bed.gz # group 2 transposon in Li, et al., Cell, 2009
 	# Trn_GROUP3=$COMMON_FOLDER/Zamore.transposon.group3.bed.gz # group 3 transposon in Li, et al., Cell, 2009, mainly somatic
-	Genes=$COMMON_FOLDER/dm6.genes.bed6.gz # = gene
-	Exons=$COMMON_FOLDER/dm6.exons.bed6.gz # = exons
-	Introns=$COMMON_FOLDER/dm6.introns.bed6.gz # = introns
-	FiveUTR=$COMMON_FOLDER/dm6.5UTR.bed6.gz # = 5' UTR
-	CDS=$COMMON_FOLDER/dm6.cds.bed6.gz # = CDS
-	ThreeUTR=$COMMON_FOLDER/dm6.3UTR.bed6.gz # = 3' UTR
-	# cisNATs=$COMMON_FOLDER/cisNATs.bed.gz # cis-NATs
-	# structural_loci=$COMMON_FOLDER/structured_loci.bed.gz # structural loci
-	# lincRNA=$COMMON_FOLDER/lincRNA.Young.bed6.gz # linc RNA identified in 'Identification and properties of 1,119 candidate lincRNA loci in the Drosophila melanogaster genome. Genome Biol Evol. 2012;4(4):427-42.'
+	Genes=$COMMON_FOLDER/UCSC.dm6.gene.bed12.gz # = gene
+	Exons=$COMMON_FOLDER/UCSC.dm6.exon.bed.gz # = exons
+	Introns=$COMMON_FOLDER/UCSC.dm6.intron.bed.gz # = introns
+	FiveUTR=$COMMON_FOLDER/UCSC.dm6.5UTR.bed.gz # = 5' UTR
+	CDS=$COMMON_FOLDER/UCSC.dm6.CDS.bed.gz # = CDS
+	ThreeUTR=$COMMON_FOLDER/UCSC.dm6.3UTR.bed.gz # = 3' UTR
+	cisNATs=$COMMON_FOLDER/cisNATs.bed.gz # cis-NATs
+	structural_loci=$COMMON_FOLDER/structured_loci.bed.gz # structural loci
+	lincRNA=$COMMON_FOLDER/lincRNA.Young.bed6.gz # linc RNA identified in 'Identification and properties of 1,119 candidate lincRNA loci in the Drosophila melanogaster genome. Genome Biol Evol. 2012;4(4):427-42.'
 	# unannotated=$COMMON_FOLDER/unannotated_genome.bed.gz
 	declare -a TARGETS=( \
 	"piRNA_Cluster" \
-	"piRNA_Cluster_42AB" \
-	"piRNA_Cluster_20A" \
-	"piRNA_Cluster_flam" \
-	"repBase_repeatMasker" \
-	"flyBase_repeatMasker" \
+	"repeatMasker" "RM_DNA" "RM_LINE" "RM_LTR" "RM_RNA" "RM_Satellite" \
 	"Genes" \
 	"Exons" \
 	"Introns" \
 	"FiveUTR" \
 	"CDS" \
 	"ThreeUTR" \
+	"cisNATs" \
+	"structural_loci" \
+	"lincRNA" \
  	)
 
 	declare -a TARGETS_SHORT=( \
 	"piRNA_Cluster" \
-	"piRNA_Cluster_42AB" \
-	"piRNA_Cluster_20A" \
-	"piRNA_Cluster_flam" \
-	"repBase_repeatMasker" \
-	"flyBase_repeatMasker" \
+	"repeatMasker" \
 	"Genes" \
 	"Exons" \
 	"Introns" \
@@ -57,11 +69,11 @@
 	"FiveUTR" \
 	"ThreeUTR" \
 	"Introns" \
-	"flyBase_repeatMasker" \
+	"repeatMasker" \
 	)
 	
 # variables for small RNA direct mapping
-	declare -a DIRECT_MAPPING=( "repBase" "piRNAcluster" )
+	declare -a DIRECT_MAPPING=( ) # need to have BowtieIndex/repBase # BowtieIndex/piRNAcluster
 	
 # gtf files for rnaseq/deg/cage htseq-count
 	# Genes_transposon_Cluster=$COMMON_FOLDER/
