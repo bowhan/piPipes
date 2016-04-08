@@ -30,14 +30,14 @@ cat << EOF
 
 Genome install pipeline v$GENOME_INSTALL_VERSION from $BOLD$PACKAGE_NAME$RESET
 $INSTALL_USAGE${RESET}
-Please email $CONTACT_EMAILS for any questions or bugs. 
-Thank you for using it. 
+Please email $CONTACT_EMAILS for any questions or bugs.
+Thank you for using it.
 
 ${UNDERLINE}usage${RESET}:
-	piPipes install \ 
-		-g [dm3|mm9|...] \  
-		-l http://www.link.to.iGenome.tar.gz \ 
-		-D 
+	piPipes install \
+		-g [dm3|mm9|...] \
+		-l http://www.link.to.iGenome.tar.gz \
+		-D
 
 OPTIONS:
 	-h      Show this message
@@ -60,7 +60,7 @@ ${OPTIONAL}[ optional ]
 			$PIPELINE_DIRECTORY/bin/piPipes_extract_organiam_from_fa.py hairpin.fa dme > $PIPELINE_DIRECTORY/common/dm3/dm3.hairpin.fa
 			$PIPELINE_DIRECTORY/bin/piPipes_extract_organiam_from_fa.py mature.fa  dme > $PIPELINE_DIRECTORY/common/dm3/dm3.mature.fa
 	      Then run: piPipes install -g GENOME -C
-	
+
 EOF
 echo -e "${COLOR_END}"
 }
@@ -83,7 +83,7 @@ done
 
 [ ! -z "${CPU##*[!0-9]*}" ] || CPU=8
 
-# use a different script for dm6 
+# use a different script for dm6
 # 04/03/2016 now that iGeonme include a dm6 annotation, we will begin to use that
 # if [[ "$GENOME" == "dm6" || "$GENOME" == "BDGP6" ]]; then
 # 	echo2 "Installing new Drosophila melanogaster assembly 6" && bash $DEBUG piPipes_install_dm6.sh $CPU $DOWNLOAD_ONLY
@@ -136,7 +136,7 @@ echo2 "$GENOME is in the record!"
 [ ! -f "$PIPELINE_DIRECTORY/common/$GENOME/${GENOME}.repBase.fa" ] && \
 	echo2 "It appears that piPipes does not have the transposon consensus sequence ready for this genome.\nPlease provide this information in fasta format and name it \n\n\t$PIPELINE_DIRECTORY/common/$GENOME/${GENOME}.repBase.fa\n\n*For your convinience, the fasta of all repBase record can be found under the \"common\" folder.\nDo you still wish to proceed? [y/n]" "warning" && \
 	read PROCEED && \
-	case $PROCEED in 
+	case $PROCEED in
 		N|n|no) exit ;;
 		Y|y|yes) ;;
 		*) echo2 "unreognized answer" "error" ;;
@@ -152,25 +152,25 @@ echo2 "How many mismatches should be allowed for rRNA mapping by bowtie?"
 read rRNA_MM
 [ ! -z $rRNA_MM ] && echo "export rRNA_MM=$rRNA_MM" > $PIPELINE_DIRECTORY/common/$GENOME/variables
 echo2 "How many mismatches should be allowed for microRNA hairping mapping by bowtie?"
-read hairpin_MM 
+read hairpin_MM
 [ ! -z $hairpin_MM ] && echo "export hairpin_MM=$hairpin_MM" >> $PIPELINE_DIRECTORY/common/$GENOME/variables
 echo2 "How many mismatches should be allowed for genome mapping by bowtie?"
-read genome_MM 
+read genome_MM
 [ ! -z $genome_MM ] && echo "export genome_MM=$genome_MM" >> $PIPELINE_DIRECTORY/common/$GENOME/variables
 echo2 "How many mismatches should be allowed for trasnposons/piRNAcluster mapping by bowtie?"
-read transposon_MM 
+read transposon_MM
 [ ! -z $transposon_MM ] && echo "export transposon_MM=$transposon_MM" >> $PIPELINE_DIRECTORY/common/$GENOME/variables
 echo2 "What is the shortest length for siRNA?"
-read siRNA_bot 
+read siRNA_bot
 [ ! -z $siRNA_bot ] && echo "export siRNA_bot=$siRNA_bot" >> $PIPELINE_DIRECTORY/common/$GENOME/variables
 echo2 "What is the longest length for siRNA?"
-read siRNA_top 
+read siRNA_top
 [ ! -z $siRNA_top ] && echo "export siRNA_top=$siRNA_top" >> $PIPELINE_DIRECTORY/common/$GENOME/variables
 echo2 "What is the shortest length for piRNA?"
-read piRNA_bot 
+read piRNA_bot
 [ ! -z $piRNA_bot ] && echo "export piRNA_bot=$piRNA_bot" >> $PIPELINE_DIRECTORY/common/$GENOME/variables
 echo2 "What is the longest length for piRNA?"
-read piRNA_top 
+read piRNA_top
 [ ! -z $piRNA_top ] && echo "export piRNA_top=$piRNA_top" >> $PIPELINE_DIRECTORY/common/$GENOME/variables
 echo2 "Done. If you would like to change the variables, please edit file: $PIPELINE_DIRECTORY/common/$GENOME/variables manually" "warning"
 echo2 "------------------------------------------"
@@ -185,9 +185,9 @@ eval LINK='$'`echo $GENOME`
 # install R packages if not available #
 #######################################
 echo2 "Testing/Installing missing R packages"
-#[ ! -f $PIPELINE_DIRECTORY/common/.R_pkg_installed ] && 
+#[ ! -f $PIPELINE_DIRECTORY/common/.R_pkg_installed ] &&
 # ALWAYS test for R packages
-Rscript $PIPELINE_DIRECTORY/bin/piPipes_install_packages.R 1>&2 
+Rscript $PIPELINE_DIRECTORY/bin/piPipes_install_packages.R 1>&2
 #&& touch $PIPELINE_DIRECTORY/common/.R_pkg_installed
 
 #################
@@ -222,10 +222,10 @@ echo2 "Uncompressing genome $GENOME"
 # links files & build index #
 #############################
 echo2 "Preparing genomic sequence/annotation and making indexes"
-	
-# patch for dm3; iGenome does not have chrU and X-TAS, hence add it manually. Indexes have to be rebuild as well. 
-case $GENOME in	
-dm3)	
+
+# patch for dm3; iGenome does not have chrU and X-TAS, hence add it manually. Indexes have to be rebuild as well.
+case $GENOME in
+dm3)
 	mkdir -p BowtieIndex
 	mkdir -p Bowtie2Index
 	mkdir -p BWAIndex
@@ -260,23 +260,23 @@ dm3)
 			echo2 "unable to find or generate fasta for the genome. Please create it manually and name it $PWD/${GENOME}.fa" "error"
 		fi
 	fi
-	
+
 	if [ -s $IGENOME_DIR_NAME/UCSC/$GENOME/Sequence/WholeGenomeFasta/genome.fa.fai ]; then
 		ln -s $IGENOME_DIR_NAME/UCSC/$GENOME/Sequence/WholeGenomeFasta/genome.fa.fai ${GENOME}.fa.fai
 	else
 		samtools faidx ${GENOME}.fa
 	fi
-	
-	if [ -s $IGENOME_DIR_NAME/UCSC/$GENOME/Annotation/Genes/ChromInfo.txt ]; then  
+
+	if [ -s $IGENOME_DIR_NAME/UCSC/$GENOME/Annotation/Genes/ChromInfo.txt ]; then
 		ln -s $IGENOME_DIR_NAME/UCSC/$GENOME/Annotation/Genes/ChromInfo.txt ${GENOME}.ChromInfo.txt
 	else
 		faSize -tab -detailed ${GENOME}.fa > ${GENOME}.ChromInfo.txt
 	fi
-	
+
 	ln -s $IGENOME_DIR_NAME/UCSC/$GENOME/Sequence/BowtieIndex
 	ln -s $IGENOME_DIR_NAME/UCSC/$GENOME/Sequence/Bowtie2Index
 	ln -s $IGENOME_DIR_NAME/UCSC/$GENOME/Sequence/BWAIndex
-	
+
 	if [ -s $IGENOME_DIR_NAME/UCSC/$GENOME/Annotation/Genes/cytoBand.txt ]; then
 		ln -s $IGENOME_DIR_NAME/UCSC/$GENOME/Annotation/Genes/cytoBand.txt
 	else
@@ -339,7 +339,7 @@ fi
 [ ! -s mature2hairpin.allMapper.bed ] && cat mature2hairpin.uniq.bed mature2hairpin.multi.bed > mature2hairpin.allMapper.bed
 
 # repBase | transposon indexes # the pipiline should include the repBase.fa
-echo2 "Building Bowtie/BWA index for repBase transposon annotation" 
+echo2 "Building Bowtie/BWA index for repBase transposon annotation"
 [ ! -s ${GENOME}.repBase.fa ] && echo2 "Missing ${GENOME}.repBase.fa, if you are installing genomes other than dm3 or mm9, please retrieve that file from repBase" "error"
 [ ! -s BowtieIndex/repBase.sizes ] && bowtie-build ${GENOME}.repBase.fa BowtieIndex/repBase && faSize -tab -detailed ${GENOME}.repBase.fa > BowtieIndex/repBase.sizes
 [ ! -s Bowtie2Index/repBase.sizes ] && bowtie2-build ${GENOME}.repBase.fa Bowtie2Index/repBase && faSize -tab -detailed ${GENOME}.repBase.fa > Bowtie2Index/repBase.sizes
@@ -357,23 +357,25 @@ fi
 [ ! -s ${GENOME}.piRNAcluster.fa ] && bedtools_piPipes getfasta -fi ${GENOME}.fa -bed ${GENOME}.piRNAcluster.bed.gz -fo ${GENOME}.piRNAcluster.fa -name -split -s
 [ ! -s BowtieIndex/piRNAcluster.sizes ] && bowtie-build ${GENOME}.piRNAcluster.fa BowtieIndex/piRNAcluster && faSize -tab -detailed ${GENOME}.piRNAcluster.fa > BowtieIndex/piRNAcluster.sizes
 
-case $GENOME in	
-dm3)
+case $GENOME in
+dm3|dm6)
+	echo2 "Building Bowtie2 index for transposon + genes"
 	[ ! -s ${GENOME}.gene+transposon.fa ] && cat ${GENOME}.genes.fa  ${GENOME}.transposon.fa  >  ${GENOME}.gene+transposon.fa
-	[ ! -s BowtieIndex/gene+transposon.sizes ] && bowtie-build		${GENOME}.gene+transposon.fa BowtieIndex/gene+transposon  && faSize -tab -detailed ${GENOME}.gene+transposon.fa > BowtieIndex/gene+transposon.sizes
+	# [ ! -s BowtieIndex/gene+transposon.sizes ] && bowtie-build		${GENOME}.gene+transposon.fa BowtieIndex/gene+transposon  && faSize -tab -detailed ${GENOME}.gene+transposon.fa > BowtieIndex/gene+transposon.sizes
 	[ ! -s Bowtie2Index/gene+transposon.sizes ] && bowtie2-build	${GENOME}.gene+transposon.fa Bowtie2Index/gene+transposon && faSize -tab -detailed ${GENOME}.gene+transposon.fa > Bowtie2Index/gene+transposon.sizes
+;;
+*)
+# genes + repBase + cluster indexes
+	echo2 "Building Bowtie2 index for repBase + piRNA cluster + genes"
+	[ ! -s ${GENOME}.gene+cluster+repBase.fa ] && cat ${GENOME}.genes.fa  ${GENOME}.piRNAcluster.fa  ${GENOME}.repBase.fa  >  ${GENOME}.gene+cluster+repBase.fa
+	# [ ! -s BowtieIndex/gene+cluster+repBase.sizes ] && bowtie-build ${GENOME}.gene+cluster+repBase.fa BowtieIndex/gene+cluster+repBase && faSize -tab -detailed ${GENOME}.gene+cluster+repBase.fa > BowtieIndex/gene+cluster+repBase.sizes
+	[ ! -s Bowtie2Index/gene+cluster+repBase.sizes ] && bowtie2-build ${GENOME}.gene+cluster+repBase.fa Bowtie2Index/gene+cluster+repBase && faSize -tab -detailed ${GENOME}.gene+cluster+repBase.fa > Bowtie2Index/gene+cluster+repBase.sizes
 ;;
 esac
 
-# genes + repBase + cluster indexes
-echo2 "Building Bowtie/BWA index for repBase + piRNA cluster + genes"
-[ ! -s ${GENOME}.gene+cluster+repBase.fa ] && cat ${GENOME}.genes.fa  ${GENOME}.piRNAcluster.fa  ${GENOME}.repBase.fa  >  ${GENOME}.gene+cluster+repBase.fa
-[ ! -s BowtieIndex/gene+cluster+repBase.sizes ] && bowtie-build ${GENOME}.gene+cluster+repBase.fa BowtieIndex/gene+cluster+repBase && faSize -tab -detailed ${GENOME}.gene+cluster+repBase.fa > BowtieIndex/gene+cluster+repBase.sizes
-[ ! -s Bowtie2Index/gene+cluster+repBase.sizes ] && bowtie2-build ${GENOME}.gene+cluster+repBase.fa Bowtie2Index/gene+cluster+repBase && faSize -tab -detailed ${GENOME}.gene+cluster+repBase.fa > Bowtie2Index/gene+cluster+repBase.sizes
-
 # unzipping the UCSC.RepeatMask.bed.gz shipped with the pipeline
 # if the piPipes already has this in the github, just unzip it
-[ ! -s UCSC.RepeatMask.bed -a -s UCSC.RepeatMask.bed.gz ] && gunzip UCSC.RepeatMask.bed.gz 
+[ ! -s UCSC.RepeatMask.bed -a -s UCSC.RepeatMask.bed.gz ] && gunzip UCSC.RepeatMask.bed.gz
 # if the piPipes does not have it, download it from UCSC
 [ ! -s UCSC.RepeatMask.bed -a ! -s UCSC.RepeatMask.bed.gz ] && \
 	mkdir -p rmsk && \
@@ -384,23 +386,23 @@ echo2 "Building Bowtie/BWA index for repBase + piRNA cluster + genes"
 	cd ..
 
 # making gtf files for htseq-count
-echo2 "Making GTF file for HTSeq-count"
-case $GENOME in	
-dm3|dm6)
-	echo2 "Nothing needs to be done for dm3: the gtf file for htseq-count is stored on github"
-;;
-mm9)
-	echo2 "Merging repeat masker with prepachytene and pachytene clusters defined in the Zamore and ZLab"
-	[ ! -s UCSC.RepeatMask.gtf ] && awk 'BEGIN{FS=OFS="\t"}{ if (!c[$4]) c[$4]=0; ++c[$4]; $4=$4"."c[$4]; print $0}' UCSC.RepeatMask.bed | bedToGenePred stdin /dev/stdout | genePredToGtf file stdin /dev/stdout | awk '$3=="exon"' > UCSC.RepeatMask.gtf
-	[ ! -s Zamore.NM.gtf ] && zcat Zamore.NM.bed12.gz | bedToGenePred stdin /dev/stdout | genePredToGtf file stdin /dev/stdout | awk '$3=="exon"' > Zamore.NM.gtf
-	[ ! -s Zamore.NR.gtf ] && zcat Zamore.NR.bed12.gz | bedToGenePred stdin /dev/stdout | genePredToGtf file stdin /dev/stdout | awk '$3=="exon"' > Zamore.NR.gtf
-	[ ! -s ${GENOME}.genes+repBase+cluster.gtf ] && cat Zamore.NM.gtf Zamore.NR.gtf UCSC.RepeatMask.gtf > ${GENOME}.genes+repBase+cluster.gtf && rm -rf Zamore.NM.gtf Zamore.NR.gtf UCSC.RepeatMask.gtf
-;;
-*)	
-	[ ! -s UCSC.RepeatMask.gtf ] && awk 'BEGIN{FS=OFS="\t"}{ if (!c[$4]) c[$4]=0; ++c[$4]; $4=$4"."c[$4]; print $0}' UCSC.RepeatMask.bed | bedToGenePred stdin /dev/stdout | genePredToGtf file stdin /dev/stdout | awk '$3=="exon"' > UCSC.RepeatMask.gtf
-	[ ! -s ${GENOME}.piRNAcluster.gtf ] && zcat ${GENOME}.piRNAcluster.bed.gz | bedToGenePred stdin /dev/stdout | genePredToGtf file stdin /dev/stdout | awk '$3=="exon"' > ${GENOME}.piRNAcluster.gtf
-	[ ! -s ${GENOME}.genes+repBase+cluster.htseq.gtf ] && cat ${GENOME}.genes.gtf  UCSC.RepeatMask.gtf  ${GENOME}.piRNAcluster.gtf  >  ${GENOME}.genes+repBase+cluster.htseq.gtf && rm -rf UCSC.RepeatMask.gtf  ${GENOME}.piRNAcluster.gtf
-;;
-esac
+# echo2 "Making GTF file for HTSeq-count"
+# case $GENOME in
+# dm3|dm6)
+# 	echo2 "Nothing needs to be done for dm3: the gtf file for htseq-count is stored on github"
+# ;;
+# mm9)
+# 	echo2 "Merging repeat masker with prepachytene and pachytene clusters defined in the Zamore and ZLab"
+# 	[ ! -s UCSC.RepeatMask.gtf ] && awk 'BEGIN{FS=OFS="\t"}{ if (!c[$4]) c[$4]=0; ++c[$4]; $4=$4"."c[$4]; print $0}' UCSC.RepeatMask.bed | bedToGenePred stdin /dev/stdout | genePredToGtf file stdin /dev/stdout | awk '$3=="exon"' > UCSC.RepeatMask.gtf
+# 	[ ! -s Zamore.NM.gtf ] && zcat Zamore.NM.bed12.gz | bedToGenePred stdin /dev/stdout | genePredToGtf file stdin /dev/stdout | awk '$3=="exon"' > Zamore.NM.gtf
+# 	[ ! -s Zamore.NR.gtf ] && zcat Zamore.NR.bed12.gz | bedToGenePred stdin /dev/stdout | genePredToGtf file stdin /dev/stdout | awk '$3=="exon"' > Zamore.NR.gtf
+# 	[ ! -s ${GENOME}.genes+repBase+cluster.gtf ] && cat Zamore.NM.gtf Zamore.NR.gtf UCSC.RepeatMask.gtf > ${GENOME}.genes+repBase+cluster.gtf && rm -rf Zamore.NM.gtf Zamore.NR.gtf UCSC.RepeatMask.gtf
+# ;;
+# *)
+# 	[ ! -s UCSC.RepeatMask.gtf ] && awk 'BEGIN{FS=OFS="\t"}{ if (!c[$4]) c[$4]=0; ++c[$4]; $4=$4"."c[$4]; print $0}' UCSC.RepeatMask.bed | bedToGenePred stdin /dev/stdout | genePredToGtf file stdin /dev/stdout | awk '$3=="exon"' > UCSC.RepeatMask.gtf
+# 	[ ! -s ${GENOME}.piRNAcluster.gtf ] && zcat ${GENOME}.piRNAcluster.bed.gz | bedToGenePred stdin /dev/stdout | genePredToGtf file stdin /dev/stdout | awk '$3=="exon"' > ${GENOME}.piRNAcluster.gtf
+# 	[ ! -s ${GENOME}.genes+repBase+cluster.htseq.gtf ] && cat ${GENOME}.genes.gtf  UCSC.RepeatMask.gtf  ${GENOME}.piRNAcluster.gtf  >  ${GENOME}.genes+repBase+cluster.htseq.gtf && rm -rf UCSC.RepeatMask.gtf  ${GENOME}.piRNAcluster.gtf
+# ;;
+# esac
 
 echo $GENOME >> $PIPELINE_DIRECTORY/common/genome_supported.txt

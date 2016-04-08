@@ -103,8 +103,8 @@ done
 	awk -v piRNA_bot=$piRNA_bot -v piRNA_top=$piRNA_top '{l=$3-$2; if (l>=piRNA_bot && l<=piRNA_top) ct[$(NF-2)]+=$4/$5/$NF}END{for (f in ct) {print f"\t"ct[f]}}' ${TABLE}.exclusive_genomic_feature.bed > ${TABLE}.exclusive_genomic_feature.piRNA.count && \
 	awk 'BEGIN{OFS="\t"}{ if (ARGIND==1) {a+=$2; b[$1]=$2;} else {printf "%s\t%.1f\n",$1, (b[$1]?b[$1]:0);}}' ${TABLE}.exclusive_genomic_feature.piRNA.count ${TABLE}.exclusive_genomic_feature.order > ${TABLE}.exclusive_genomic_feature.piRNA.count1 && \
 	mv ${TABLE}.exclusive_genomic_feature.piRNA.count1 ${TABLE}.exclusive_genomic_feature.piRNA.count && \
-	Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_pie.R $PDF_DIR/${PREFIX}.piRNA.pie ${TABLE}.exclusive_genomic_feature.piRNA.count
-rm -rf $INTERSECT_OUTDIR/exclusive_genomic_feature.bed ${TABLE}.exclusive_genomic_feature.order ${TABLE}.exclusive_genomic_feature.bed
+	Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_pie.R $PDF_DIR/${PREFIX}.piRNA.pie ${TABLE}.exclusive_genomic_feature.piRNA.count && \
+	rm -rf $INTERSECT_OUTDIR/exclusive_genomic_feature.bed ${TABLE}.exclusive_genomic_feature.order ${TABLE}.exclusive_genomic_feature.bed
 
 ( gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=$PDF_DIR/${PREFIX}.features.pdf ${PDFs} && rm -rf ${PDFs} ) || \
 echo2 "Failed to merge pdf from features intersecting... check gs... Or use your favorarite pdf merge tool by editing line$LINENO in $0" "warning"

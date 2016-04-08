@@ -15,10 +15,6 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-##########
-# Config #
-##########
-
 #########
 # USAGE #
 #########
@@ -27,30 +23,30 @@ cat << EOF
 
 RNASeq pipeline single library mode v$RNASEQ_VERSION from the $BOLD$PACKAGE_NAME$RESET
 $RNASEQ_INTRO${RESET}
-Please email $CONTACT_EMAILS for any questions or bugs. 
-Thank you for using it. 
+Please email $CONTACT_EMAILS for any questions or bugs.
+Thank you for using it.
 
 ==================< paired-end >==================
 ${UNDERLINE}usage${RESET}:
-	piPipes rna \ 
-		-l left.fq[.gz] \ 
-		-r right.fq[.gz] \ 
-		-g dm3 \ 
-		-o output_directory [current working directory] \ 
-		-c cpu [8] \ 
-		-B 38 [21]
-	
-==================< single-end >==================
-${UNDERLINE}usage${RESET}:
-	piPipes rna \ 
-		-i input.fq[.gz] \ 
-		-g dm3 \ 
-		-o output_directory [current working directory] \ 
-		-c cpu [8] \ 
+	piPipes rna \
+		-l left.fq[.gz] \
+		-r right.fq[.gz] \
+		-g dm3 \
+		-o output_directory [current working directory] \
+		-c cpu [8] \
 		-B 38 [21]
 
-By default, the pipeline assumes dUTR based method. For Paired-End sample: \2 is in the same 
-direction as the transcript, opposite to ligation-based degradome/CAGE-seq. 
+==================< single-end >==================
+${UNDERLINE}usage${RESET}:
+	piPipes rna \
+		-i input.fq[.gz] \
+		-g dm3 \
+		-o output_directory [current working directory] \
+		-c cpu [8] \
+		-B 38 [21]
+
+By default, the pipeline assumes dUTR based method. For Paired-End sample: \2 is in the same
+direction as the transcript, opposite to ligation-based degradome/CAGE-seq.
 Use option -L to change the behavior.
 
 
@@ -62,11 +58,11 @@ ${REQUIRED}[ required ]
 	-r      Right reads from Paired-End sequencing
 	-i      Input reads from Single-End sequence
 	-g      Genome assembly name, like mm9 or dm3. required
-	        Check $PIPELINE_DIRECTORY/common/genome_supported.txt for genome assemblies currently installed; 
+	        Check $PIPELINE_DIRECTORY/common/genome_supported.txt for genome assemblies currently installed;
 	        Use "install" to install new genome
 ${OPTIONAL}[ optional ]
 	-L      Ligation based library preperation method; Left reads (\1) being in the same direction as the transcripts. default: off (dUTR based, \2 reads being in the same direction)
-	-x      Turn on "--no-length-correction " option of cufflinks; use if library is made without fragmentation, PAS-seq for example.		
+	-x      Turn on "--no-length-correction " option of cufflinks; use if library is made without fragmentation, PAS-seq for example.
 	-o      Output directory, default: current directory $PWD
 	-c      Number of CPUs to use, default: 8
 	-B      How many rounds of batch algorithm to run for eXpress, default: 21
@@ -121,19 +117,19 @@ check_genome $GENOME
 cd ${OUTDIR} || (echo2 "Cannot access directory ${OUTDIR}... Exiting..." "error")
 touch .writting_permission && rm -rf .writting_permission || (echo2 "Cannot write in directory ${OUTDIR}... Exiting..." "error")
 
-if [ "${LIGATIONLIB}" == 1 ]; 
-then 
+if [ "${LIGATIONLIB}" == 1 ];
+then
 	LIBRARY_TYPE="fr-secondstrand";
 	END_TO_REVERSE_STRAND=2
-	SENSE_HTSEQ_OPT="yes"; 
-	ANTISENSE_HTSEQ_OPT="reverse"; 
+	SENSE_HTSEQ_OPT="yes";
+	ANTISENSE_HTSEQ_OPT="reverse";
 	EXPRESS_OPTION_PE="--fr-stranded"
 	EXPRESS_OPTION_SE="--f-stranded"
-else 
+else
 	LIBRARY_TYPE="fr-firststrand"
 	END_TO_REVERSE_STRAND=1
-	SENSE_HTSEQ_OPT="reverse"; 
-	ANTISENSE_HTSEQ_OPT="yes"; 
+	SENSE_HTSEQ_OPT="reverse";
+	ANTISENSE_HTSEQ_OPT="yes";
 	EXPRESS_OPTION_PE="--rf-stranded"
 	EXPRESS_OPTION_SE="--r-stranded"
 fi
@@ -143,7 +139,7 @@ echo $LIBRARY_TYPE > .LIBRARY_TYPE
 # creating output files/folders #
 #################################
 export PDF_DIR=$OUTDIR/pdfs && mkdir -p $PDF_DIR
-READS_DIR=input_read_files && mkdir -p $READS_DIR 
+READS_DIR=input_read_files && mkdir -p $READS_DIR
 rRNA_DIR=rRNA_mapping && mkdir -p $rRNA_DIR
 GENOMIC_MAPPING_DIR=genome_mapping && mkdir -p $GENOMIC_MAPPING_DIR
 CUFFLINKS_DIR=cufflinks_output && mkdir -p $CUFFLINKS_DIR
@@ -206,7 +202,7 @@ STARINDEX=$COMMON_FOLDER/STARIndex
 # beginning running pipeline #
 ##############################
 echo2 "---------------------------------------------------------------------------------"
-echo2 "Beginning running [${PACKAGE_NAME}] RNA-Seq pipeline version $RNASEQ_VERSION" 
+echo2 "Beginning running [${PACKAGE_NAME}] RNA-Seq pipeline version $RNASEQ_VERSION"
 
 if [[ -n $PE_MODE ]]; then
 # Paired-End
@@ -354,29 +350,29 @@ if [[ -n $PE_MODE ]]; then
 	#############################################
 	# genomic feature counting with htSeq-count #
 	#############################################
-	echo2 "Quantifying genomic features from genomic mapping using HTSeq-count"
-	[ ! -f .${JOBUID}.status.${STEP}.htseq_count ] && \
-		. $COMMON_FOLDER/genomic_features && \
-		[ ! -z $HTSEQ_TARGETS ] && \
-		para_file=$HTSEQ_DIR/${RANDOM}${RANDOM}.para && \
-		for t in "${HTSEQ_TARGETS[@]}"; do \
-			echo "htseq-count -m intersection-strict -s $SENSE_HTSEQ_OPT -t exon -i transcript_id -q ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.Aligned.out.sam ${!t} | awk 'BEGIN{FS=OFS=\"\t\"}{n=split (\$1,a,\".\"); ct[a[1]]+=\$2; }END{for (x in ct) {print x, ct[x]}}' | sort -k1,1 > ${HTSEQ_DIR}/${PREFIX}.x_rRNA.${GENOME}.${t}.htseqcount.strict.S.out" >> $para_file
-			echo "htseq-count -m intersection-strict -s $ANTISENSE_HTSEQ_OPT -t exon -i transcript_id -q ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.Aligned.out.sam ${!t} | awk 'BEGIN{FS=OFS=\"\t\"}{n=split (\$1,a,\".\"); ct[a[1]]+=\$2; }END{for (x in ct) {print x, ct[x]}}' | sort -k1,1 > ${HTSEQ_DIR}/${PREFIX}.x_rRNA.${GENOME}.${t}.htseqcount.strict.AS.out" >> $para_file
-			echo "htseq-count -m union -s $SENSE_HTSEQ_OPT -t exon -i transcript_id -q ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.Aligned.out.sam ${!t} | awk 'BEGIN{FS=OFS=\"\t\"}{n=split (\$1,a,\".\"); ct[a[1]]+=\$2; }END{for (x in ct) {print x, ct[x]}}' | sort -k1,1 > ${HTSEQ_DIR}/${PREFIX}.x_rRNA.${GENOME}.${t}.htseqcount.union.S.out" >> $para_file
-			echo "htseq-count -m union -s $ANTISENSE_HTSEQ_OPT -t exon -i transcript_id -q ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.Aligned.out.sam ${!t} | awk 'BEGIN{FS=OFS=\"\t\"}{n=split (\$1,a,\".\"); ct[a[1]]+=\$2; }END{for (x in ct) {print x, ct[x]}}' | sort -k1,1 > ${HTSEQ_DIR}/${PREFIX}.x_rRNA.${GENOME}.${t}.htseqcount.union.AS.out" >> $para_file
-		done && \
-	ParaFly -c $para_file -CPU $CPU -failed_cmds ${para_file}.failedCommands 1>&2 && \
-	rm -rf ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.Aligned.out.sam && \
-	touch .${JOBUID}.status.${STEP}.htseq_count
-	STEP=$((STEP+1))
+	# echo2 "Quantifying genomic features from genomic mapping using HTSeq-count"
+	# [ ! -f .${JOBUID}.status.${STEP}.htseq_count ] && \
+	# 	. $COMMON_FOLDER/genomic_features && \
+	# 	[ ! -z $HTSEQ_TARGETS ] && \
+	# 	para_file=$HTSEQ_DIR/${RANDOM}${RANDOM}.para && \
+	# 	for t in "${HTSEQ_TARGETS[@]}"; do \
+	# 		echo "htseq-count -m intersection-strict -s $SENSE_HTSEQ_OPT -t exon -i transcript_id -q ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.Aligned.out.sam ${!t} | awk 'BEGIN{FS=OFS=\"\t\"}{n=split (\$1,a,\".\"); ct[a[1]]+=\$2; }END{for (x in ct) {print x, ct[x]}}' | sort -k1,1 > ${HTSEQ_DIR}/${PREFIX}.x_rRNA.${GENOME}.${t}.htseqcount.strict.S.out" >> $para_file
+	# 		echo "htseq-count -m intersection-strict -s $ANTISENSE_HTSEQ_OPT -t exon -i transcript_id -q ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.Aligned.out.sam ${!t} | awk 'BEGIN{FS=OFS=\"\t\"}{n=split (\$1,a,\".\"); ct[a[1]]+=\$2; }END{for (x in ct) {print x, ct[x]}}' | sort -k1,1 > ${HTSEQ_DIR}/${PREFIX}.x_rRNA.${GENOME}.${t}.htseqcount.strict.AS.out" >> $para_file
+	# 		echo "htseq-count -m union -s $SENSE_HTSEQ_OPT -t exon -i transcript_id -q ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.Aligned.out.sam ${!t} | awk 'BEGIN{FS=OFS=\"\t\"}{n=split (\$1,a,\".\"); ct[a[1]]+=\$2; }END{for (x in ct) {print x, ct[x]}}' | sort -k1,1 > ${HTSEQ_DIR}/${PREFIX}.x_rRNA.${GENOME}.${t}.htseqcount.union.S.out" >> $para_file
+	# 		echo "htseq-count -m union -s $ANTISENSE_HTSEQ_OPT -t exon -i transcript_id -q ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.Aligned.out.sam ${!t} | awk 'BEGIN{FS=OFS=\"\t\"}{n=split (\$1,a,\".\"); ct[a[1]]+=\$2; }END{for (x in ct) {print x, ct[x]}}' | sort -k1,1 > ${HTSEQ_DIR}/${PREFIX}.x_rRNA.${GENOME}.${t}.htseqcount.union.AS.out" >> $para_file
+	# 	done && \
+	# ParaFly -c $para_file -CPU $CPU -failed_cmds ${para_file}.failedCommands 1>&2 && \
+	# rm -rf ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.Aligned.out.sam && \
+	# touch .${JOBUID}.status.${STEP}.htseq_count
+	# STEP=$((STEP+1))
 
 	##################################################
 	# direct mapping and quantification with eXpress #
 	##################################################
 	echo2 "Mapping to genes and transposon directly with Bowtie2"
 	. $COMMON_FOLDER/genomic_features
+	if [ "$GENOME" == "dm3" -o "$GENOME" == "dm6" ]; then
 	# for fly genome, the transcripts from piRNA cluster are usually undetectable. including them in eXpress will actually have negative influence.
-	if [ "$GENOME" == "dm3" ]; then
 		TRANSCRIPTOME_INDEX="gene+transposon"
 	else
 		TRANSCRIPTOME_INDEX="gene+cluster+repBase"
@@ -457,7 +453,7 @@ if [[ -n $PE_MODE ]]; then
 		rm -f ${DIRECTMAPPING_DIR}/${PREFIX}.${TRANSCRIPTOME_INDEX}.sorted.unique.bed
 	fi
 else # Single-End
-	
+
 	###########################
 	# determine fastQ version #
 	###########################
