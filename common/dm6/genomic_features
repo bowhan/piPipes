@@ -1,10 +1,10 @@
 # variables for small RNA pipeline intersecting
 	MASK=$COMMON_FOLDER/dm6.tRNA+rRNA.bed.gz # tRNA, rRNA, nonCoding RNA (flyBase) from UCSC table browser
-	
+
 	tRNA=$COMMON_FOLDER/dm6.tRNA.bed.gz
 	rRNA=$COMMON_FOLDER/dm6.rDNA.repeatMasker.bed.gz # run repeatMasker using rDNA sequence
 	RM_rRNA=$COMMON_FOLDER/dm6.repBase.repeatMasker.rRNA.bed.gz # run repeatMasker using repBase default and extract the ones classified as rRNA
-	
+
 	piRNA_Cluster=$COMMON_FOLDER/dm6.piRNAcluster.bed.gz
 	# piRNA_Cluster_42AB=$COMMON_FOLDER/Brennecke.piRNAcluster.42AB.bed6 # 42AB
 	# piRNA_Cluster_20A=$COMMON_FOLDER/Brennecke.piRNAcluster.20A.bed6 # 20A
@@ -22,18 +22,18 @@
 	RM_Satellite=$COMMON_FOLDER/dm6.repBase.repeatMasker.Satellite.bed.gz
 	RM_Simple_repeat=$COMMON_FOLDER/dm6.repBase.repeatMasker.Simple_repeat.bed.gz
 	RM_Unknown=$COMMON_FOLDER/dm6.repBase.repeatMasker.Unknown.bed.gz
-	
+
 	# Trn=$COMMON_FOLDER/Zamore.transposon.bed.gz # transposon region used in Li, et al., Cell, 2009. More conserved than repeat masker
 	# Trn_GROUP0=$COMMON_FOLDER/Zamore.transposon.group0.bed.gz # transposons that failed to pass threshold in Li, et al., Cell, 2009. More conserved than repeat masker
 	# Trn_GROUP1=$COMMON_FOLDER/Zamore.transposon.group1.bed.gz # group 1 transposon in Li, et al., Cell, 2009, mainly germline
 	# Trn_GROUP2=$COMMON_FOLDER/Zamore.transposon.group2.bed.gz # group 2 transposon in Li, et al., Cell, 2009
 	# Trn_GROUP3=$COMMON_FOLDER/Zamore.transposon.group3.bed.gz # group 3 transposon in Li, et al., Cell, 2009, mainly somatic
-	Genes=$COMMON_FOLDER/UCSC.dm6.gene.bed12.gz # = gene
-	Exons=$COMMON_FOLDER/UCSC.dm6.exon.bed.gz # = exons
-	Introns=$COMMON_FOLDER/UCSC.dm6.intron.bed.gz # = introns
-	FiveUTR=$COMMON_FOLDER/UCSC.dm6.5UTR.bed.gz # = 5' UTR
-	CDS=$COMMON_FOLDER/UCSC.dm6.CDS.bed.gz # = CDS
-	ThreeUTR=$COMMON_FOLDER/UCSC.dm6.3UTR.bed.gz # = 3' UTR
+	Genes=$COMMON_FOLDER/UCSC.refSeq.gene.bed12.gz # = gene
+	Exons=$COMMON_FOLDER/UCSC.refSeq.exon.bed.gz # = exons
+	Introns=$COMMON_FOLDER/UCSC.refSeq.intron.bed.gz # = introns
+	FiveUTR=$COMMON_FOLDER/UCSC.refSeq.5UTR.bed.gz # = 5' UTR
+	CDS=$COMMON_FOLDER/UCSC.refSeq.CDS.bed.gz # = CDS
+	ThreeUTR=$COMMON_FOLDER/UCSC.refSeq.3UTR.bed.gz # = 3' UTR
 	cisNATs=$COMMON_FOLDER/cisNATs.bed.gz # cis-NATs
 	structural_loci=$COMMON_FOLDER/structured_loci.bed.gz # structural loci
 	lincRNA=$COMMON_FOLDER/lincRNA.Young.bed6.gz # linc RNA identified in 'Identification and properties of 1,119 candidate lincRNA loci in the Drosophila melanogaster genome. Genome Biol Evol. 2012;4(4):427-42.'
@@ -62,7 +62,7 @@
 	"CDS" \
 	"ThreeUTR" \
  	)
-	
+
 	declare -a TARGETS_EXCLUSIVE=(\
 	"piRNA_Cluster" \
 	"CDS" \
@@ -71,10 +71,10 @@
 	"Introns" \
 	"repeatMasker" \
 	)
-	
+
 # variables for small RNA direct mapping
 	declare -a DIRECT_MAPPING=( ) # need to have BowtieIndex/repBase # BowtieIndex/piRNAcluster
-	
+
 # gtf files for rnaseq/deg/cage htseq-count
 	# Genes_transposon_Cluster=$COMMON_FOLDER/
 	# Genes_repBase_Cluster=$COMMON_FOLDER/

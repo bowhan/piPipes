@@ -29,20 +29,20 @@ cat << EOF
 
 small RNA Seq pipeline dual library mode v$SMALLRNA2_VERSION from the $BOLD$PACKAGE_NAME$RESET
 $SMALLRNA2_INTRO${RESET}
-Please email $CONTACT_EMAILS for any questions or bugs. 
-Thank you for using it. 
+Please email $CONTACT_EMAILS for any questions or bugs.
+Thank you for using it.
 
 ${UNDERLINE}usage${RESET}:
-	piPipes small2 \	
-		-a small_rna_pipeline_single_mode_output_dir1 \ 
-		-b small_rna_pipeline_single_mode_output_dir2 \ 
-		-g dm3 \ 
-		-N siRNA \ 
-		-c 24 [8] \ 
-		-o output_dir [cwd] \ 
-		-A piwi_heterozygous [basename of -a] \ 
+	piPipes small2 \
+		-a small_rna_pipeline_single_mode_output_dir1 \
+		-b small_rna_pipeline_single_mode_output_dir2 \
+		-g dm3 \
+		-N siRNA \
+		-c 24 [8] \
+		-o output_dir [cwd] \
+		-A piwi_heterozygous [basename of -a] \
 		-B piwi_mutant [basename of -b]
-	
+
 OPTIONS:
 	-h      Show this message
 	-v      Print out the version
@@ -50,7 +50,7 @@ ${REQUIRED}[ required ]
 	-a      Directory to the folder with the output of single library mode, for sample A (wild-type)
 	-b      Directory to the folder with the output of single library mode, for sample B (mutant)
 	-g      Genome assembly name, like mm9 or dm3
-		 Check "$PIPELINE_DIRECTORY/common/genome_supported.txt" for genome assemblies currently installed; 
+		 Check "$PIPELINE_DIRECTORY/common/genome_supported.txt" for genome assemblies currently installed;
 		 Use "install" to install new genome
 ${OPTIONAL}[ optional ]
 	-N      Normalization method, choose from " unique | uniqueXmiRNA | all | allXmiRNA | miRNA"; three more available for fly dm3 "siRNA | 42AB | flam"
@@ -67,7 +67,7 @@ ${OPTIONAL}[ optional ]
 	-A      Name to use for Sample A, default: using the basename of -a
 	-B      Name to use for Sample B, default: using the basename of -b
 
-The pipeline will automatically detect the version and options of the single library run for the two samples and ensure the consistence. 
+The pipeline will automatically detect the version and options of the single library run for the two samples and ensure the consistence.
 
 EOF
 echo -e "${COLOR_END}"
@@ -92,11 +92,11 @@ while getopts "hva:b:g:c:o:A:B:N:" OPTION; do
 	esac
 done
 # if INPUT_FASTQ or GENOME is undefined, print out usage and exit
-[[ -z $SAMPLE_A_DIR ]] && usage && echo2 "Missing option -a for input dir for sample A (wild-type) file " "error" 
+[[ -z $SAMPLE_A_DIR ]] && usage && echo2 "Missing option -a for input dir for sample A (wild-type) file " "error"
 [[ ! -d $SAMPLE_A_DIR ]] && echo2 "Cannot find input directory $SAMPLE_A_DIR" "error"
-[[ -z $SAMPLE_B_DIR ]] && usage && echo2 "Missing option -b for input dir for sample B (mutant) file " "error" 
+[[ -z $SAMPLE_B_DIR ]] && usage && echo2 "Missing option -b for input dir for sample B (mutant) file " "error"
 [[ ! -d $SAMPLE_B_DIR ]] && echo2 "Cannot find input directory $SAMPLE_B_DIR" "error"
-[[ -z $GENOME ]]  && usage && echo2 "Missing option -g for specifying which genome assembly to use" "error" 
+[[ -z $GENOME ]]  && usage && echo2 "Missing option -g for specifying which genome assembly to use" "error"
 check_genome $GENOME
 [[ -z $SAMPLE_A_NAME ]] && export SAMPLE_A_NAME=`basename $SAMPLE_A_DIR`
 [[ -z $SAMPLE_B_NAME ]] && export SAMPLE_B_NAME=`basename $SAMPLE_B_DIR`
@@ -150,7 +150,7 @@ CHROM=$COMMON_FOLDER/${GENOME}.ChromInfo.txt
 # bowtie index directory
 export BOWTIE_INDEXES=$COMMON_FOLDER/BowtieIndex
 # reading the information to intersect with, as well as some other annotation files
-. $COMMON_FOLDER/genomic_features 
+. $COMMON_FOLDER/genomic_features
 # normalization method
 # unique | uniqueXmiRNA | all | allXmiRNA | miRNA | siRNA | 42AB | flam
 case "$NORMMETHOD" in
@@ -268,7 +268,7 @@ if [ ! -f .${JOBUID}.status.${STEP}.transposon_abundance.normalized_by_$NORMMETH
 	awk '$3>0&&$4>0' $TRN_DIR/${SAMPLE_A_NAME}.transposon.mean_len.normalized_by_$NORMMETHOD > $TRN_DIR/${SAMPLE_A_NAME}.transposon.mean_len.normalized_by_${NORMMETHOD}.no_zero && \
 	awk '$3>0&&$4>0' $TRN_DIR/${SAMPLE_B_NAME}.transposon.mean_len.normalized_by_$NORMMETHOD > $TRN_DIR/${SAMPLE_B_NAME}.transposon.mean_len.normalized_by_${NORMMETHOD}.no_zero && \
 	Rscript --slave $PIPELINE_DIRECTORY/bin/piPipes_draw_scatter_plot_linear.R $TRN_DIR/${SAMPLE_A_NAME}.transposon.mean_len.normalized_by_${NORMMETHOD}.no_zero  $TRN_DIR/${SAMPLE_B_NAME}.transposon.mean_len.normalized_by_${NORMMETHOD}.no_zero  $SAMPLE_A_NAME $SAMPLE_B_NAME $PDF_DIR/${SAMPLE_A_NAME}_vs_${SAMPLE_B_NAME}.transposon.mean_len.normalized_by_$NORMMETHOD && \
-	touch .${JOBUID}.status.${STEP}.transposon_abundance.normalized_by_$NORMMETHOD	
+	touch .${JOBUID}.status.${STEP}.transposon_abundance.normalized_by_$NORMMETHOD
 fi
 
 echo2 "Making interactive HTML plot for transposon abundance and mean length"
@@ -288,7 +288,7 @@ awk 'BEGIN{FS=OFS="\t"}{if(ARGIND==1){t[$1]=$2; m[$1]=1; a[$1]=$3; b[$1]=$4}else
 	$TRN_DIR/${SAMPLE_B_NAME}.transposon.mean_len.normalized_by_$NORMMETHOD \
 	>> $HTML_DIR/${SAMPLE_A_NAME}_vs_${SAMPLE_B_NAME}.transposon.mean_len.normalized_by_${NORMMETHOD}.html && \
 cat ${PIPELINE_DIRECTORY}/html/smallRNA_menlen_scatterplot_2.html >> $HTML_DIR/${SAMPLE_A_NAME}_vs_${SAMPLE_B_NAME}.transposon.mean_len.normalized_by_${NORMMETHOD}.html
-		
+
 ;;
 *)
 
@@ -311,14 +311,14 @@ awk 'BEGIN{FS=OFS="\t"}{if(ARGIND==1){m[$1]=1;a[$1]=$2; b[$1]=$3}else{m[$1]=1; c
 	>> $HTML_DIR/${SAMPLE_A_NAME}_vs_${SAMPLE_B_NAME}.transposon.abundance.normalized_by_${NORMMETHOD}.html && \
 cat ${PIPELINE_DIRECTORY}/html/smallRNA_abundance_scatterplot_2.html >> $HTML_DIR/${SAMPLE_A_NAME}_vs_${SAMPLE_B_NAME}.transposon.abundance.normalized_by_${NORMMETHOD}.html
 
-cat ${PIPELINE_DIRECTORY}/html/smallRNA_menlen_scatterplot_1.html > $HTML_DIR/${SAMPLE_A_NAME}_vs_${SAMPLE_B_NAME}.transposon.mean_len.normalized_by_${NORMMETHOD}.html && \
-echo "transposon,type,${SAMPLE_A_NAME},${SAMPLE_A_NAME},${SAMPLE_B_NAME},${SAMPLE_B_NAME}" >> $HTML_DIR/${SAMPLE_A_NAME}_vs_${SAMPLE_B_NAME}.transposon.mean_len.normalized_by_${NORMMETHOD}.html && \
-awk 'BEGIN{FS=OFS="\t"}{if(ARGIND==1){t[$1]=$2; m[$1]=1; a[$1]=$3; b[$1]=$4}else{m[$1]=1; c[$1]=$3; d[$1]=$4}}END{for(i in m) printf "%s,%d,%.2f,%.2f,%.2f,%.2f\n", i, t[i], a[i]?a[i]:0, b[i]?b[i]:0, c[i]?c[i]:0, d[i]?d[i]:0}' \
-	$TRN_DIR/${SAMPLE_A_NAME}.transposon.mean_len.normalized_by_$NORMMETHOD \
-	$TRN_DIR/${SAMPLE_B_NAME}.transposon.mean_len.normalized_by_$NORMMETHOD \
-	>> $HTML_DIR/${SAMPLE_A_NAME}_vs_${SAMPLE_B_NAME}.transposon.mean_len.normalized_by_${NORMMETHOD}.html && \
-cat ${PIPELINE_DIRECTORY}/html/smallRNA_menlen_scatterplot_2.html >> $HTML_DIR/${SAMPLE_A_NAME}_vs_${SAMPLE_B_NAME}.transposon.mean_len.normalized_by_${NORMMETHOD}.html
-		
+# cat ${PIPELINE_DIRECTORY}/html/smallRNA_menlen_scatterplot_1.html > $HTML_DIR/${SAMPLE_A_NAME}_vs_${SAMPLE_B_NAME}.transposon.mean_len.normalized_by_${NORMMETHOD}.html && \
+# echo "transposon,type,${SAMPLE_A_NAME},${SAMPLE_A_NAME},${SAMPLE_B_NAME},${SAMPLE_B_NAME}" >> $HTML_DIR/${SAMPLE_A_NAME}_vs_${SAMPLE_B_NAME}.transposon.mean_len.normalized_by_${NORMMETHOD}.html && \
+# awk 'BEGIN{FS=OFS="\t"}{if(ARGIND==1){t[$1]=$2; m[$1]=1; a[$1]=$3; b[$1]=$4}else{m[$1]=1; c[$1]=$3; d[$1]=$4}}END{for(i in m) printf "%s,%d,%.2f,%.2f,%.2f,%.2f\n", i, t[i], a[i]?a[i]:0, b[i]?b[i]:0, c[i]?c[i]:0, d[i]?d[i]:0}' \
+# 	$TRN_DIR/${SAMPLE_A_NAME}.transposon.mean_len.normalized_by_$NORMMETHOD \
+# 	$TRN_DIR/${SAMPLE_B_NAME}.transposon.mean_len.normalized_by_$NORMMETHOD \
+# 	>> $HTML_DIR/${SAMPLE_A_NAME}_vs_${SAMPLE_B_NAME}.transposon.mean_len.normalized_by_${NORMMETHOD}.html && \
+# cat ${PIPELINE_DIRECTORY}/html/smallRNA_menlen_scatterplot_2.html >> $HTML_DIR/${SAMPLE_A_NAME}_vs_${SAMPLE_B_NAME}.transposon.mean_len.normalized_by_${NORMMETHOD}.html
+#
 ;;
 esac
 STEP=$((STEP+1))
