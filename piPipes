@@ -28,7 +28,7 @@
 # University of Massachusetts Medical School
 
 cmd=`basename $0`
-dir=`dirname  $0`
+dir=`dirname $(readlink -f $0)`
 
 if [[ "${cmd}" == "piPipes_debug" ]]; then
 	export DEBUG='-x'
