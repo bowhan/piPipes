@@ -1,6 +1,6 @@
 /*
 	# piPipes, a set of pipelines for PIWI-interacting RNA (piRNA) and transposon analysis
-	# Copyright (C) 2014  Bo Han, Wei Wang, Zhiping Weng, Phillip Zamore
+	# Copyright (C) 2014-2016  Bo Han, Wei Wang, Zhiping Weng, Phillip Zamore
 	#
 	# This program is free software; you can redistribute it and/or modify
 	# it under the terms of the GNU General Public License as published by
