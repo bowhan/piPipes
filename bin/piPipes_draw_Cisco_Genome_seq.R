@@ -18,8 +18,9 @@
 
 
 source (paste (Sys.getenv ("PIPELINE_DIRECTORY"),"/bin/piPipes.R",sep=""))
+library(pacman)
+p_load(RCircos)
 
-pkgTest ("RCircos")
 argv  = commandArgs (TRUE)
 cyto.info = read.table (argv[1],F)
 piRNA_cluster = read.table(gzfile(argv[2]), header=F) # make sure the second argument, the piRNA cluster bed file, is gzipped

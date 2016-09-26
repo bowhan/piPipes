@@ -19,13 +19,14 @@
 
 
 source (paste (Sys.getenv ("PIPELINE_DIRECTORY"),"/bin/piPipes.R",sep=""))
+library(pacman)
 
-pkgTest ("ggplot2")
-pkgTest ("grid")
-pkgTest ("ggthemes")
-pkgTest ("scales")
-pkgTest ("reshape")
-pkgTest ("gridExtra")
+p_load("ggplot2")
+p_load("grid")
+p_load("ggthemes")
+p_load("scales")
+p_load("reshape")
+p_load("gridExtra")
 
 argv  = commandArgs (TRUE)
 # reading options

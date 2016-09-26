@@ -19,10 +19,11 @@
 
 source (paste (Sys.getenv ("PIPELINE_DIRECTORY"),"/bin/piPipes.R",sep=""))
 
-pkgTest ("ggplot2")
-pkgTest ("grid")
-pkgTest ("ggthemes")
-pkgTest ("RColorBrewer")
+library(pacman)
+p_load(grid)
+p_load(ggplot2)
+p_load(ggthemes)
+p_load(RColorBrewer)
 
 argv  = commandArgs (TRUE)
 pdf (paste(argv[2], ".pdf", sep=''))

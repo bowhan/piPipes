@@ -18,11 +18,12 @@
 
 
 source (paste (Sys.getenv ("PIPELINE_DIRECTORY"),"/bin/piPipes.R",sep=""))
+library(pacman)
 
-pkgTest ("parallel")
-pkgTest ("RColorBrewer")
-pkgTest ("ggplot2")
-pkgTest ("grid")
+p_load("parallel")
+p_load("RColorBrewer")
+p_load("ggplot2")
+p_load("grid")
 
 # https://github.com/mylesmharrison/colorRampPaletteAlpha/blob/master/colorRampPaletteAlpha.R
 addalpha <- function(colors, alpha=1.0) {

@@ -18,7 +18,8 @@
 
 source (paste (Sys.getenv ("PIPELINE_DIRECTORY"),"/bin/piPipes.R",sep=""))
 
-pkgTest ("RColorBrewer")
+library(pacman)
+p_load(RColorBrewer)
 
 argv = commandArgs (TRUE)
 pdf (paste (argv[1], ".pdf", sep=''), width=10, height=10)

@@ -19,9 +19,9 @@
 
 
 source (paste (Sys.getenv ("PIPELINE_DIRECTORY"),"/bin/piPipes.R",sep=""))
-
-pkgTest("gplots")
-pkgTest("parallel")
+library(pacman)
+p_load(gplots)
+p_load(parallel)
 
 argv = commandArgs (TRUE)
 mirRelativePos = read.table (argv[1], F, sep="\t", stringsAsFactors=F)

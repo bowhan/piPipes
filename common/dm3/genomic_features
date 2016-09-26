@@ -91,7 +91,7 @@
 	)
 	
 # variables for small RNA direct mapping
-	declare -a DIRECT_MAPPING=( "transposon" "repBase" "piRNAcluster" )
+	declare -a DIRECT_MAPPING=( "transposon" "piRNAcluster" )
 	
 # gtf files for rnaseq/deg/cage htseq-count
 	Genes_transposon_Cluster=$COMMON_FOLDER/dm3.genes+transposon+piRNACluster.gtf

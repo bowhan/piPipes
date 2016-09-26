@@ -18,21 +18,28 @@ Visit our [Wiki Page](https://github.com/bowhan/piPipes/wiki) for more details o
 ***
 ### C/C++
 **piPipes** comes with statically compiled linux x86_64 binaries for its own C++ scripts and the other tools written in C/C++. **Ideally, the users don't need to do any compiling.**
-But if the static versions do not work in your system, exemplified by the error message "kernel too old", please compile them from src and move the binaries to the `bin`, or simply email us or file an issue on Github.
+But if the static versions do not work in your system, exemplified by the error message "kernel too old", please compile them using `cmake`.
 
 If you need to compile from source code:
 - Please install **BEDtools** using the source code in the `third_party` directory and rename it as `bedtools_piPipes` in the `bin` directory of `piPipes`. It has a little modification that makes our self-defined format more efficient to process. 			
 - Please install **bowtie** from https://github.com/bowhan/bowtie , where we have added native gzip/bzip2 support, which is required to run zipped, Paired-End sample for ChIP-seq pipeline.
 - Most of **piPipes's** C++ code utilizes *C++11* features and *Boost* library. It is recommended to install relatively new [GCC](http://gcc.gnu.org/) and [Boost](http://www.boost.org/users/download/) for compiling them.
-If you don't have them, we recommend to use [brew](https://github.com/Homebrew/linuxbrew) to install them automatically.		
+If you don't have them, we recommend to use [brew](https://github.com/Homebrew/linuxbrew) to install them automatically.
+```bash
+cd piPipes 
+mkdir build && cd build 
+cmake .. && make
+```
 - Some codes require the [htslib](https://github.com/samtools/htslib) installed first.
 
 ***
+
 ### Python/Cython
 **For MACS2 and HTSeq-count, the users will need to install them and make them available in their `$PATH`.**        
 *We cannot find a good way to ship the ready-to-use Cython code. Without `htseq-count`, `piPipes rna/deg/cage` won't be able to make transcripts/transposon counting using genomic coordinates. But it will still perform other functions of the pipeline, including quantification using Cufflinks and eXpress. Without `macs2`, `piPipes chip/chip2` won't work at all*.
 
 ***
+
 ### R
 For R packages that are unavailable in the user's system, the installation is performed during the `piPipes install` process. They will be installed in the same directory as the pipeline in case the user doesn't have write permission in the R installation directory. Please keep the version of R constant.
 ***

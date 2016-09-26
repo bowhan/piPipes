@@ -19,7 +19,8 @@
 
 source (paste (Sys.getenv ("PIPELINE_DIRECTORY"),"/bin/piPipes.R",sep=""))
 
-pkgTest ("parallel")
+library(pacman)
+p_load(parallel)
 
 argv  = commandArgs (TRUE)
 summaryTableFile = argv[1]

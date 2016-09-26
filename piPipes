@@ -1,7 +1,7 @@
 #! /bin/bash
 
 # piPipes, a set of pipelines for PIWI-interacting RNA (piRNA) and transposon analysis
-# Copyright (C) 2014  Bo Han, Wei Wang, Zhiping Weng, Phillip Zamore
+# Copyright (C) 2014-2016  Bo Han, Wei Wang, Zhiping Weng, Phillip Zamore
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,12 +27,15 @@
 # RNA Therapeutics Institute
 # University of Massachusetts Medical School
 
-cmd=`basename $0`
-dir=`dirname $(readlink -f $0)`
+declare -xr PACKAGE_NAME="piPipes"
+declare -xr PROG_MAJOR_VERSION=2
+declare -xr PROG_MINOR_VERSION=0
+declare -xr PROG_PATCH_VERSION=0
+declare -xr PROG_VERSION=${PROG_MAJOR_VERSION}.${PROG_MINOR_VERSION}.${PROG_PATCH_VERSION}
 
-if [[ "${cmd}" == "piPipes_debug" ]]; then
-	export DEBUG='-x'
-	set -x
-fi
-
-bash $DEBUG $dir/piPipes.sh "$@"
+set -e -o pipefail
+cmd=$(basename $0)
+dir=$(dirname $(readlink -f $0))
+if [[ "${cmd}" == "piPipes_debug" ]]; then set -x; fi
+export SHELLOPTS
+$dir/piPipes.sh "$@"

@@ -16,17 +16,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-.libPaths(c(paste(Sys.getenv ("PIPELINE_DIRECTORY"),"Rlib",sep='/'), .libPaths()))
-
-# this function is modified from http://stackoverflow.com/questions/9341635/how-can-i-check-for-installed-r-packages-before-running-install-packages
-pkgTest <- function(x)
-{
-	if (!require(x,character.only = TRUE))
-	{
-		install.packages(x,dep=TRUE, lib=paste(Sys.getenv ("PIPELINE_DIRECTORY"),"Rlib",sep="/"), repos='http://cran.us.r-project.org')
-		if(!require(x,character.only = TRUE)) stop ("Failed to install the package. Please check the internet access or update your R if it is too old.")
-	}
-}
+.libPaths(c(.libPaths(), paste(Sys.getenv ("PIPELINE_DIRECTORY"),"Rlib",sep='/')))
 
 # for bioconductor package test and installation
 bioConductorTest = function (x) {

@@ -18,9 +18,10 @@
 
 source (paste (Sys.getenv ("PIPELINE_DIRECTORY"),"/bin/piPipes.R",sep=""))
 
-pkgTest ("ggplot2")
-pkgTest ("grid")
-pkgTest ("scales")
+library(pacman)
+p_load(ggplot2)
+p_load(grid)
+p_load(scales)
 
 argv = commandArgs (TRUE)
 lendis = read.table (argv[1],FALSE)
