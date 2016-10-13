@@ -19,16 +19,16 @@
 ##########
 # Config #
 ##########
-declare -x  GenomeInstallModuleVesion=2.0.0
-declare -xi Threads=8
+declare -x  GenomeInstallModuleVesion=${PROG_VERSION}
+declare -xi Threads=${DEFAULT_THREADS}
 declare -x  Genome=""
-declare -a RequiredPrgrams=( \
+declare -a  RequiredPrgrams=( \
 	wget rsync mysql \
 	faSize twoBitToFa gtfToGenePred genePredToBed \
 	bowtie-build bowtie2-build bwa \
 	samtools bedtools_piPipes Rscript \
 	)
-declare -a RequiredAnnotationFiles=( \
+declare -a  RequiredAnnotationFiles=( \
 	rRNA.fa \
 	hairpin.fa \
 	mature.fa \
@@ -76,12 +76,13 @@ echo -e "${COLOR_END}"
 #############################
 # ARGS reading and checking #
 #############################
-while getopts "hg:c:vDC" OPTION; do
+while getopts "hg:Dc:v" OPTION; do
 	case $OPTION in
 		h)	usage && exit 1 ;;
 		v)	echo2 "GenomeInstallModuleVesion: v$GenomeInstallModuleVesion" && exit 0 ;;
 		g)	Genome=$OPTARG  ;;
 		c)  Threads=$OPTARG ;;
+		D)  set -x;;
 		*)	usage && exit 1 ;;
 	esac
 done
@@ -127,7 +128,7 @@ if [[ ! -s $PIPELINE_DIRECTORY/common/$Genome/variables ]]; then
 	ReadUserParameter() {
 		local message="${1}"
 		local varname=${2}
-		echo2 ${message}
+		echo2 "${message}"
 		read ${varname}
 		[[ ! -z ${!varname} ]] \
 		&& echo "export ${varname}=${!varname}" >> $PIPELINE_DIRECTORY/common/$Genome/variables \
@@ -356,5 +357,6 @@ if [[ ! -s transcriptome.sizes ]]; then faSize -tab -detailed transcriptome.fa >
 # Done #
 ########
 # TODO: lock file
+touch $PIPELINE_DIRECTORY/common/genome_supported.txt # make sure it exist
 sort -u <(cat $PIPELINE_DIRECTORY/common/genome_supported.txt) <(echo $Genome) > $PIPELINE_DIRECTORY/common/genome_supported.txt.${Genome} \
 && mv $PIPELINE_DIRECTORY/common/genome_supported.txt.${Genome} $PIPELINE_DIRECTORY/common/genome_supported.txt  

@@ -19,7 +19,9 @@
 
 source (paste (Sys.getenv ("PIPELINE_DIRECTORY"),"/bin/piPipes.R",sep=""))
 
-if(!require("pacman")) install.packages("pacman")
+if(!require("pacman")) { 
+    install.packages("pacman", repos='http://cran.us.r-project.org') 
+}
 library(pacman)
 p_load(readr)
 p_load(dplyr)

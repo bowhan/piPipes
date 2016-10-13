@@ -31,8 +31,9 @@ fi
 export -f echo2
 
 function assertBinExists {
-    local program_path=$(which $1 2>/dev/null)
-    if [[ $? -ne 0 ]]; then echo2 "Required program \"$1\" is not available" error; fi
+    if ! which $1 &>/dev/null; then
+        echo2 "Required program \"$1\" is not available" error 
+    fi
 }
 export -f assertBinExists
 
@@ -88,17 +89,10 @@ function bwaCheck {
 export -f bwaCheck
 
 function StarCheck {
-    if [[ ! -f ${1}/chrLength.txt ]]; then return 1; fi
-    if [[ ! -f ${1}/chrNameLength.txt ]]; then return 1; fi
-    if [[ ! -f ${1}/chrName.txt ]]; then return 1; fi
-    if [[ ! -f ${1}/chrStart.txt ]]; then return 1; fi
-    if [[ ! -f ${1}/Genome ]]; then return 1; fi
-    if [[ ! -f ${1}/genomeParameters.txt ]]; then return 1; fi
-    if [[ ! -f ${1}/SA ]]; then return 1; fi
-    if [[ ! -f ${1}/SAindex ]]; then return 1; fi
-    if [[ ! -f ${1}/sjdbInfo.txt ]]; then return 1; fi
-    if [[ ! -f ${1}/sjdbList.out.tab ]]; then return 1; fi
-    return 0;
+    for f in "chrLength.txt" "chrNameLength.txt" "chrName.txt" "chrStart.txt" "Genome" "genomeParameters.txt" "SA" "SAindex" "sjdbInfo.txt" "sjdbList.out.tab"; do
+        if [[ ! -f ${1}/${f} ]]; then return 1; fi
+    done
+    return 0
 }
 export -f StarCheck
 
