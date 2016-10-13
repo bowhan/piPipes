@@ -16,7 +16,8 @@
  # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include "chiSquared.hpp"
+#include "../include/chiSquared.hpp"
+
 using namespace std;
 
 const string usage = R"(
@@ -32,20 +33,22 @@ usage:
 contact bo.han@umassmed.edu for questions
 
 )";
-int main (int argc, char** argv) {
-  if (argc != 2) {
-    cerr << usage << endl;
-    exit (1);
-  }
-  ifstream in {argv[1]};
-  string firstLine;
-  getline (in, firstLine);
-  uint32_t N = 0;
-  for (char c : firstLine) {
-    if ( c == '\t' )
-      ++N;
-  }
-  in.clear (); in.seekg (ios_base::beg); /// return to the beginning
-  chiSquared<double> cs {N};
-  cs.readFile(&in);
+
+int main(int argc, char **argv) {
+    if (argc != 2) {
+        cerr << usage << endl;
+        exit(1);
+    }
+    ifstream in{argv[1]};
+    string firstLine;
+    getline(in, firstLine);
+    uint32_t N = 0;
+    for (char c : firstLine) {
+        if (c == '\t')
+            ++N;
+    }
+    in.clear();
+    in.seekg(ios_base::beg); /// return to the beginning
+    chiSquared<double> cs{N};
+    cs.readFile(&in);
 }

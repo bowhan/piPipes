@@ -25,23 +25,27 @@
 #include <unordered_map>
 #include "boost/algorithm/string.hpp"
 
-void readFile(const std::string& fileName, std::unordered_map<std::string,std::string>* storage, int commonField, int mergeField) {
-	std::ifstream in1(fileName);
-	std::string line{};
-	std::vector<std::string> tokens;
-	if (mergeField != -1) {
-		while(getline(in1, line)) {
-			boost::split(tokens, line, boost::is_any_of("\t"));
-			assert(tokens.size() > commonField && tokens.size() > mergeField);
-			storage->insert(std::pair<std::string, std::string> {tokens[commonField], tokens[mergeField]});
-		}
-	} else {
-		while(getline(in1,line)) {
-			boost::split(tokens, line, boost::is_any_of("\t"));
-			assert(tokens.size() > commonField && tokens.size() > mergeField);
-			storage->insert(std::pair<std::string, std::string> {tokens[commonField], line});
-		}
-	}
+void readFile(const std::string& fileName
+              , std::unordered_map<std::string, std::string> *storage
+              , int commonField
+              , int mergeField
+             ) {
+    std::ifstream in1(fileName);
+    std::string line{};
+    std::vector<std::string> tokens;
+    if (mergeField != -1) {
+        while (getline(in1, line)) {
+            boost::split(tokens, line, boost::is_any_of("\t"));
+            assert(tokens.size() > commonField && tokens.size() > mergeField);
+            storage->insert(std::pair<std::string, std::string> {tokens[commonField], tokens[mergeField]});
+        }
+    } else {
+        while (getline(in1, line)) {
+            boost::split(tokens, line, boost::is_any_of("\t"));
+            assert(tokens.size() > commonField && tokens.size() > mergeField);
+            storage->insert(std::pair<std::string, std::string> {tokens[commonField], line});
+        }
+    }
 }
 
 #endif
