@@ -26,76 +26,76 @@
 
 /* policies for generic containers */
 template <typename T, template <typename...> class C>
-struct containerPolicy { };
+struct containerPolicy {};
 
 /* Vector */
-template<typename T>
+template <typename T>
 struct containerPolicy<T, std::vector> {
-	
-	template<typename U>
-	static void push(std::vector<T>& vec, U&& data) {
-		vec.push_back(data);
-	}
-	
-	static void pop (std::vector<T>& vec) {
-		vec.pop_back();
-	}
-	
-	static T& top(std::vector<T>& vec) {
-		return vec.back();
-	}
+
+    template <typename U>
+    static void push(std::vector<T>& vec, U&& data) {
+        vec.push_back(data);
+    }
+
+    static void pop(std::vector<T>& vec) {
+        vec.pop_back();
+    }
+
+    static T& top(std::vector<T>& vec) {
+        return vec.back();
+    }
 };
 
 /* Deque */
-template<typename T>
+template <typename T>
 struct containerPolicy<T, std::deque> {
-	template<typename U>
-	static void push(std::deque<T>& deq, U&& data) {
-		deq.push_back(data);
-	}
-	
-	static void pop(std::deque<T>& deq) {
-		deq.pop_back();
-	}
-	
-	static T& top(std::deque<T>& deq) {
-		return deq.back();
-	}
+    template <typename U>
+    static void push(std::deque<T>& deq, U&& data) {
+        deq.push_back(data);
+    }
+
+    static void pop(std::deque<T>& deq) {
+        deq.pop_back();
+    }
+
+    static T& top(std::deque<T>& deq) {
+        return deq.back();
+    }
 };
 
 /* Queue */
-template<typename T>
+template <typename T>
 struct containerPolicy<T, std::queue> {
-	template<typename U>
-	static void push(std::queue<T>& que, U&& data) {
-		que.push(data);
-	}
-	
-	static void pop (std::queue<T>& que) {
-		que.pop();
-	}
-	
-	static T& top(std::queue<T>& que) {
-		return que.front();
-	}
-	
+    template <typename U>
+    static void push(std::queue<T>& que, U&& data) {
+        que.push(data);
+    }
+
+    static void pop(std::queue<T>& que) {
+        que.pop();
+    }
+
+    static T& top(std::queue<T>& que) {
+        return que.front();
+    }
+
 };
 
 /* Stack */
-template<typename T>
+template <typename T>
 struct containerPolicy<T, std::stack> {
-	template<typename U>
-	static void push(std::stack<T>& stk, U&& data) {
-		stk.push(data);
-	}
-	
-	static void pop(std::stack<T>& stk) {
-		stk.pop();
-	}
-	
-	static T& top(std::stack<T>& stk) {
-		return stk.top();
-	}
+    template <typename U>
+    static void push(std::stack<T>& stk, U&& data) {
+        stk.push(data);
+    }
+
+    static void pop(std::stack<T>& stk) {
+        stk.pop();
+    }
+
+    static T& top(std::stack<T>& stk) {
+        return stk.top();
+    }
 };
 
 #endif
