@@ -19,21 +19,26 @@
 ##########
 # Config #
 ##########
-declare -x  SmallRnaModuleVersion=2.0.0
-declare -xi Threads=8
-declare -x  Genome=""
-declare -x  InputFastq=""
-declare -x  Outdir=""
+declare -x  SmallRnaModuleVersion=${PROG_VERSION}
+declare -xi Threads=${DEFAULT_THREADS}
+declare -x  Genome
+declare -x  InputFastq
+declare -x  Outdir
 declare -x  Normmethod="unique"
-declare     FilterMappingFileList=""
-declare     PreGenomeMappingFileList=""
-declare     PostGenomeMappingFileList=""
+declare -a  FilterMappingFileList=()
+declare -a  PreGenomeMappingFileList=()
+declare -a  PostGenomeMappingFileList=()
 
 declare -a  RequiredPrgrams=( \
     sort md5sum awk grep python gs Rscript \
     samtools bowtie ParaFly bedGraphToBigWig \
     bedtools_piPipes piPipes_bed2Summary piPipes_fastq_to_insert piPipes_insertBed_to_bed2 \
     )
+
+#########
+# const #
+#########
+declare -ix NucCompExtLen=30
 
 #########
 # USAGE #
@@ -58,29 +63,51 @@ ${UNDERLINE}usage${RESET}:
 
 OPTIONS:
     -h      Show this message
+
     -v      Print out the version
+
 ${REQUIRED}[ required ]
     -i      Input file in fastq or gzipped fastq format; Needs adaptor and barcode removed
             Since this small RNA pipeline does not consider quality, we strongly recommend a quality filtering step.
+    
     -g      Genome assembly name, like mm9 or dm3
-            Check "$PIPELINE_DIRECTORY/common/genome_supported.txt" for genome assemblies currently installed;
-            Use "install" to install new genome
+            Check "$PIPELINE_DIRECTORY/common/genome_supported.txt" for genome assemblies currently installed.
+            Use "install" to install new genome.
+
 ${OPTIONAL}[ optional ]
     -N      Normalization method, choose from " input | rRNA | unique | uniqueXmiRNA | all | allXmiRNA | miRNA "
-            unique: use non-rRNA genomic unique mappers <default>.
-            input: use the number of reads input to the pipeline, this will include genome unmappers. But might be useful when you have additional sequence in the genome, like a transgene.
-            rRNA: use the number of reads mapped to rRNA.
-            uniqueXmiRNA:    use non-rRNA genomic unique mappers excluding microRNAs <for oxidized library from piRNA mutant>.
-            all: use non-rRNA genomic all mappers including microRNAs.
-            allXmiRNA: use non-rRNA genomic all mappers excluding microRNAs.
-            miRNA: use microRNAs. normalized to: reads per millions of miRNA <for unoxidized library from piRNA mutant>.
+                ${UNDERLINE}unique${RESET}${OPTIONAL}: use non-rRNA genomic unique mappers <default>.
+                ${UNDERLINE}input${RESET}${OPTIONAL}: use the number of reads input to the pipeline, this will include genome 
+            unmappers. But might be useful when you have additional sequence in the genome, like a transgene.
+                ${UNDERLINE}rRNA${RESET}${OPTIONAL}: use the number of reads mapped to rRNA.
+                ${UNDERLINE}uniqueXmiRNA${RESET}${OPTIONAL}: use non-rRNA genomic unique mappers excluding microRNAs <for oxidized library from piRNA mutant>.
+                ${UNDERLINE}all${RESET}${OPTIONAL}: use non-rRNA genomic all mappers including microRNAs.
+                ${UNDERLINE}allXmiRNA${RESET}${OPTIONAL}: use non-rRNA genomic all mappers excluding microRNAs.
+                ${UNDERLINE}miRNA${RESET}${OPTIONAL}: use microRNAs. normalized to: reads per millions of miRNA <for unoxidized library from piRNA mutant>.
             * Different normalization methods, including "siRNA", are available in the dual sample mode.
             * You are able to run the same library multiple times with different normalization method. They will not collapse.
+
     -c      Number of Threadss to use, default: $Threads
+    
     -o      Output directory, default: current directory $PWD
-    -F      A list of Fasta files, delimited by comma, used to do filtering (other than rRNA precursor sequence provide).
-    -P      A list of Fasta files, delimited by comma, used to do pre-genomic mapping and analysis. For example, given "-P miniwhite.fa,virus.fa", after removing reads mappable to rRNA and miRNA hairpin, reads are mapped to miniWhite sequence first. Only the non-miniWhite-mappers are mapped to virus sequence. And only the non-miniWhite, non-virus mappers will be used in the genome mapping and further analysis.
-    -O      A list of Fasta files, delimited by comma, used to do post-genomic mapping and analysis. For example, given "-O gfp.fa,luciferase.fa", after removing reads mappable rRNA, miRNA hairpin and genome, reads are mapped to gfp sequence first. Only the non-genome non-gfp mappers are mapped to luciferase sequence. If more than one sequences are put in one Fasta file, they will be treated equally. ${UNDERLINE}Please only use letters and numbers as filename and USE \$HOME instead of ~ to indicate the home directory.${RESET}${OPTIONAL}
+    
+    -F      A Fasta file used for filtering (other than rRNA precursor sequence provide).
+    
+    -P      A Fasta files used to do pre-genomic mapping and analysis. For example, given "-P miniwhite.fa -P virus.fa", 
+            after removing reads mappable to rRNA and miRNA hairpin, reads are mapped to miniWhite sequence first. 
+            Only the non-miniWhite-mappers are mapped to virus sequence. And only the non-miniWhite, non-virus mappers will be 
+            used in the genome mapping and further analysis.
+    
+    -O      A Fasta files used to do post-genomic mapping and analysis. For example, given "-O gfp.fa,luciferase.fa", 
+            after removing reads mappable rRNA, miRNA hairpin and genome, reads are mapped to gfp sequence first. 
+            Only the non-genome non-gfp mappers are mapped to luciferase sequence. If more than one sequences are put in 
+            one Fasta file, they will be treated equally. 
+    
+    For -F, -P and -O options, you can provide more than one fasta files, each with their own tag, such as "-P white.fa -P virus.fa". 
+    They will be mapped and analyzed sequentially.
+    
+
+${RESET}
 
 EOF
 echo -e "${COLOR_END}"
@@ -89,18 +116,36 @@ echo -e "${COLOR_END}"
 ########
 # ARGS #
 ########
-while getopts "hi:c:o:g:vN:F:P:O:D" OPTION; do
+while getopts "hi:c:o:g:vN:F:P:O:" OPTION; do
     case $OPTION in
         h)  usage && exit 0;;
+        
         v)  echo2 "SmallRnaModuleVersion: v$SmallRnaModuleVersion" && exit 0;;
-        i)  InputFastq=$(readlink -f "${OPTARG}"); assertFileExists "${InputFastq}";;
+        
+        i)  InputFastq=$(readlink -f "${OPTARG}"); 
+            assertFileExists "${InputFastq}";;
+        
         o)  Outdir=$(readlink -f "${OPTARG}");;
+        
         c)  Threads=$OPTARG;;
-        g)  Genome=${OPTARG}; check_genome $Genome;;
+        
+        g)  Genome=${OPTARG}
+            check_genome $Genome;;
+        
         N)  Normmethod=$(echo "${OPTARG}" | tr '[A-Z]' '[a-z]');;
-        F)  FilterMappingFileList="${OPTARG}";;
-        P)  PreGenomeMappingFileList="${OPTARG}";;
-        O)  PostGenomeMappingFileList="${OPTARG}";;
+        
+        F)  declare optarg=$(readlink -f "${OPTARG}"); 
+            assertFileExists $optarg;
+            FilterMappingFileList+=( "${optarg}" );;
+        
+        P)  declare optarg=$(readlink -f "${OPTARG}"); 
+            assertFileExists $optarg;
+            PreGenomeMappingFileList+=( "${optarg}" );;
+        
+        O)  declare optarg=$(readlink -f "${OPTARG}");
+            assertFileExists $optarg;
+            PostGenomeMappingFileList+=( "${optarg}" );;
+        
         *)  usage && exit 1;;
     esac
 done
@@ -111,7 +156,7 @@ if [[ -z ${Genome} ]]; then echo2 "Missing option -g for specifying which genome
 declare FqName=$(basename "${InputFastq}")
 declare -x Prefix=${FqName%.f[qa]*}
 if [[ -z $Outdir ]]; then Outdir=$PWD; fi
-if [[ -d $Outdir ]] ; then mkdir -p $Outdir; fi
+if [[ ! -d $Outdir ]] ; then mkdir -p $Outdir; fi
 assertDirExists $Outdir
 assertDirWritable $Outdir
 cd ${Outdir} || echo2 "Cannot access directory ${Outdir}... Exiting..." error
@@ -124,31 +169,33 @@ for program in "${RequiredPrgrams[@]}"; do assertBinExists $program; done
 #################################
 # creating output files/folders #
 #################################
-declare -x Table=${Prefix}.basic_stats
-declare PdfDir=$Outdir/pdfs && mkdir -p $PdfDir
-declare ReadsDir=input_read_files && mkdir -p $ReadsDir
-declare rRnaDir=rRNA_mapping && mkdir -p $rRnaDir
-declare miRnaDir=hairpins_mapping && mkdir -p $miRnaDir
-declare FilterDir=custom_filter && mkdir -p $FilterDir
-declare PreGenomeDir=pre_genome_mapping && mkdir -p $PreGenomeDir
-declare PostGenomeDir=post_genome_mapping && mkdir -p $PostGenomeDir
-declare GenomeMappingDir=genome_mapping && mkdir -p $GenomeMappingDir
-declare IntersectDir=intersect_genomic_features && mkdir -p $IntersectDir
-declare SummaryDir=summaries && mkdir -p $SummaryDir
-declare BigwigDir=bigWig_normalized_by_$Normmethod && mkdir -p $BigwigDir
-declare TransposonDir=transposon_piRNAcluster_mapping_normalized_by_$Normmethod && mkdir -p $TransposonDir
-declare LogDir=log && mkdir -p ${LogDir}
-declare SentinelDir=sentinels && mkdir -p ${SentinelDir}
+declare -x TableDir=tables && mkdir -p $TableDir
+declare -x Table=$TableDir/${Prefix}.basic_stats
+declare -x PdfDir=pdfs && mkdir -p $PdfDir
+declare -x ReadsDir=input_read_files && mkdir -p $ReadsDir
+declare -x JobDir=jobs && mkdir -p $JobDir
+declare -x rRnaDir=$JobDir/rRNA_mapping && mkdir -p $rRnaDir
+declare -x miRnaDir=$JobDir/hairpins_mapping && mkdir -p $miRnaDir
+declare -x FilterDir=$JobDir/custom_filter && mkdir -p $FilterDir
+declare -x PreGenomeDir=$JobDir/pre_genome_mapping && mkdir -p $PreGenomeDir
+declare -x PostGenomeDir=$JobDir/post_genome_mapping && mkdir -p $PostGenomeDir
+declare -x GenomeMappingDir=$JobDir/genome_mapping && mkdir -p $GenomeMappingDir
+declare -x IntersectDir=$JobDir/intersect_genomic_features && mkdir -p $IntersectDir
+declare -x SummaryDir=summaries && mkdir -p $SummaryDir
+declare -x BigwigDir=$JobDir/bigWig_normalized_by_$Normmethod && mkdir -p $BigwigDir
+declare -x TransposonDir=$JobDir/transposon_piRNAcluster_mapping_normalized_by_$Normmethod && mkdir -p $TransposonDir
+declare -x LogDir=log && mkdir -p ${LogDir}
+declare -x SentinelDir=sentinels && mkdir -p ${SentinelDir}
 
 declare -i Step=1
-declare RunUid=$(echo "${InputFastq}" | md5sum | cut -d" " -f1)
+declare -x RunUid=$(echo "${InputFastq}" | md5sum | cut -d" " -f1)
 declare -x CommonFolder=$PIPELINE_DIRECTORY/common/$Genome
 . $CommonFolder/variables
 for var in rRNA_MM hairpin_MM Genome_MM transposon_MM siRNA_bot siRNA_top piRNA_bot piRNA_top; do
     if [[ -z ${!var} ]]; then echo2 "value of $var is missing, please check your $CommonFolder/variables file" error; fi
 done
 declare -x GenomeFa=$CommonFolder/${Genome}.fa && assertFileExists ${GenomeFa}
-declare ChromSize=$CommonFolder/${Genome}.ChromInfo.txt && assertFileExists ${ChromSize}
+declare -x ChromSize=$CommonFolder/${Genome}.ChromInfo.txt && assertFileExists ${ChromSize}
 declare -x BOWTIE_INDEXES=$CommonFolder/BowtieIndex # for Bowtie
 
 ##############################
@@ -160,502 +207,333 @@ echo2 "Beginning running [${PACKAGE_NAME}] small RNA pipeline single library mod
 ########################################
 ## Pre Processing before any Mapping ###
 ########################################
-# convering fastq to insert; quality information will be lost
-echo2 "Converting fastq format into insert format"
 declare Insert=$ReadsDir/${Prefix}.insert
-if [[ ! -f $SentinelDir/${RunUid}.${Step}.Done || SentinelDir/${RunUid}.${Step}.Done -ot ${RunUid}.$((Step-1)).Done ]]; then
+if [[ ! -f $SentinelDir/${RunUid}.status.${Step}.Done ]]; then
+    echo2 "Converting fastq format into insert format by dumping quality strings"
     piPipes_fastq_to_insert "${InputFastq}" ${Insert} \
-    && touch $SentinelDir/${RunUid}.${Step}.Done \
+    && touch $SentinelDir/${RunUid}.status.${Step}.Done \
     || echo2 "fq2insert failed" error
+else 
+    echo2 "Conversion from fastq to insert has been done previously" warning
 fi
 let Step+=1
 
 ####################
 ## pre filtering ###
 ####################
-declare CurrentMM=0
-declare CurrentInput=$Insert
-declare CurrentPrefix=$(basename $CurrentInput) 
-declare CurrentTargetName=""
-declare CurrentTargetFa=""
-declare CurrentOutdir=""
+declare -xi CurrentMM=0
+
+declare -x CurrentInput=$Insert
+declare -x CurrentInputPrefix=${CurrentInput%.insert}
+declare -x CurrentInputName=$(basename $CurrentInput) 
+declare -x CurrentInputNamePrefix=${CurrentInputName%.insert}
+declare -x NextInput
+declare -x CurrentTarget
+declare -x CurrentTargetName
+declare -x CurrentTargetNamePrefix
+declare -x CurrentOutdir
+declare -x BowtieIndexName
+declare -x LogFile
+
 # parsing customer defined pre-genomic mapping variables
-if [[ ! -z $FilterMappingFileList ]]; then
+if [[ ! -z ${FilterMappingFileList[@]+"${FilterMappingFileList[@]}"} ]]; then
     echo2 "Mapping to customer defined filtering indexes"
-    eval $(echo $FilterMappingFileList | awk 'BEGIN{FS=","}{printf "export FilterMappingFiles=(" ; ;for (i=1;i<=NF;++i) printf "\"%s\" ", $i; printf ")\n";}')
-    for target in "${FilterMappingFiles[@]}"; do
-        CurrentTargetName=$(basename $target) && CurrentTargetName=${CurrentTargetName%.fa}
-        CurrentTargetFa=$(readlink -f $target)
-        if [[ ! -f $CurrentTargetFa ]]; then echo2 "File $target specified by -F do not exist" error; fi
-        if [[ ! -f $SentinelDir/${RunUid}.status.${Step}.${CurrentTargetName}_filtering_mapping ]]; then
-            CurrentOutdir=$FilterDir/${CurrentTargetName} && mkdir -p $CurrentOutdir || echo2 "Cannot create directory $Outdir1, please check the permission. And try to only use letter and number to name the Fasta file" error
-            bowtie-build $CurrentTargetFa $CurrentOutdir/$CurrentTargetName &>/dev/null || echo2 "Failed to build the bowtie index for $targetFa" error
-            echo2 "Mapping to ${CurrentTargetName}"
+    # eval $(echo $FilterMappingFileList | awk 'BEGIN{FS=","}{printf "export FilterMappingFiles=(" ; ;for (i=1;i<=NF;++i) printf "\"%s\" ", $i; printf ")\n";}')
+    for target in "${FilterMappingFileList[@]}"; do
+        CurrentTarget=$target # already full path from argparse
+        CurrentTargetName=$(basename $CurrentTarget) 
+        CurrentTargetNamePrefix=${CurrentTargetName%.fa}
+        NextInput=${CurrentInputPrefix}.x_${CurrentTargetNamePrefix}.insert
+        CurrentOutdir=$FilterDir/${CurrentTargetNamePrefix}
+        BowtieIndexName=$CurrentOutdir/$CurrentTargetNamePrefix
+        LogFile=${LogDir}/${CurrentInputNamePrefix}.bowtie2${CurrentTargetNamePrefix}.log
+        if [[ ! -f $SentinelDir/${RunUid}.status.${Step}.${CurrentTargetNamePrefix}_filtering_mapping ]]; then
+            echo2 "Mapping to ${CurrentTargetNamePrefix}"
+            mkdir -p $CurrentOutdir \
+            || echo2 "Cannot create directory $CurrentOutdir, please check the permission. And try to only use letter and number to name the Fasta file" error
+            
+            bowtie-build \
+                $CurrentTarget \
+                $BowtieIndexName \
+                &> ${LogDir}/bowtie_build.${CurrentTargetNamePrefix}.log \
+            || echo2 "Failed to build the bowtie index for $targetFa" error
+            
             bowtie -r -v 0 -a --best --strata -p $Threads -S \
-                --un ${CurrentInput%.insert}.x_${CurrentTargetName}.insert \
-                $CurrentOutdir/$CurrentTargetName \
+                --un ${NextInput} \
+                $BowtieIndexName \
                 $CurrentInput \
                 1> /dev/null \
-                2> ${LogDir}/${CurrentPrefix}.bowtie2${CurrentTargetName}.log \
-            && rm -rf $CurrentOutdir/${CurrentTargetName}*ebwt \
-            && touch $SentinelDir/${RunUid}.status.${Step}.${CurrentTargetName}_filtering_mapping
+                2> ${LogFile}  \
+            && rm -rf ${BowtieIndexName}*ebwt \
+            && touch $SentinelDir/${RunUid}.status.${Step}.${CurrentTargetNamePrefix}_filtering_mapping
+        else 
+            echo2 "Mapping to ${CurrentTargetNamePrefix} has been done previously" warning
         fi
-        CurrentInput=${CurrentInput%.insert}.x_${CurrentTargetName}.insert
-        CurrentPrefix=$(basename $CurrentInput) 
+        CurrentInput=${NextInput}
+        CurrentInputPrefix=${CurrentInput%.insert}
+        CurrentInputName=$(basename $CurrentInput) 
+        CurrentInputNamePrefix=${CurrentInputName%.insert}
     done
+else 
+    echo2 "User has not specified any filtering sequenceing" warning
 fi
 
-#####################################
-# Pre Processing before any Mapping #
-#####################################
+################
+# rRNA removal #
+################
 # getting rid of sequences mapping to rRNA, we use -k 1 option for speed purpose
-echo2 "Mapping to rRNA, with $rRNA_MM mismatch(es) allowed"
-declare x_rRNA_Insert=${CurrentInput%.insert}.x_rRNA.insert
-if [[ ! -f $SentinelDir/${RunUid}.status.${Step}.rRNA_mapping ]]; then
+NextInput=${CurrentInputPrefix}.x_rRNA.insert
+CurrentTargetName=rRNA
+CurrentTargetNamePrefix=rRNA
+BowtieIndexName=rRNA
+CurrentMM=$rRNA_MM
+LogFile=${LogDir}/${CurrentInputNamePrefix}.bowtie2${CurrentTargetNamePrefix}.log
+if [[ ! -f $SentinelDir/${RunUid}.status.${Step}.${CurrentTargetNamePrefix} ]]; then
+    echo2 "Mapping to ${CurrentTargetNamePrefix}, with ${CurrentMM} mismatch(es) allowed"
     declare -i totalReads=$(awk '{a+=$2}END{printf "%d", a}' ${CurrentInput}) \
-    && echo $totalReads > ${SentinelDir}/${RunUid}.totalReads \
-    && bowtie -r -S -v $rRNA_MM -k 1 -p $Threads \
-        --un $x_rRNA_Insert \
-        rRNA \
+    && echo $totalReads > ${TableDir}/${RunUid}.totalReads \
+    && bowtie -r -S -v $CurrentMM -k 1 -p $Threads \
+        --un $NextInput \
+        ${BowtieIndexName} \
         ${CurrentInput} \
         1> /dev/null \
         2> ${LogDir}/${Prefix}.bowtie2rRNA.log \
-    && declare -i nonrRNAReads=$(awk '{a+=$2}END{printf "%d", a}' ${x_rRNA_Insert}) \
-    && echo $nonrRNAReads > $SentinelDir/${RunUid}.nonrRNAReads \
+    && declare -i nonrRNAReads=$(awk '{a+=$2}END{printf "%d", a}' ${NextInput}) \
+    && echo $nonrRNAReads > $TableDir/${RunUid}.nonrRNAReads \
     && declare -i rRNAReads=$((totalReads-nonrRNAReads)) \
-    && echo $rRNAReads > $SentinelDir/${RunUid}.rRNAReads \
-    && touch $SentinelDir/${RunUid}.status.${Step}.rRNA_mapping \
+    && echo $rRNAReads > $TableDir/${RunUid}.rRNAReads \
+    && touch $SentinelDir/${RunUid}.status.${Step}.${CurrentTargetNamePrefix} \
     || echo2 "mapping to rRNA failed" error
+else 
+    echo2 "Mapping to ${CurrentTargetNamePrefix} has been done previously" warning
 fi
 let Step+=1
-CurrentInput=${x_rRNA_Insert}
-
+CurrentInput=${NextInput}
+CurrentInputPrefix=${CurrentInput%.insert}
+CurrentInputName=$(basename $CurrentInput) 
+CurrentInputNamePrefix=${CurrentInputName%.*}
 # reading values from file, this is for resuming the job, which won't run the previous step
-totalReads=$(cat $SentinelDir/${RunUid}.totalReads)
-rRNAReads=$(cat $SentinelDir/${RunUid}.rRNAReads)
-nonrRNAReads=$(cat $SentinelDir/${RunUid}.nonrRNAReads)
+totalReads=$(cat $TableDir/${RunUid}.totalReads)
+rRNAReads=$(cat $TableDir/${RunUid}.rRNAReads)
+nonrRNAReads=$(cat $TableDir/${RunUid}.nonrRNAReads)
 
 #########################
 # miRNA hairpin Mapping #
 #########################
-echo2 "Mapping to microRNA Hairpin, with $hairpin_MM mismatch(es) allowed; only keep unique mappers"
-declare x_rRNA_HairpinInsert=${CurrentInput%insert}hairpin.insert # insert file storing reads that nonmappable to rRNA and mappable to hairpin
-declare x_rRNA_x_hairpinInsert=${CurrentInput%insert}x_hairpin.insert # reads that nonmappable to rRNA or hairpin
-declare x_rRNA_HairpinBed2=$miRnaDir/${Prefix}.x_rRNA.hairpin.v${hairpin_MM}m1.bed2 # bed2 format with hairpin mapper, with the hairpin as reference
-declare x_rRNA_HairpinLendis=$miRnaDir/${Prefix}.x_rRNA.hairpin.v${hairpin_MM}m1.lendis # length distribution for hairpin mapper
-declare x_rRNA_Hairpin_GenomeBed2=$GenomeMappingDir/${Prefix}.x_rRNA.hairpin.${Genome}v${Genome_MM}a.bed2 # bed2 format with hairpin mapper, with genome as reference
-declare x_rRNA_Hairpin_GenomeLog=$LogDir/${Prefix}.x_rRNA.hairpin.${Genome}v${Genome_MM}a.log # log file for hairpin mapping
+declare HairpinInsert=${CurrentInputPrefix}.hairpin.insert 
+declare NextInput=${CurrentInputPrefix}.x_hairpin.insert 
+declare HairpinBed2=$miRnaDir/${CurrentInputNamePrefix}.hairpin_v${hairpin_MM}m1.bed2
+declare HairpinLendis=$miRnaDir/${CurrentInputNamePrefix}.hairpin_v${hairpin_MM}m1.lendis 
+declare HairpinGenomeBed2=$GenomeMappingDir/${CurrentInputNamePrefix}.hairpin.${Genome}v${Genome_MM}a.bed2
+CurrentTargetNamePrefix=hairpin
+CurrentMM=$hairpin_MM
+CurrentOutdir=$miRnaDir
+BowtieIndexName=hairpin
+LogFile=$LogDir/${CurrentInputNamePrefix}.hairpin.${Genome}v${Genome_MM}a.log # log file for hairpin mapping
 if [[ ! -f $SentinelDir/${RunUid}.status.${Step}.hairpin_mapping ]]; then
-    bowtie -r --norc -v $hairpin_MM -m 1 --best --strata -p $Threads -S \
-        --al $x_rRNA_HairpinInsert \
-        --un $x_rRNA_x_hairpinInsert \
-        hairpin \
-        $x_rRNA_Insert \
+    echo2 "Mapping to microRNA Hairpin, with $hairpin_MM mismatch(es) allowed; only keep unique mappers"
+    bowtie -r --norc -v $CurrentMM -m 1 \
+        --best --strata -p $Threads -S \
+        --al $HairpinInsert \
+        --un $NextInput \
+        $BowtieIndexName \
+        $CurrentInput \
         2> $LogDir/${Prefix}.hairpin_unique.log \
     | samtools view -bSF 0x4 - 2>/dev/null \
-    | bedtools_piPipes bamtobed -i - > ${Prefix}.x_rRNA.hairpin.v${hairpin_MM}m1.bed \
-    && piPipes_insertBed_to_bed2 $x_rRNA_Insert ${Prefix}.x_rRNA.hairpin.v${hairpin_MM}m1.bed > $x_rRNA_HairpinBed2 \
-    && rm -rf ${Prefix}.x_rRNA.hairpin.v${hairpin_MM}m1.bed  \
-    && bed2lendis $x_rRNA_HairpinBed2 > $x_rRNA_HairpinLendis \
+    | bedtools_piPipes bamtobed -i - \
+        > ${CurrentInputPrefix}.${BowtieIndexName}m1.bed \
+    && piPipes_insertBed_to_bed2 \
+        $CurrentInput \
+        ${CurrentInputPrefix}.${BowtieIndexName}m1.bed \
+        > $HairpinBed2 \
+    && rm -r ${CurrentInputPrefix}.${BowtieIndexName}m1.bed  \
+    && bed2lendis $HairpinBed2 > $HairpinLendis \
     && bowtie -r -v $Genome_MM -a --best --strata -p $Threads \
         -S \
         genome \
-        $x_rRNA_HairpinInsert \
-        2> $x_rRNA_Hairpin_GenomeLog \
+        $HairpinInsert \
+        2> $LogFile \
     | samtools view -uS -F0x4 - 2>/dev/null \
-    | bedtools_piPipes bamtobed -i - > ${Prefix}.x_rRNA.hairpin.${Genome}v${Genome_MM}a.bed \
-    && piPipes_insertBed_to_bed2 $x_rRNA_HairpinInsert ${Prefix}.x_rRNA.hairpin.${Genome}v${Genome_MM}a.bed > $x_rRNA_Hairpin_GenomeBed2 \
-    && rm -rf ${Prefix}.x_rRNA.hairpin.${Genome}v${Genome_MM}a.bed \
-    && declare -i hairpinReads=$(bedwc $x_rRNA_HairpinBed2) \
-    && echo $hairpinReads > $SentinelDir/${RunUid}.hairpinReads \
+    | bedtools_piPipes bamtobed -i - \
+        > ${miRnaDir}/${CurrentInputNamePrefix}.hairpin.${Genome}v${Genome_MM}a.bed \
+    && piPipes_insertBed_to_bed2 \
+        $HairpinInsert \
+        ${miRnaDir}/${CurrentInputNamePrefix}.hairpin.${Genome}v${Genome_MM}a.bed \
+        > $HairpinGenomeBed2 \
+    && rm -f ${miRnaDir}/${CurrentInputNamePrefix}.hairpin.${Genome}v${Genome_MM}a.bed \
+    && declare -i hairpinReads=$(bedwc $HairpinBed2) \
+    && echo $hairpinReads > $TableDir/${RunUid}.hairpinReads \
     && touch $SentinelDir/${RunUid}.status.${Step}.hairpin_mapping
+else 
+    echo2 "Mapping to miRNA hairpin has been down previously" warning
 fi
 let Step+=1 
-declare -i hairpinReads=$(cat $SentinelDir/${RunUid}.hairpinReads)
-
-exit # TODO: work frontier
+declare -i hairpinReads=$(cat $TableDir/${RunUid}.hairpinReads)
+CurrentInput=${NextInput}
+CurrentInputPrefix=${CurrentInput%.insert}
+CurrentInputName=$(basename $CurrentInput) 
+CurrentInputNamePrefix=${CurrentInputName%.*}
 
 # run miRNA heterogeneity analysis
-echo2 "Calculate microRNA heterogeneity"
-[ ! -f .${RunUid}.status.${Step}.miRNA_pipeline ] && \
-    piPipes_calculate_miRNA_heterogeneity $CommonFolder/mature2hairpin.uniq.bed  ${x_rRNA_HairpinBed2} 1> ${x_rRNA_HairpinBed2%.bed*}.sum 2> ${x_rRNA_HairpinBed2%.bed*}.hetergeneity.log
-    touch .${RunUid}.status.${Step}.miRNA_pipeline
-Step=$((Step+1))
+if [[ ! -f $SentinelDir/${RunUid}.status.${Step}.miRNA_heterogeneity ]]; then
+    echo2 "Calculate microRNA heterogeneity"
+    piPipes_calculate_miRNA_heterogeneity \
+        $CommonFolder/mature2hairpin.uniq.bed \
+        ${HairpinBed2} \
+        1> ${HairpinBed2%.bed*}.sum \
+    && touch $SentinelDir/${RunUid}.status.${Step}.miRNA_heterogeneity
+else 
+    echo2 "Calculate microRNA heterogeneity has been done previously" warning
+fi
+let Step+=1 
 
 #############################
 # custom pre-genome mapping #
 #############################
-INPUT=$x_rRNA_x_hairpinInsert
-MM=0 # haven't implement method to take mismatch # from user
+CurrentMM=0 # haven't implement method to take mismatch # from user
 # parsing customer defined pre-genomic mapping variables
-[[ ! -z $PreGenomeMappingFileList ]] && \
-    echo2 "Mapping to customer defined pre-genome mapping indexes"
-    eval `echo $PreGenomeMappingFileList | awk 'BEGIN{FS=","}{printf "export PRE_GENOME_MAPPING_FILES=(" ; ;for (i=1;i<=NF;++i) printf "\"%s\" ", $i; printf ")\n";}'`
-    for TARGET in "${PRE_GENOME_MAPPING_FILES[@]}"; do
-        targetName1=`basename $TARGET`
-        targetName=${targetName1%.fa}
-        targetFa=`readlink -f $TARGET`
-        [[ ! -f $targetFa ]] && echo2 "File $TARGET specified by -P do not exist" error
-        if [[ ! -f .${RunUid}.status.${Step}.${targetName}_mapping ]]; then
-            Outdir1=$PreGenomeDir/${targetName} && mkdir -p $Outdir1 || echo2 "Cannot create directory $Outdir1, please check the permission. And try to only use letter and number to name the Fasta file" error
-            bowtie-build $targetFa $Outdir1/$targetName 1>/dev/null 2>/dev/null || echo2 "Failed to build the bowtie index for $targetFa" error
-            faSize -tab -detailed $targetFa > $Outdir1/${targetName}.sizes
-            Prefix1=`basename $INPUT` && Prefix1=${Outdir1}/${Prefix1%.insert} && \
-            echo2 "Mapping to ${targetName}" && \
-            bowtie -r -v 0 -a --best --strata -p $Threads -S \
-                --un ${INPUT%.insert}.x_${targetName}.insert \
-                $Outdir1/$targetName \
-                $INPUT \
-                2> ${Prefix1}.log | \
-            samtools view -bSF 0x4 - 2>/dev/null | bedtools_piPipes bamtobed -i - > ${Prefix1}.${targetName}.v${MM}a.bed && \
-            piPipes_insertBed_to_bed2 $INPUT ${Prefix1}.${targetName}.v${MM}a.bed > ${Prefix1}.${targetName}.v${MM}a.bed2 && \
-            rm -rf ${Prefix1}.${targetName}.v${MM}a.bed && \
-            piPipes_bed2Summary -5 -i ${Prefix1}.${targetName}.v${MM}a.bed2 -c $Outdir1/${targetName}.sizes -o $Outdir1/${targetName}.summary && \
-            Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_summary.R $Outdir1/${targetName}.summary $Outdir1/ $Threads 1 1>&2 && \
-            bash $DEBUG piPipes_smallRNA_bed2_to_bw.sh \
-                ${Prefix1}.${targetName}.v${MM}a.bed2 \
-                $Outdir1/${targetName}.sizes \
-                1 \
-                $Threads \
-                $Outdir1 && \
-            para_file=$Outdir1/${RANDOM}${RANDOM}.para && \
-            echo "awk '\$3-\$2>=$siRNA_bot && \$3-\$2<=$siRNA_top' ${Prefix1}.${targetName}.v${MM}a.bed2 > ${Prefix1}.${targetName}.v${MM}a.siRNA.bed2" >  $para_file && \
-            echo "awk '\$3-\$2>=$piRNA_bot && \$3-\$2<=$piRNA_top' ${Prefix1}.${targetName}.v${MM}a.bed2 > ${Prefix1}.${targetName}.v${MM}a.piRNA.bed2" >> $para_file && \
-            ParaFly -c $para_file -Threads $Threads -failed_cmds ${para_file}.failedCommands 1>&2 && \
-            rm -rf ${para_file}* && \
-            awk 'BEGIN{FS=OFS="\t"}\
-            { \
-                if ($5==1) \
-                { \
-                    l=$3-$2; \
-                    if (l>m) m=l; \
-                    if ($6=="+") s[l]+=$4;\
-                    else as[l]+=$4; \
-                } \
-            }END\
-            {\
-                for (d=1;d<=m;++d) \
-                {\
-                    printf "%d\t%.0f\t%.0f\n", d, (s[d]?s[d]:0), (as[d]?as[d]:0); \
-                }\
-            }' ${Prefix1}.${targetName}.v${MM}a.bed2 | sort -k1,1n > ${Prefix1}.${targetName}.v${MM}a.unique.lendis && \
-            awk 'BEGIN{FS=OFS="\t"}\
-            { \
-                if ($5==1) \
-                { \
-                    l=$3-$2; \
-                    if (l>m) m=l; \
-                    if ($6=="+") s[l]+=$4;\
-                    else as[l]+=$4; \
-                } \
-            }END\
-            {\
-                for (d=1;d<=m;++d) \
-                {\
-                    printf "%d\t%.0f\t%.0f\n", d, (s[d]?s[d]:0), (as[d]?as[d]:0); \
-                }\
-            }'  ${Prefix1}.${targetName}.v${MM}a.piRNA.bed2 | sort -k1,1n > ${Prefix1}.${targetName}.v${MM}a.piRNA.unique.lendis && \
-                awk 'BEGIN{FS=OFS="\t"}\
-                { \
-                    if ($5==1) \
-                    { \
-                        l=$3-$2; \
-                        if (l>m) m=l; \
-                        if ($6=="+") s[l]+=$4;\
-                        else as[l]+=$4; \
-                    } \
-                }END\
-                {\
-                    for (d=1;d<=m;++d) \
-                    {\
-                        printf "%d\t%.0f\t%.0f\n", d, (s[d]?s[d]:0), (as[d]?as[d]:0); \
-                    }\
-                }'  ${Prefix1}.${targetName}.v${MM}a.siRNA.bed2 | sort -k1,1n > ${Prefix1}.${targetName}.v${MM}a.siRNA.unique.lendis && \
-            awk 'BEGIN{FS=OFS="\t"}\
-            { \
-                l=$3-$2; \
-                if (l>m) m=l; \
-                if ($6=="+") s[l]+=$4/$5;\
-                else as[l]+=$4/$5; \
-            }END\
-            {\
-                for (d=1;d<=m;++d) \
-                {\
-                    printf "%d\t%.0f\t%.0f\n", d, (s[d]?s[d]:0), (as[d]?as[d]:0); \
-                }\
-            }' ${Prefix1}.${targetName}.v${MM}a.bed2 | sort -k1,1n > ${Prefix1}.${targetName}.v${MM}a.all.lendis && \
-            awk 'BEGIN{FS=OFS="\t"}\
-            { \
-                l=$3-$2; \
-                if (l>m) m=l; \
-                if ($6=="+") s[l]+=$4/$5;\
-                else as[l]+=$4/$5; \
-            }END\
-            {\
-                for (d=1;d<=m;++d) \
-                {\
-                    printf "%d\t%.0f\t%.0f\n", d, (s[d]?s[d]:0), (as[d]?as[d]:0); \
-                }\
-            }'  ${Prefix1}.${targetName}.v${MM}a.piRNA.bed2 | sort -k1,1n > ${Prefix1}.${targetName}.v${MM}a.piRNA.all.lendis && \
-                awk 'BEGIN{FS=OFS="\t"}\
-                { \
-                    l=$3-$2; \
-                    if (l>m) m=l; \
-                    if ($6=="+") s[l]+=$4/$5;\
-                    else as[l]+=$4/$5; \
-                }END\
-                {\
-                    for (d=1;d<=m;++d) \
-                    {\
-                        printf "%d\t%.0f\t%.0f\n", d, (s[d]?s[d]:0), (as[d]?as[d]:0); \
-                    }\
-                }'  ${Prefix1}.${targetName}.v${MM}a.siRNA.bed2 | sort -k1,1n > ${Prefix1}.${targetName}.v${MM}a.siRNA.all.lendis && \
-            piPipes_local_ping_pong -a ${Prefix1}.${targetName}.v${MM}a.bed2 -b ${Prefix1}.${targetName}.v${MM}a.bed2 -p $Threads > ${Prefix1}.${targetName}.v${MM}a.pp && \
-            piPipes_local_ping_pong -a ${Prefix1}.${targetName}.v${MM}a.siRNA.bed2 -b ${Prefix1}.${targetName}.v${MM}a.siRNA.bed2 -p $Threads > ${Prefix1}.${targetName}.v${MM}a.siRNA.pp && \
-            piPipes_local_ping_pong -a ${Prefix1}.${targetName}.v${MM}a.piRNA.bed2 -b ${Prefix1}.${targetName}.v${MM}a.piRNA.bed2 -p $Threads > ${Prefix1}.${targetName}.v${MM}a.piRNA.pp && \
-            ext_len=30 && \
-            awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$7])) {printed[$7]=1; if ($2>=ext_len) { for (i=1;i<=1;++i) { if ($6=="+") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}'  ${Prefix1}.${targetName}.v${MM}a.bed2       | bedtools_piPipes getfasta -fi $targetFa -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${Prefix1}.${targetName}.v${MM}a.5end_60.percentage && \
-            awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$7])) {printed[$7]=1; if ($2>=ext_len) { for (i=1;i<=1;++i) { if ($6=="+") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}'  ${Prefix1}.${targetName}.v${MM}a.piRNA.bed2 | bedtools_piPipes getfasta -fi $targetFa -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${Prefix1}.${targetName}.v${MM}a.piRNA.5end_60.percentage && \
-            awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$7])) {printed[$7]=1; if ($2>=ext_len) { for (i=1;i<=1;++i) { if ($6=="+") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}'  ${Prefix1}.${targetName}.v${MM}a.siRNA.bed2 | bedtools_piPipes getfasta -fi $targetFa -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${Prefix1}.${targetName}.v${MM}a.siRNA.5end_60.percentage && \
-            awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$7])) {printed[$7]=1; if ($2>=ext_len) { for (i=1;i<=1;++i) { if ($6=="-") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}'  ${Prefix1}.${targetName}.v${MM}a.bed2       | bedtools_piPipes getfasta -fi $targetFa -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${Prefix1}.${targetName}.v${MM}a.3end_60.percentage && \
-            awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$7])) {printed[$7]=1; if ($2>=ext_len) { for (i=1;i<=1;++i) { if ($6=="-") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}'  ${Prefix1}.${targetName}.v${MM}a.piRNA.bed2 | bedtools_piPipes getfasta -fi $targetFa -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${Prefix1}.${targetName}.v${MM}a.piRNA.3end_60.percentage && \
-            awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$7])) {printed[$7]=1; if ($2>=ext_len) { for (i=1;i<=1;++i) { if ($6=="-") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}'  ${Prefix1}.${targetName}.v${MM}a.siRNA.bed2 | bedtools_piPipes getfasta -fi $targetFa -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${Prefix1}.${targetName}.v${MM}a.siRNA.3end_60.percentage && \
-            awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$7])) {printed[$7]=1; if ($2>=ext_len) { for (i=1;i<=$4;++i) { if ($6=="+") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}' ${Prefix1}.${targetName}.v${MM}a.bed2       | bedtools_piPipes getfasta -fi $targetFa -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${Prefix1}.${targetName}.v${MM}a.5end_60.reads.percentage && \
-            awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$7])) {printed[$7]=1; if ($2>=ext_len) { for (i=1;i<=$4;++i) { if ($6=="+") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}' ${Prefix1}.${targetName}.v${MM}a.piRNA.bed2 | bedtools_piPipes getfasta -fi $targetFa -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${Prefix1}.${targetName}.v${MM}a.piRNA.5end_60.reads.percentage && \
-            awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$7])) {printed[$7]=1; if ($2>=ext_len) { for (i=1;i<=$4;++i) { if ($6=="+") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}' ${Prefix1}.${targetName}.v${MM}a.siRNA.bed2 | bedtools_piPipes getfasta -fi $targetFa -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${Prefix1}.${targetName}.v${MM}a.siRNA.5end_60.reads.percentage && \
-            awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$7])) {printed[$7]=1; if ($2>=ext_len) { for (i=1;i<=$4;++i) { if ($6=="-") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}' ${Prefix1}.${targetName}.v${MM}a.bed2       | bedtools_piPipes getfasta -fi $targetFa -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${Prefix1}.${targetName}.v${MM}a.3end_60.reads.percentage && \
-            awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$7])) {printed[$7]=1; if ($2>=ext_len) { for (i=1;i<=$4;++i) { if ($6=="-") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}' ${Prefix1}.${targetName}.v${MM}a.piRNA.bed2 | bedtools_piPipes getfasta -fi $targetFa -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${Prefix1}.${targetName}.v${MM}a.piRNA.3end_60.reads.percentage && \
-            awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$7])) {printed[$7]=1; if ($2>=ext_len) { for (i=1;i<=$4;++i) { if ($6=="-") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}' ${Prefix1}.${targetName}.v${MM}a.siRNA.bed2 | bedtools_piPipes getfasta -fi $targetFa -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${Prefix1}.${targetName}.v${MM}a.siRNA.3end_60.reads.percentage && \
-            Rscript $PIPELINE_DIRECTORY/bin/piPipes_draw_smallRNA_features2.R \
-                $Outdir1/${Prefix}".pre-genome."${targetName}.unique_species \
-                ${Prefix1}.${targetName}.v${MM}a.unique.lendis \
-                ${Prefix1}.${targetName}.v${MM}a.siRNA.unique.lendis \
-                ${Prefix1}.${targetName}.v${MM}a.piRNA.unique.lendis \
-                ${ext_len} \
-                ${Prefix1}.${targetName}.v${MM}a.5end_60.percentage \
-                ${Prefix1}.${targetName}.v${MM}a.3end_60.percentage \
-                ${Prefix1}.${targetName}.v${MM}a.siRNA.5end_60.percentage \
-                ${Prefix1}.${targetName}.v${MM}a.siRNA.3end_60.percentage \
-                ${Prefix1}.${targetName}.v${MM}a.piRNA.5end_60.percentage \
-                ${Prefix1}.${targetName}.v${MM}a.piRNA.3end_60.percentage 1>&2 && \
-            Rscript $PIPELINE_DIRECTORY/bin/piPipes_draw_smallRNA_features.R \
-                $Outdir1/${Prefix}".pre-genome."${targetName}.all_reads \
-                ${Prefix1}.${targetName}.v${MM}a.all.lendis \
-                ${Prefix1}.${targetName}.v${MM}a.siRNA.all.lendis \
-                ${Prefix1}.${targetName}.v${MM}a.piRNA.all.lendis \
-                ${ext_len} \
-                ${Prefix1}.${targetName}.v${MM}a.5end_60.reads.percentage \
-                ${Prefix1}.${targetName}.v${MM}a.pp \
-                ${Prefix1}.${targetName}.v${MM}a.siRNA.5end_60.reads.percentage \
-                ${Prefix1}.${targetName}.v${MM}a.siRNA.pp \
-                ${Prefix1}.${targetName}.v${MM}a.piRNA.5end_60.reads.percentage \
-                ${Prefix1}.${targetName}.v${MM}a.piRNA.pp 1>&2 && \
-            piPipes_bed2Summary -5 -i ${Prefix1}.${targetName}.v${MM}a.siRNA.bed2 -c $Outdir1/${targetName}.sizes -o /dev/stdout | awk 'BEGIN{OFS="\t"}{$1=$1"-siRNA"; print $0}' > $Outdir1/${targetName}.siRNA.summary && \
-            Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_summary.R $Outdir1/${targetName}.siRNA.summary $Outdir1/siRNA $Threads 1 1>&2 && \
-            piPipes_bed2Summary -5 -i ${Prefix1}.${targetName}.v${MM}a.piRNA.bed2 -c $Outdir1/${targetName}.sizes -o /dev/stdout | awk 'BEGIN{OFS="\t"}{$1=$1"-piRNA"; print $0}' > $Outdir1/${targetName}.piRNA.summary && \
-            Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_summary.R $Outdir1/${targetName}.piRNA.summary $Outdir1/piRNA $Threads 1 1>&2 && \
-            PDFs=$Outdir1/*pdf && \
-            gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=$PdfDir/`basename ${Prefix1}`.pre-genome.${targetName}.pdf ${PDFs} && \
-            rm -rf $PDFs && \
-            touch .${RunUid}.status.${Step}.${targetName}_mapping
-        fi
-        INPUT=${INPUT%.insert}.x_${targetName}.insert
-        rm -f $Outdir1/${targetName}.1.ebwt $Outdir1/${targetName}.2.ebwt $Outdir1/${targetName}.3.ebwt $Outdir1/${targetName}.4.ebwt $Outdir1/${targetName}.rev.1.ebwt $Outdir1/${targetName}.rev.2.ebwt $Outdir1/${targetName}.sizes
-    done
+if [[ ! -z ${PreGenomeMappingFileList[@]+"${PreGenomeMappingFileList[@]}"} ]]; then
+    echo2 "Pre-genome mapping to customer defined sequences"
+    for CurrentTarget in "${PreGenomeMappingFileList[@]}"; do
+        CurrentTargetName=$(basename $CurrentTarget) 
+        CurrentTargetNamePrefix=${CurrentTargetName%.fa}
+        NextInput=${CurrentInputPrefix}.x_${CurrentTargetNamePrefix}.insert
+        CurrentOutdir=$PreGenomeDir/${CurrentTargetNamePrefix}
+        mkdir -p $CurrentOutdir || echo2 "Cannot create directory $CurrentOutdir, please check the permission. And try to only use letter and number to name the Fasta file" error
+        BowtieIndexName=$CurrentOutdir/$CurrentTargetNamePrefix
+        LogFile=${LogDir}/${CurrentInputNamePrefix}.bowtie2${CurrentTargetNamePrefix}.log
 
+        if [[ ! -f $SentinelDir/${RunUid}.status.${Step}.${CurrentTargetNamePrefix}_pregenome_mapping ]]; then
+            echo2 "Mapping to ${CurrentTargetName}"
+            bash piPipes_map_smallRNA_to_target.sh \
+            && touch $SentinelDir/${RunUid}.status.${Step}.${CurrentTargetNamePrefix}_pregenome_mapping
+        else 
+            echo2 "Mapping to ${CurrentTargetName} has been done previously" warning
+        fi
+        CurrentInput=${NextInput}
+        CurrentInputPrefix=${CurrentInput%.insert}
+        CurrentInputName=$(basename $CurrentInput) 
+        CurrentInputNamePrefix=${CurrentInputName%.*}
+    done
+else 
+    echo2 "User has not specified any pre-genomic mapping" warning
+fi
+let Step+=1 
+            
 ##################
 # GENOME Mapping #
 ##################
-# take the OUTPUT of last step as INPUT
-Insert=`basename ${INPUT}`
-# bed2 format storing all mappers for genomic mapping
-GENOME_ALLMAP_BED2=$GenomeMappingDir/${Insert%.insert}.${Genome}v${Genome_MM}.all.bed2 # all mapper in bed2 format
-GENOME_ALLMAP_LOG=$GenomeMappingDir/${Insert%.insert}.${Genome}v${Genome_MM}.all.log # log file
-# bed2 format storing unique mappers for genomic mapping
-GENOME_UNIQUEMAP_BED2=$GenomeMappingDir/${Insert%.insert}.${Genome}v${Genome_MM}.unique.bed2
-# bed2 format storing unique mappers for genomic mapping and miRNA hairpin mapper
-GENOME_UNIQUEMAP_HAIRPIN_BED2=$GenomeMappingDir/${Insert%.insert}.${Genome}v${Genome_MM}.unique.+hairpin.bed2
-# mapping insert file to genome
-echo2 "Mapping to genome, with ${Genome_MM} mismatch(es) allowed"
-[ ! -f .${RunUid}.status.${Step}.genome_mapping ] && \
-    bowtie -r -v $Genome_MM -a --best --strata -p $Threads \
-        --al  ${INPUT%.insert}.${Genome}v${Genome_MM}a.al.insert \
-        --un  ${INPUT%.insert}.${Genome}v${Genome_MM}a.un.insert \
+CurrentMM=$Genome_MM
+CurrentTargetNamePrefix=${Genome}
+BowtieIndexName=genome
+GenomeAllmapBed2=$GenomeMappingDir/${CurrentInputNamePrefix}.genome_v${CurrentMM}a.bed2
+GenomeUniquemapBed2=$GenomeMappingDir/${CurrentInputNamePrefix}.genome_v${CurrentMM}a.unique.bed2
+GenomeAllmapLogFile=$LogDir/${CurrentInputNamePrefix}.genome_v${CurrentMM}a.log 
+NextInput=${CurrentInputPrefix}.x_${CurrentTargetNamePrefix}.insert
+
+declare -i totalGenomicMapCount
+declare -i uniqueGenomicMapCount
+declare -i multipGenomicMapCount
+
+if [[ ! -f $SentinelDir/${RunUid}.status.${Step}.${CurrentTargetNamePrefix}_mapping ]]; then
+    echo2 "Mapping to ${CurrentTargetNamePrefix}, with ${CurrentMM} mismatch(es) allowed"
+    bowtie -r -v $CurrentMM -a --best --strata -p $Threads \
+        --al ${CurrentInputPrefix}.${CurrentTargetNamePrefix}.al.insert \
+        --un $NextInput \
         -S \
-        genome \
-        ${INPUT} \
-        2> $Genome_ALLMAP_LOG | \
-    samtools view -uS -F0x4 - 2>/dev/null | \
-    bedtools_piPipes bamtobed -i - > ${Insert%.insert}.${Genome}v${Genome_MM}a.insert.bed && \
-    piPipes_insertBed_to_bed2 $INPUT ${Insert%.insert}.${Genome}v${Genome_MM}a.insert.bed > ${GENOME_ALLMAP_BED2} && \
-    rm -rf ${Insert%.insert}.${Genome}v${Genome_MM}a.insert.bed && \
-    touch .${RunUid}.status.${Step}.genome_mapping
-[ ! -f .${RunUid}.status.${Step}.genome_mapping ] && echo2 "Genome mapping failed" error
-Step=$((Step+1))
+        $BowtieIndexName \
+        ${CurrentInput} \
+        2> $GenomeAllmapLogFile \
+    | samtools view -uS -F0x4 - 2>/dev/null \
+    | bedtools_piPipes bamtobed -i - \
+        > ${GenomeAllmapBed2}.temp \
+    && piPipes_insertBed_to_bed2 \
+        $CurrentInput \
+        ${GenomeAllmapBed2}.temp \
+        > ${GenomeAllmapBed2} \
+    && rm -rf ${GenomeAllmapBed2}.temp \
+    && awk 'BEGIN{OFS="\t"}{if ($5==1) print $0}' \
+        ${GenomeAllmapBed2} \
+        > ${GenomeUniquemapBed2} \
+    && totalGenomicMapCount=$(bedwc ${GenomeAllmapBed2}) \
+    && echo $totalGenomicMapCount > $TableDir/${RunUid}.totalGenomicMapCount \
+    && uniqueGenomicMapCount=$(bedwc ${GenomeUniquemapBed2}) \
+    && echo $uniqueGenomicMapCount > $TableDir/${RunUid}.uniqueGenomicMapCount \
+    && multipGenomicMapCount=$((totalGenomicMapCount-uniqueGenomicMapCount)) \
+    && echo $multipGenomicMapCount > $TableDir/${RunUid}.multipGenomicMapCount \
+    && touch $SentinelDir/${RunUid}.status.${Step}.${CurrentTargetNamePrefix}_mapping
+else
+    echo2 "Mapping to ${CurrentTargetNamePrefix} has already been down" warning
+fi
+let Step+=1
 
-# separating unique and multiple mappers
-echo2 "Separating unique and multiple mappers"
-[ ! -f .${RunUid}.status.${Step}.separate_unique_and_multiple ] && \
-    awk 'BEGIN{OFS="\t"}{if ($5==1) print $0}' ${GENOME_ALLMAP_BED2} \
-    1> ${GENOME_UNIQUEMAP_BED2}    && \
-    totalMapCount=`bedwc ${GENOME_ALLMAP_BED2}` && echo $totalMapCount > .${RunUid}.totalMapCount && \
-    uniqueMapCount=`bedwc ${GENOME_UNIQUEMAP_BED2}` && echo $uniqueMapCount > .${RunUid}.uniqueMapCount && \
-    multipMapCount=$((totalMapCount-uniqueMapCount)) && echo $multipMapCount > .${RunUid}.multipMapCount && \
-    cat $x_rRNA_Hairpin_GenomeBed2 ${GENOME_UNIQUEMAP_BED2} > $Genome_UNIQUEMAP_HAIRPIN_BED2 && \
-    touch .${RunUid}.status.${Step}.separate_unique_and_multiple
-Step=$((Step+1))
-totalMapCount=`cat .${RunUid}.totalMapCount`
-uniqueMapCount=`cat .${RunUid}.uniqueMapCount`
-multipMapCount=`cat .${RunUid}.multipMapCount`
+totalGenomicMapCount=$(cat $TableDir/${RunUid}.totalGenomicMapCount)
+uniqueGenomicMapCount=$(cat $TableDir/${RunUid}.uniqueGenomicMapCount)
+multipGenomicMapCount=$(cat $TableDir/${RunUid}.multipGenomicMapCount)
 
-#############################
+CurrentInput=${NextInput}
+CurrentInputPrefix=${CurrentInput%.insert}
+CurrentInputName=$(basename $CurrentInput) 
+CurrentInputNamePrefix=${CurrentInputName%.*}
+
+##############################
 # custom post-genome mapping #
-#############################
-INPUT=${INPUT%.insert}.${Genome}v${Genome_MM}a.un.insert
-# parsing customer defined post-genomic mapping variables
-[[ ! -z $PostGenomeMappingFileList ]] && \
-    echo2 "Mapping to customer defined post-genome mapping indexes"
-    eval `echo $PostGenomeMappingFileList | awk 'BEGIN{FS=","}{printf "export POST_GENOME_MAPPING_FILES=(" ; ;for (i=1;i<=NF;++i) printf "\"%s\" ", $i; printf ")\n";}'`
-    for TARGET in "${POST_GENOME_MAPPING_FILES[@]}"; do
-        targetName1=`basename $TARGET`
-        targetName=${targetName1%.fa}
-        targetFa=`readlink -f $TARGET`
-        if [[ ! -f .${RunUid}.status.${Step}.${targetName}_mapping ]]; then
-            [[ ! -f $targetFa ]] && echo2 "File $TARGET specified by -P do not exist" error
-            Outdir1=$PostGenomeDir/${targetName} && mkdir -p $Outdir1 || echo2 "Cannot create directory $Outdir1, please check the permission. And try to only use letter and number to name the Fasta file" error
-            bowtie-build $targetFa $Outdir1/$targetName 1>/dev/null 2>/dev/null || echo2 "Failed to build the bowtie index for $targetFa" error
-            faSize -tab -detailed $targetFa > $Outdir1/${targetName}.sizes
-            Prefix1=`basename $INPUT` && Prefix1=${Outdir1}/${Prefix1%.insert} && \
-            echo2 "Mapping to ${targetName}" && \
-            bowtie -r -v 0 -a --best --strata -p $Threads -S \
-                --un ${INPUT%.insert}.x_${targetName}.insert \
-                $Outdir1/$targetName \
-                $INPUT \
-                2> ${Prefix1}.log | \
-            samtools view -bSF 0x4 - 2>/dev/null | bedtools_piPipes bamtobed -i - > ${Prefix1}.${targetName}.v${MM}a.bed && \
-            piPipes_insertBed_to_bed2 $INPUT ${Prefix1}.${targetName}.v${MM}a.bed > ${Prefix1}.${targetName}.v${MM}a.bed2 && \
-            rm -rf ${Prefix1}.${targetName}.v${MM}a.bed && \
-            piPipes_bed2Summary -5 -i ${Prefix1}.${targetName}.v${MM}a.bed2 -c $Outdir1/${targetName}.sizes -o $Outdir1/${targetName}.summary && \
-            Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_summary.R $Outdir1/${targetName}.summary $Outdir1/ $Threads 1 1>&2 && \
-            bash $DEBUG piPipes_smallRNA_bed2_to_bw.sh \
-                ${Prefix1}.${targetName}.v${MM}a.bed2 \
-                $Outdir1/${targetName}.sizes \
-                1 \
-                $Threads \
-                $Outdir1 && \
-            para_file=$Outdir1/${RANDOM}${RANDOM}.para && \
-            echo "awk '\$3-\$2>=$siRNA_bot && \$3-\$2<=$siRNA_top' ${Prefix1}.${targetName}.v${MM}a.bed2 > ${Prefix1}.${targetName}.v${MM}a.siRNA.bed2" >  $para_file && \
-            echo "awk '\$3-\$2>=$piRNA_bot && \$3-\$2<=$piRNA_top' ${Prefix1}.${targetName}.v${MM}a.bed2 > ${Prefix1}.${targetName}.v${MM}a.piRNA.bed2" >> $para_file && \
-            ParaFly -c $para_file -Threads $Threads -failed_cmds ${para_file}.failedCommands 1>&2 && \
-            rm -rf ${para_file}* && \
-            awk 'BEGIN{FS=OFS="\t"}\
-            { \
-                if ($5==1) \
-                { \
-                    l=$3-$2; \
-                    if (l>m) m=l; \
-                    if ($6=="+") s[l]+=$4;\
-                    else as[l]+=$4; \
-                } \
-            }END\
-            {\
-                for (d=1;d<=m;++d) \
-                {\
-                    printf "%d\t%.0f\t%.0f\n", d, (s[d]?s[d]:0), (as[d]?as[d]:0); \
-                }\
-            }' ${Prefix1}.${targetName}.v${MM}a.bed2 | sort -k1,1n > ${Prefix1}.${targetName}.v${MM}a.lendis && \
-            awk 'BEGIN{FS=OFS="\t"}\
-            { \
-                if ($5==1) \
-                { \
-                    l=$3-$2; \
-                    if (l>m) m=l; \
-                    if ($6=="+") s[l]+=$4;\
-                    else as[l]+=$4; \
-                } \
-            }END\
-            {\
-                for (d=1;d<=m;++d) \
-                {\
-                    printf "%d\t%.0f\t%.0f\n", d, (s[d]?s[d]:0), (as[d]?as[d]:0); \
-                }\
-            }'  ${Prefix1}.${targetName}.v${MM}a.piRNA.bed2 | sort -k1,1n > ${Prefix1}.${targetName}.v${MM}a.piRNA.lendis && \
-                awk 'BEGIN{FS=OFS="\t"}\
-                { \
-                    if ($5==1) \
-                    { \
-                        l=$3-$2; \
-                        if (l>m) m=l; \
-                        if ($6=="+") s[l]+=$4;\
-                        else as[l]+=$4; \
-                    } \
-                }END\
-                {\
-                    for (d=1;d<=m;++d) \
-                    {\
-                        printf "%d\t%.0f\t%.0f\n", d, (s[d]?s[d]:0), (as[d]?as[d]:0); \
-                    }\
-                }'  ${Prefix1}.${targetName}.v${MM}a.siRNA.bed2 | sort -k1,1n > ${Prefix1}.${targetName}.v${MM}a.siRNA.lendis && \
-            piPipes_local_ping_pong -a ${Prefix1}.${targetName}.v${MM}a.piRNA.bed2 -b ${Prefix1}.${targetName}.v${MM}a.piRNA.bed2 -p $Threads > ${Prefix1}.${targetName}.v${MM}a.piRNA.pp && \
-            ext_len=30 && \
-            awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$7])) {printed[$7]=1; if ($2>=ext_len) { for (i=1;i<=1;++i) { if ($6=="+") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}' ${Prefix1}.${targetName}.v${MM}a.bed2       | bedtools_piPipes getfasta -fi $targetFa -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${Prefix1}.${targetName}.v${MM}a.5end_60.percentage && \
-            awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$7])) {printed[$7]=1; if ($2>=ext_len) { for (i=1;i<=1;++i) { if ($6=="+") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}' ${Prefix1}.${targetName}.v${MM}a.piRNA.bed2 | bedtools_piPipes getfasta -fi $targetFa -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${Prefix1}.${targetName}.v${MM}a.piRNA.5end_60.percentage && \
-            awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$7])) {printed[$7]=1; if ($2>=ext_len) { for (i=1;i<=1;++i) { if ($6=="+") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}' ${Prefix1}.${targetName}.v${MM}a.siRNA.bed2 | bedtools_piPipes getfasta -fi $targetFa -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${Prefix1}.${targetName}.v${MM}a.siRNA.5end_60.percentage && \
-            awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$7])) {printed[$7]=1; if ($2>=ext_len) { for (i=1;i<=1;++i) { if ($6=="-") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}' ${Prefix1}.${targetName}.v${MM}a.bed2       | bedtools_piPipes getfasta -fi $targetFa -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${Prefix1}.${targetName}.v${MM}a.3end_60.percentage && \
-            awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$7])) {printed[$7]=1; if ($2>=ext_len) { for (i=1;i<=1;++i) { if ($6=="-") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}' ${Prefix1}.${targetName}.v${MM}a.piRNA.bed2 | bedtools_piPipes getfasta -fi $targetFa -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${Prefix1}.${targetName}.v${MM}a.piRNA.3end_60.percentage && \
-            awk -v ext_len=$ext_len 'BEGIN{OFS="\t"} { if (($5==1)&&(!printed[$7])) {printed[$7]=1; if ($2>=ext_len) { for (i=1;i<=1;++i) { if ($6=="-") { print $1,$2-ext_len,$2+ext_len+1,$4,$5,$6 } else { print $1,$3-ext_len-1,$3+ext_len,$4,$5,$6 }}}}}' ${Prefix1}.${targetName}.v${MM}a.siRNA.bed2 | bedtools_piPipes getfasta -fi $targetFa -bed stdin -fo stdout -s -name -tab | piPipes_nuc_percentage.py $ext_len > ${Prefix1}.${targetName}.v${MM}a.siRNA.3end_60.percentage && \
-            Rscript $PIPELINE_DIRECTORY/bin/piPipes_draw_smallRNA_features2.R \
-                $Outdir1/${Prefix}".post-genome."${targetName} \
-                ${Prefix1}.${targetName}.v${MM}a.lendis \
-                ${Prefix1}.${targetName}.v${MM}a.siRNA.lendis \
-                ${Prefix1}.${targetName}.v${MM}a.piRNA.lendis \
-                ${ext_len} \
-                ${Prefix1}.${targetName}.v${MM}a.5end_60.percentage \
-                ${Prefix1}.${targetName}.v${MM}a.3end_60.percentage \
-                ${Prefix1}.${targetName}.v${MM}a.siRNA.5end_60.percentage \
-                ${Prefix1}.${targetName}.v${MM}a.siRNA.3end_60.percentage \
-                ${Prefix1}.${targetName}.v${MM}a.piRNA.5end_60.percentage \
-                ${Prefix1}.${targetName}.v${MM}a.piRNA.3end_60.percentage 1>&2 && \
-            piPipes_bed2Summary -5 -i ${Prefix1}.${targetName}.v${MM}a.siRNA.bed2 -c $Outdir1/${targetName}.sizes -o /dev/stdout | awk 'BEGIN{OFS="\t"}{$1=$1"-siRNA"; print $0}' > $Outdir1/${targetName}.siRNA.summary && \
-            Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_summary.R $Outdir1/${targetName}.siRNA.summary $Outdir1/ $Threads 1 1>&2 && \
-            piPipes_bed2Summary -5 -i ${Prefix1}.${targetName}.v${MM}a.piRNA.bed2 -c $Outdir1/${targetName}.sizes -o /dev/stdout | awk 'BEGIN{OFS="\t"}{$1=$1"-piRNA"; print $0}' > $Outdir1/${targetName}.piRNA.summary && \
-            Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_summary.R $Outdir1/${targetName}.piRNA.summary $Outdir1/ $Threads 1 1>&2 && \
-            PDFs=$Outdir1/*pdf && \
-            gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=$PdfDir/`basename ${Prefix1}`.post-genome.${targetName}.pdf ${PDFs} && \
-            rm -rf $PDFs && \
-            touch .${RunUid}.status.${Step}.${targetName}_mapping
+##############################
+CurrentMM=0 # haven't implement method to take mismatch # from user
+if [[ ! -z ${PostGenomeMappingFileList[@]+"${PostGenomeMappingFileList[@]}"} ]]; then
+    echo2 "Post-genome mapping to customer defined sequences"
+    for CurrentTarget in "${PostGenomeMappingFileList[@]}"; do
+        CurrentTargetName=$(basename $CurrentTarget) 
+        CurrentTargetNamePrefix=${CurrentTargetName%.fa}
+        NextInput=${CurrentInputPrefix}.x_${CurrentTargetNamePrefix}.insert
+        CurrentOutdir=$PostGenomeDir/${CurrentTargetNamePrefix}
+        mkdir -p $CurrentOutdir || echo2 "Cannot create directory $CurrentOutdir, please check the permission. And try to only use letter and number to name the Fasta file" error
+        BowtieIndexName=$CurrentOutdir/$CurrentTargetNamePrefix
+        LogFile=${LogDir}/${CurrentInputNamePrefix}.bowtie2${CurrentTargetNamePrefix}.log
+
+        if [[ ! -f $SentinelDir/${RunUid}.status.${Step}.${CurrentTargetNamePrefix}_postgenome_mapping ]]; then
+            echo2 "Mapping to ${CurrentTargetName}"
+            bash piPipes_map_smallRNA_to_target.sh \
+            && touch $SentinelDir/${RunUid}.status.${Step}.${CurrentTargetNamePrefix}_postgenome_mapping
+        else 
+            echo2 "Mapping to ${CurrentTargetName} has been done previously" warning
         fi
-        INPUT=${INPUT%.insert}.x_${targetName}.insert
-        rm -f $Outdir1/${targetName}.1.ebwt $Outdir1/${targetName}.2.ebwt $Outdir1/${targetName}.3.ebwt $Outdir1/${targetName}.4.ebwt $Outdir1/${targetName}.rev.1.ebwt $Outdir1/${targetName}.rev.2.ebwt $Outdir1/${targetName}.sizes
+        CurrentInput=${NextInput}
+        CurrentInputPrefix=${CurrentInput%.insert}
+        CurrentInputName=$(basename $CurrentInput) 
+        CurrentInputNamePrefix=${CurrentInputName%.*}
     done
+fi
+let Step+=1 
 
 #####################
 # Length Separation #
 #####################
-echo2 "Separating siRNA, piRNA based on length"
-[ -z "$siRNA_bot" -o -z "$siRNA_top" ]  && echo2 "length for siRNA is not defined! please check the \"variable\" file under common\$Genome" error
-[ -z "$piRNA_bot" -o -z "$piRNA_top" ]  && echo2 "lengt for piRNA is not defined! please check the \"variable\" file under common\$Genome" error
-[ ! -f .${RunUid}.status.${Step}.sep_length ] && \
+declare GenomeAllmapSiRNABed=${GenomeAllmapBed2%bed2}siRNA.bed2
+declare GenomeAllmapPiRNABed=${GenomeAllmapBed2%bed2}piRNA.bed2
+if [[ ! -f $SentinelDir/${RunUid}.status.${Step}.sep_length ]]; then
     para_file=${RANDOM}${RANDOM}.para && \
-    echo "awk '\$3-\$2>=$siRNA_bot && \$3-\$2<=$siRNA_top' ${GENOME_ALLMAP_BED2} > ${GENOME_ALLMAP_BED2%bed2}siRNA.bed2" > $para_file && \
-    echo "awk '\$3-\$2>=$piRNA_bot && \$3-\$2<=$piRNA_top' ${GENOME_ALLMAP_BED2} > ${GENOME_ALLMAP_BED2%bed2}piRNA.bed2" >> $para_file && \
-    ParaFly -c $para_file -Threads $Threads -failed_cmds ${para_file}.failedCommands 1>&2 && \
-    rm -rf ${para_file}* && \
-    touch  .${RunUid}.status.${Step}.sep_length
-[ ! -f .${RunUid}.status.${Step}.sep_length ] && "separating siRNA, piRNA failed"
-Step=$((Step+1))
+    echo "awk '\$3-\$2>=$siRNA_bot && \$3-\$2<=$siRNA_top' ${GenomeAllmapBed2} > ${GenomeAllmapSiRNABed}" > $para_file \
+    && echo "awk '\$3-\$2>=$piRNA_bot && \$3-\$2<=$piRNA_top' ${GenomeAllmapBed2} > ${GenomeAllmapPiRNABed}" >> $para_file \
+    && ParaFly -c $para_file -CPU $Threads -failed_cmds ${para_file}.failedCommands \
+    || echo2 "Failed to separate siRNA and piRNA from genomic bed file" error
+    rm -rf ${para_file}* \
+    && touch $SentinelDir/${RunUid}.status.${Step}.sep_length
+fi
+let Step+=1 
 
+exit
 # plotting length distribution
 echo2 "Plotting length distribution"
 [ ! -f .${RunUid}.status.${Step}.plotting_length_dis ] && \
-    awk '{a[$7]=$4}END{m=0; for (b in a){c[length(b)]+=a[b]; if (length(b)>m) m=length(b)} for (d=1;d<=m;++d) {print d"\t"(c[d]?c[d]:0)}}' ${GENOME_ALLMAP_BED2}  | sort -k1,1n > ${GENOME_ALLMAP_BED2}.lendis && \
-    awk '{a[$7]=$4}END{m=0; for (b in a){c[length(b)]+=a[b]; if (length(b)>m) m=length(b)} for (d=1;d<=m;++d) {print d"\t"(c[d]?c[d]:0)}}' ${GENOME_UNIQUEMAP_BED2}  | sort -k1,1n > ${GENOME_UNIQUEMAP_BED2}.lendis && \
-    Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_lendis.R ${GENOME_ALLMAP_BED2}.lendis $PdfDir/`basename ${GENOME_ALLMAP_BED2}`.x_hairpin 1>&2 && \
-    Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_lendis.R ${GENOME_UNIQUEMAP_BED2}.lendis $PdfDir/`basename ${GENOME_UNIQUEMAP_BED2}`.x_hairpin 1>&2 && \
-    awk '{ct[$1]+=$2}END{for (l in ct) {print l"\t"ct[l]}}' ${GENOME_ALLMAP_BED2}.lendis $x_rRNA_HairpinLendis | sort -k1,1n > ${GENOME_ALLMAP_BED2}.+hairpin.lendis && \
-    awk '{ct[$1]+=$2}END{for (l in ct) {print l"\t"ct[l]}}' ${GENOME_UNIQUEMAP_BED2}.lendis $x_rRNA_HairpinLendis | sort -k1,1n > ${GENOME_UNIQUEMAP_BED2}.+hairpin.lendis && \
-    Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_lendis.R ${GENOME_ALLMAP_BED2}.+hairpin.lendis $PdfDir/`basename ${GENOME_ALLMAP_BED2}`.+hairpin 1>&2 && \
-    Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_lendis.R ${GENOME_UNIQUEMAP_BED2}.+hairpin.lendis $PdfDir/`basename ${GENOME_UNIQUEMAP_BED2}`.+hairpin 1>&2 && \
+    awk '{a[$7]=$4}END{m=0; for (b in a){c[length(b)]+=a[b]; if (length(b)>m) m=length(b)} for (d=1;d<=m;++d) {print d"\t"(c[d]?c[d]:0)}}' ${GenomeAllmapBed2}  | sort -k1,1n > ${GenomeAllmapBed2}.lendis && \
+    awk '{a[$7]=$4}END{m=0; for (b in a){c[length(b)]+=a[b]; if (length(b)>m) m=length(b)} for (d=1;d<=m;++d) {print d"\t"(c[d]?c[d]:0)}}' ${GenomeUniquemapBed2}  | sort -k1,1n > ${GenomeUniquemapBed2}.lendis && \
+    Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_lendis.R ${GenomeAllmapBed2}.lendis $PdfDir/`basename ${GenomeAllmapBed2}`.x_hairpin 1>&2 && \
+    Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_lendis.R ${GenomeUniquemapBed2}.lendis $PdfDir/`basename ${GenomeUniquemapBed2}`.x_hairpin 1>&2 && \
+    awk '{ct[$1]+=$2}END{for (l in ct) {print l"\t"ct[l]}}' ${GenomeAllmapBed2}.lendis $HairpinLendis | sort -k1,1n > ${GenomeAllmapBed2}.+hairpin.lendis && \
+    awk '{ct[$1]+=$2}END{for (l in ct) {print l"\t"ct[l]}}' ${GenomeUniquemapBed2}.lendis $HairpinLendis | sort -k1,1n > ${GenomeUniquemapBed2}.+hairpin.lendis && \
+    Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_lendis.R ${GenomeAllmapBed2}.+hairpin.lendis $PdfDir/`basename ${GenomeAllmapBed2}`.+hairpin 1>&2 && \
+    Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_lendis.R ${GenomeUniquemapBed2}.+hairpin.lendis $PdfDir/`basename ${GenomeUniquemapBed2}`.+hairpin 1>&2 && \
     touch .${RunUid}.status.${Step}.plotting_length_dis
 Step=$((Step+1))
 
@@ -710,8 +588,8 @@ echo $NormScale > .depth
 echo2 "Intersecting with genomic features, make length distribution, nucleotide fraction for siRNA/piRNA assigned to each feature"
 [ ! -f .${RunUid}.status.${Step}.intersect_with_genomic_features ] && \
 bash $DEBUG piPipes_intersect_smallRNA_with_genomic_features.sh \
-    ${GENOME_ALLMAP_BED2} \
-    $SummaryDir/`basename ${GENOME_ALLMAP_BED2%.bed2}` \
+    ${GenomeAllmapBed2} \
+    $SummaryDir/`basename ${GenomeAllmapBed2%.bed2}` \
     $Threads \
     $IntersectDir \
     1>&2 && \
@@ -725,13 +603,13 @@ Step=$((Step+1))
 echo2 "Making bigWig files for genome browser"
 [ ! -f .${RunUid}.status.${Step}.make_bigWig_normalized_by_$Normmethod ] && \
     bash $DEBUG piPipes_smallRNA_bed2_to_bw.sh \
-        ${GENOME_ALLMAP_BED2} \
+        ${GenomeAllmapBed2} \
         ${ChromSize} \
         ${NormScale} \
         $Threads \
         $BigwigDir && \
     bash $DEBUG piPipes_smallRNA_bed2_to_bw.sh \
-        ${GENOME_ALLMAP_BED2%bed2}piRNA.bed2 \
+        ${GenomeAllmapBed2%bed2}piRNA.bed2 \
         ${ChromSize} \
         ${NormScale} \
         $Threads \
@@ -766,41 +644,6 @@ done && \
 touch .${RunUid}.status.${Step}.direct_mapping_normalized_by_$Normmethod
 Step=$((Step+1))
 
-#####################################################
-# Direct mapping to and quantification with eXpress #
-#####################################################
-# for accurate quantification, we map to the index of gene+cluster+repBase.
-# echo2 "Quantification by direct mapping and eXpress"
-# [ ! -f .${RunUid}.status.${Step}.direct_mapping_no_normalization ] && \
-# awk '{for (j=0;j<$2;++j) print $1}' $x_rRNA_x_hairpinInsert | \
-# bowtie \
-#     -r \
-#     -v ${transposon_MM} \
-#     -a --best --strata \
-#     -p $Threads \
-#     -S \
-#     gene+cluster+repBase \
-#     - 2> $EXPRESS_DIR/${Prefix}.bowtie.gene+cluster+repBase.bowtie.log | \
-#     samtools view -bS - > \
-#     $EXPRESS_DIR/${Prefix}.bowtie.gene+cluster+repBase.bam && \
-# touch .${RunUid}.status.${Step}.direct_mapping_no_normalization
-# Step=$((Step+1))
-
-# deprecated
-# [ ! -f .${RunUid}.status.${Step}.quantification_by_eXpress ] && \
-# express \
-#     -B $eXpressBATCH \
-#     -m $(( (siRNA + piRNA_top)/2 )) \
-#     -s $(( (piRNA_top - 18)/2 )) \
-#     --output-align-prob \
-#     -o $EXPRESS_DIR \
-#     --no-update-check \
-#     $CommonFolder/${Genome}.gene+cluster+repBase.fa \
-#     $EXPRESS_DIR/${Prefix}.bowtie.gene+cluster+repBase.bam \
-#     1>&2 2> $EXPRESS_DIR/${Prefix}.eXpress.log && \
-# touch .${RunUid}.status.${Step}.quantification_by_eXpress
-# Step=$((Step+1))
-
 ################
 # Joining Pdfs #
 ################
@@ -812,15 +655,15 @@ then
             $PdfDir/${Prefix}.pie.pdf \
             $PdfDir/${Prefix}.siRNA.pie.pdf \
             $PdfDir/${Prefix}.piRNA.pie.pdf \
-            $PdfDir/`basename ${GENOME_UNIQUEMAP_BED2}`.+hairpin.lendis.pdf \
-            $PdfDir/`basename ${GENOME_ALLMAP_BED2}`.+hairpin.lendis.pdf \
-            $PdfDir/`basename ${GENOME_UNIQUEMAP_BED2}`.x_hairpin.lendis.pdf \
-            $PdfDir/`basename ${GENOME_ALLMAP_BED2}`.x_hairpin.lendis.pdf  \
+            $PdfDir/`basename ${GenomeUniquemapBed2}`.+hairpin.lendis.pdf \
+            $PdfDir/`basename ${GenomeAllmapBed2}`.+hairpin.lendis.pdf \
+            $PdfDir/`basename ${GenomeUniquemapBed2}`.x_hairpin.lendis.pdf \
+            $PdfDir/`basename ${GenomeAllmapBed2}`.x_hairpin.lendis.pdf  \
             $PdfDir/${Prefix}.features.pdf  && \
-        rm -rf $PdfDir/`basename ${GENOME_UNIQUEMAP_BED2}`.+hairpin.lendis.pdf \
-            $PdfDir/`basename ${GENOME_ALLMAP_BED2}`.+hairpin.lendis.pdf \
-            $PdfDir/`basename ${GENOME_UNIQUEMAP_BED2}`.x_hairpin.lendis.pdf \
-            $PdfDir/`basename ${GENOME_ALLMAP_BED2}`.x_hairpin.lendis.pdf  \
+        rm -rf $PdfDir/`basename ${GenomeUniquemapBed2}`.+hairpin.lendis.pdf \
+            $PdfDir/`basename ${GenomeAllmapBed2}`.+hairpin.lendis.pdf \
+            $PdfDir/`basename ${GenomeUniquemapBed2}`.x_hairpin.lendis.pdf \
+            $PdfDir/`basename ${GenomeAllmapBed2}`.x_hairpin.lendis.pdf  \
             $PdfDir/${Prefix}.pie.pdf \
             $PdfDir/${Prefix}.siRNA.pie.pdf \
             $PdfDir/${Prefix}.piRNA.pie.pdf \
@@ -829,14 +672,14 @@ then
 else
     [ ! -f .${RunUid}.status.${Step}.merge_pdfs ] && \
         gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=$PdfDir/${Prefix}.${PACKAGE_NAME}.small_RNA_pipeline.${PROG_VERSION}.pdf \
-            $PdfDir/`basename ${GENOME_UNIQUEMAP_BED2}`.+hairpin.lendis.pdf \
-            $PdfDir/`basename ${GENOME_ALLMAP_BED2}`.+hairpin.lendis.pdf \
-            $PdfDir/`basename ${GENOME_UNIQUEMAP_BED2}`.x_hairpin.lendis.pdf \
-            $PdfDir/`basename ${GENOME_ALLMAP_BED2}`.x_hairpin.lendis.pdf  && \
-        rm -rf $PdfDir/`basename ${GENOME_UNIQUEMAP_BED2}`.+hairpin.lendis.pdf \
-            $PdfDir/`basename ${GENOME_ALLMAP_BED2}`.+hairpin.lendis.pdf \
-            $PdfDir/`basename ${GENOME_UNIQUEMAP_BED2}`.x_hairpin.lendis.pdf \
-            $PdfDir/`basename ${GENOME_ALLMAP_BED2}`.x_hairpin.lendis.pdf  && \
+            $PdfDir/`basename ${GenomeUniquemapBed2}`.+hairpin.lendis.pdf \
+            $PdfDir/`basename ${GenomeAllmapBed2}`.+hairpin.lendis.pdf \
+            $PdfDir/`basename ${GenomeUniquemapBed2}`.x_hairpin.lendis.pdf \
+            $PdfDir/`basename ${GenomeAllmapBed2}`.x_hairpin.lendis.pdf  && \
+        rm -rf $PdfDir/`basename ${GenomeUniquemapBed2}`.+hairpin.lendis.pdf \
+            $PdfDir/`basename ${GenomeAllmapBed2}`.+hairpin.lendis.pdf \
+            $PdfDir/`basename ${GenomeUniquemapBed2}`.x_hairpin.lendis.pdf \
+            $PdfDir/`basename ${GenomeAllmapBed2}`.x_hairpin.lendis.pdf  && \
         touch .${RunUid}.status.${Step}.merge_pdfs
 fi
 Step=$((Step+1))

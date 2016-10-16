@@ -19,7 +19,7 @@
 
 source (paste (Sys.getenv ("PIPELINE_DIRECTORY"),"/bin/piPipes.R",sep=""))
 library(pacman)
-
+p_load("readr")
 p_load("ggplot2")
 p_load("grid")
 p_load("ggthemes")

@@ -35,43 +35,62 @@ roundUp <- function(x, nice=c(1,2,4,5,6,8,10)) {
 
 # function to draw small RNA ggplot lendis
 draw_smRNA_lendis = function (file, main) {
-	lendis = read.table (file,FALSE)
-	minRow = min ( min(lendis[lendis[,2]!=0,1]), min(lendis[lendis[,3]!=0,1]) )
-	maxRow = max ( max(lendis[lendis[,2]!=0,1]), max(lendis[lendis[,3]!=0,1]) )
-	lendis = lendis[seq(minRow, maxRow),]
-	lendis[,3]=lendis[,3]*-1
-	ru=roundUp( (max(lendis$V2)-min(lendis$V3) )/20 )
-	gg = ggplot (lendis, aes (V1,V2)) +
-	    theme_minimal() +
-	    theme( panel.grid.major=element_blank(),
-	           panel.grid.minor=element_blank(),
-	           axis.ticks.x=element_blank(),
-	           title=element_text(size=6, colour='black'),
-	           plot.margin=unit(c(1,1,0,0),"lines"),
-	           legend.margin=unit(0,"lines"),
-	           panel.margin=unit(0, "lines"),
-	           axis.ticks.margin=unit(0,"lines"),
-	           axis.text=element_text (size=4),
-	           axis.title=element_text(size=6),
-	           axis.ticks = element_line(size = 0.5) ) +
-	    geom_bar (stat="identity", colour="blue", fill="blue") +
-	    geom_bar (aes(V1,V3), stat="identity", colour="red", fill="red") +
-	    scale_x_discrete (breaks=c(minRow:maxRow)) +
-	    coord_cartesian(xlim = c(minRow, maxRow)) +
-	    scale_y_continuous(labels = comma, breaks=seq(ru*-20, ru*20, 2*ru)) +
-	    labs(title=paste("Length distribution", main, sep="\t")) +
-	    xlab("Length, nt") +
-	    ylab("Reads")
-	return (gg)
+	print(file)
+	print(main)
+    lendis = read_tsv (file,FALSE)
+    if( all(dim(lendis)==0) ) {
+        gg = ggplot() + geom_blank()
+        return(gg)
+    }
+    colnames(lendis)=c("pos", "plus", "minus")
+    minRow = min (
+        ifelse( all(lendis[,2] == 0), 999, min(lendis[lendis[,2]!=0,1])), 
+        ifelse( all(lendis[,3] == 0), 999, min(lendis[lendis[,3]!=0,1]))
+        )
+    maxRow = max ( 
+        ifelse(all(lendis[,2] == 0), 0, max(lendis[lendis[,2]!=0,1])), 
+        ifelse(all(lendis[,3] == 0), 0, max(lendis[lendis[,3]!=0,1]))
+        )
+	if(maxRow - minRow < 10) { 
+		minRow = minRow - ifelse(minRow > 5, 5, minRow); 
+		maxRow = ifelse(maxRow + 5 > max(lendis$pos), max(lendis$pos), maxRow + 5);
+	}
+    lendis = lendis[seq(minRow, maxRow),]
+    lendis[,3] = -lendis[,3]
+
+	ru = (max(lendis[,2])-min(lendis[,3]) )/20
+    if(ru < 1) {
+        ru = 1
+    } else {
+        ru = roundUp(ru)
+    }
+    gg = ggplot(lendis, aes(pos,plus)) +
+        theme_minimal() +
+        geom_bar(position = "identity", stat = "identity", colour = NA, fill = "blue") +
+        geom_bar(aes(pos,minus), position = "identity", stat = "identity", colour = NA, fill = "red") +
+        scale_x_discrete (breaks = c(minRow:maxRow)) +
+        coord_cartesian(xlim = c(minRow, maxRow)) +
+        scale_y_continuous(breaks = seq(ru*-20, ru*20, 2*ru)) +
+        labs(title = paste("Length distribution for", main, sep = " ")) +
+        xlab("Length (nt)") +
+        ylab("Reads")
+    return (gg)
 }
 
 # function to draw ping pong
 draw_ping_pong = function (ppbedfile, main) {
-	ppbed = read.table (ppbedfile, F)
-	minRow = min(ppbed$V1)
-	maxRow = max(ppbed$V1)
-	zScore=(ppbed[10,2]-mean(ppbed[-10,2]))/sd(ppbed[-10,2])
-	gg = ggplot (ppbed, aes (V1,V2)) +
+	print(ppbedfile)
+	print(main)
+	ppbed = read_tsv (ppbedfile, F)
+	colnames(ppbed)=c("pos", "score")
+	minRow = min(ppbed$pos)
+	maxRow = max(ppbed$pos)
+	if(all(ppbed[-10,2]==0)) {
+		gg = ggplot() + geom_blank()
+		return(gg) 
+	}
+	zScore = (ppbed[10,2]-mean(ppbed[-10,2]))/sd(ppbed[-10,2])
+	gg = ggplot (ppbed, aes (pos, score)) +
 	    theme_tufte () +
 	    theme( panel.grid.major=element_blank(),
 	           panel.grid.minor=element_blank(),
@@ -100,9 +119,15 @@ draw_ping_pong = function (ppbedfile, main) {
 
 # function to draw small RNA ggplot percentage
 draw_smRNA_percentage = function (file, ext, main) {
-	t = read.table (file, FALSE )
-	colnames (t) = c ("A","C","G","T")
-	rownames (t) = seq (-1*ext,ext,1)
+	print(file)
+	print(main)
+	t = read_tsv (file, FALSE )
+	colnames(t) = c ("A","C","G","T")
+	rownames(t) = seq (-1*ext,ext,1)
+	if(all(t == 0)) {
+		gg = ggplot() + geom_blank()
+		return(gg) 
+	}
 	tm = melt(cbind(t,pos=rownames(t)),is.var = c('bind'))
 	levs = levels (tm$variable)
 	levs = sort (levs, T)
@@ -140,15 +165,17 @@ draw_smRNA_percentage = function (file, ext, main) {
 
 # function to draw gene mode from a single table
 draw_summary = function (p, pdfPrefix, normScale) {
-	pdf (paste (pdfPrefix, p[1,1], ".pdf", sep=""))
-	par (bty="n")
-	p$V3 = p$V3 * normScale
-	p$V4 = p$V4 * normScale
-	plot (p$V2,p$V3, xlim=c(0,nrow(p)), ylim=c(1.4*min(p$V4), 1.4*max(p$V3)) , type='n', xlab=paste("Gene body", nrow(p), sep=" "), ylab="Signal", tck=0.01, main=p[1,1])
-	points (p$V2, p$V3, col="blue", type="s")
-	points (p$V2, p$V4, col="red", type="s")
-	abline (h=0, lty=2)
-	gc = dev.off()
+	if(any(p$V3 != 0) || any(p$V4 != 0)) {
+		pdf (paste (pdfPrefix, p[1,1], ".pdf", sep=""))
+		par (bty="n")
+		p$V3 = p$V3 * normScale
+		p$V4 = p$V4 * normScale
+		plot (p$V2,p$V3, xlim=c(0,nrow(p)), ylim=c(1.4*min(p$V4), 1.4*max(p$V3)) , type='n', xlab=paste("Gene body", nrow(p), sep=" "), ylab="Signal", tck=0.01, main=p[1,1])
+		points (p$V2, p$V3, col="blue", type="s")
+		points (p$V2, p$V4, col="red", type="s")
+		abline (h=0, lty=2)
+		gc = dev.off()
+	}
 }
 
 # function to draw balloon plot

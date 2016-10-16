@@ -98,13 +98,10 @@ export -f StarCheck
 
 # check whether the genome has been installed
 function check_genome {
-    local supported=0
 	for genome_supported in $(cat $PIPELINE_DIRECTORY/common/genome_supported.txt); do
-		if [[ $genome_supported = $1 ]]; then supported=1; fi
+		if [[ $genome_supported == $1 ]]; then return; fi
 	done
-	if [[ $supported != 1 ]]; then 
-        echo2 "The genome \"${1}\" is not currently supported. Currently supported genomes: $(cat $PIPELINE_DIRECTORY/common/genome_supported.txt); Please use \"piPipes install\" to install new genome" error
-    fi
+    echo2 "The genome \"${1}\" is not currently supported. Currently supported genomes: $(cat $PIPELINE_DIRECTORY/common/genome_supported.txt); Please use \"piPipes install\" to install new genome" error
 }
 export -f check_genome
 
