@@ -4,7 +4,7 @@
 	piRNA_Cluster_42AB=$COMMON_FOLDER/Brennecke.piRNAcluster.42AB.bed6.gz # 42AB
 	piRNA_Cluster_20A=$COMMON_FOLDER/Brennecke.piRNAcluster.20A.bed6.gz # 20A
 	piRNA_Cluster_flam=$COMMON_FOLDER/Brennecke.piRNAcluster.flam.bed6.gz # flam
-	repeatMasker=$COMMON_FOLDER/UCSC.RepeatMask.bed # repeatMakser obtained from UCSC
+	repeatMasker=$COMMON_FOLDER/UCSC.RepeatMask.bed.gz # repeatMakser obtained from UCSC
 	repeatMasker_IN_Cluster=$COMMON_FOLDER/UCSC.RepeatMask.inCluster.bed.gz # repeat masker identified region that fall into piRNA cluster
 	repeatMasker_OUT_Cluster=$COMMON_FOLDER/UCSC.RepeatMask.outCluster.bed.gz # repeat masker identified region that fall outside piRNA cluster
 	Trn=$COMMON_FOLDER/Zamore.transposon.bed.gz # transposon region used in Li, et al., Cell, 2009. More conserved than repeat masker

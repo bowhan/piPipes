@@ -242,6 +242,7 @@ Rscript $PIPELINE_DIRECTORY/bin/piPipes_draw_smallRNA_features2.R \
     $CurrentOutdir/${CurrentInputNamePrefix}.${CurrentTargetNamePrefix}_v${CurrentMM}a.siRNA.3end_$((NucCompExtLen*2)).species.percentage \
     $CurrentOutdir/${CurrentInputNamePrefix}.${CurrentTargetNamePrefix}_v${CurrentMM}a.piRNA.5end_$((NucCompExtLen*2)).species.percentage \
     $CurrentOutdir/${CurrentInputNamePrefix}.${CurrentTargetNamePrefix}_v${CurrentMM}a.piRNA.3end_$((NucCompExtLen*2)).species.percentage \
+    &> /dev/null \
 || echo2 "failed to draw unique/species pdf for ${CurrentTargetNamePrefix}" error
 
 Rscript $PIPELINE_DIRECTORY/bin/piPipes_draw_smallRNA_features2.R \
@@ -256,10 +257,6 @@ Rscript $PIPELINE_DIRECTORY/bin/piPipes_draw_smallRNA_features2.R \
     $CurrentOutdir/${CurrentInputNamePrefix}.${CurrentTargetNamePrefix}_v${CurrentMM}a.siRNA.3end_$((NucCompExtLen*2)).reads.percentage \
     $CurrentOutdir/${CurrentInputNamePrefix}.${CurrentTargetNamePrefix}_v${CurrentMM}a.piRNA.5end_$((NucCompExtLen*2)).reads.percentage \
     $CurrentOutdir/${CurrentInputNamePrefix}.${CurrentTargetNamePrefix}_v${CurrentMM}a.piRNA.3end_$((NucCompExtLen*2)).reads.percentage \
+    &> /dev/null \
 || echo2 "failed to draw all/reads pdf for ${CurrentTargetNamePrefix}" error
 
-PDFs=$PdfDir/${CurrentTargetNamePrefix}/*pdf \
-&& gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite \
-    -sOutputFile=$PdfDir/PreGenome.${CurrentTargetNamePrefix}.pdf \
-    ${PDFs} \
-|| echo2 "failed to combine all the pdf for ${CurrentTargetNamePrefix}" error

@@ -42,7 +42,7 @@ if [[ -s $OUTDIR/${INPUT_BED_NAME%bed2}sorted.Crick.bedGraph ]]; then
     echo -e "awk -v depth=$NormScale 'BEGIN{FS=OFS=\"\\\\t\"} {\$4*=depth; print}' $OUTDIR/${INPUT_BED_NAME%bed2}sorted.uniq.Crick.bedGraph  > $OUTDIR/${INPUT_BED_NAME%bed2}sorted.uniq.Crick.bedGraph.normalized && bedGraphToBigWig $OUTDIR/${INPUT_BED_NAME%bed2}sorted.uniq.Crick.bedGraph.normalized $CHROM $OUTDIR/${INPUT_BED_NAME%bed2}sorted.uniq.Crick.bigWig" >> $para_file
 fi
 if [[ ! -s $para_file ]]; then
-    ParaFly -c $para_file -CPU $CPU -failed_cmds ${para_file}.failedCommands 1>/dev/null 2>/dev/null
+    ParaFly -c $para_file -CPU $CPU -failed_cmds ${para_file}.failedCommands &>/dev/null
 fi
 
 rm -rf $para_file ${para_file}".completed" \

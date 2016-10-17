@@ -20,27 +20,25 @@ source (paste (Sys.getenv ("PIPELINE_DIRECTORY"),"/bin/piPipes.R",sep=""))
 
 library(pacman)
 p_load(ggplot2)
-p_load(grid)
-p_load(scales)
+p_load(readr)
 
-argv = commandArgs (TRUE)
-lendis = read.table (argv[1],FALSE)
+argv = commandArgs(TRUE)
+lendis = read_tsv(argv[1], FALSE)
+colnames(lendis) = c("pos", "count")
 main = argv[2]
-pdf (paste (main, ".lendis.pdf", sep=''))
+pdf(paste (main, ".lendis.pdf", sep=''))
 main = basename (main)
-main=gsub ("\\."," ",main)
-main=paste(strwrap(main, width = 50), collapse = "\n") 
+main = gsub ("\\."," ",main)
+main = paste(strwrap(main, width = 50), collapse = "\n") 
 minRow = min(lendis[lendis[,2]!=0,1])
 maxRow = max(lendis[lendis[,2]!=0,1])
 lendis = lendis[seq(minRow, maxRow),]
-ggplot (lendis, aes (V1,V2)) + 
-    theme_minimal () + 
-    theme (panel.grid.major=element_blank(), panel.grid.minor=element_blank(), axis.ticks.x=element_blank()) +
-    geom_bar (stat="identity") + 
-    scale_x_discrete (breaks=c(minRow:maxRow)) + 
+ggplot(lendis, aes (pos,count)) + 
+    theme_minimal() + 
+    theme(panel.grid.major=element_blank(), panel.grid.minor=element_blank(), axis.ticks.x=element_blank()) +
+    geom_bar(stat="identity") + 
+    scale_x_discrete(name = "Length (nt)", limits = lendis$pos, labels = lendis$pos) + 
+    scale_y_continuous(name = "Reads", breaks=seq(0,max(lendis$count),roundUp(max(lendis$count)/10))) +
     coord_cartesian(xlim = c(minRow, maxRow)) + 
-    scale_y_continuous(labels = comma, breaks=seq(0,max(lendis$V2),roundUp(max(lendis$V2)/10))) +
-    labs(title=paste("Length Distribution",main,sep="\n")) + 
-    xlab("Length (nt)") + 
-    ylab("Reads")
-noprint = dev.off ()
+    labs(title=paste("Length Distribution",main,sep="\n")) 
+noprint = dev.off()

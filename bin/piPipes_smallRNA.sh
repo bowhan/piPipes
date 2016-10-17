@@ -22,6 +22,7 @@
 declare -x  SmallRnaModuleVersion=${PROG_VERSION}
 declare -xi Threads=${DEFAULT_THREADS}
 declare -x  Genome
+declare -x  AnnotationDir
 declare -x  InputFastq
 declare -x  Outdir
 declare -x  Normmethod="unique"
@@ -30,7 +31,7 @@ declare -a  PreGenomeMappingFileList=()
 declare -a  PostGenomeMappingFileList=()
 
 declare -a  RequiredPrgrams=( \
-    sort md5sum awk grep python gs Rscript \
+    sort md5sum gawk grep python gs Rscript \
     samtools bowtie ParaFly bedGraphToBigWig \
     bedtools_piPipes piPipes_bed2Summary piPipes_fastq_to_insert piPipes_insertBed_to_bed2 \
     )
@@ -130,7 +131,10 @@ while getopts "hi:c:o:g:vN:F:P:O:" OPTION; do
         c)  Threads=$OPTARG;;
         
         g)  Genome=${OPTARG}
-            check_genome $Genome;;
+            check_genome $Genome
+            AnnotationDir=${PIPELINE_DIRECTORY}/common/${Genome}/
+            declare -x COMMON_FOLDER=${AnnotationDir} # backward compatibility
+            ;;
         
         N)  Normmethod=$(echo "${OPTARG}" | tr '[A-Z]' '[a-z]');;
         
@@ -170,7 +174,7 @@ for program in "${RequiredPrgrams[@]}"; do assertBinExists $program; done
 # creating output files/folders #
 #################################
 declare -x TableDir=tables && mkdir -p $TableDir
-declare -x Table=$TableDir/${Prefix}.basic_stats
+declare -x StatsTable=$TableDir/${Prefix}.basic_stats
 declare -x PdfDir=pdfs && mkdir -p $PdfDir
 declare -x ReadsDir=input_read_files && mkdir -p $ReadsDir
 declare -x JobDir=jobs && mkdir -p $JobDir
@@ -186,8 +190,8 @@ declare -x BigwigDir=$JobDir/bigWig_normalized_by_$Normmethod && mkdir -p $Bigwi
 declare -x TransposonDir=$JobDir/transposon_piRNAcluster_mapping_normalized_by_$Normmethod && mkdir -p $TransposonDir
 declare -x LogDir=log && mkdir -p ${LogDir}
 declare -x SentinelDir=sentinels && mkdir -p ${SentinelDir}
-
-declare -i Step=1
+declare -x NormScale=1
+declare -xi Step=1
 declare -x RunUid=$(echo "${InputFastq}" | md5sum | cut -d" " -f1)
 declare -x CommonFolder=$PIPELINE_DIRECTORY/common/$Genome
 . $CommonFolder/variables
@@ -406,7 +410,12 @@ if [[ ! -z ${PreGenomeMappingFileList[@]+"${PreGenomeMappingFileList[@]}"} ]]; t
         if [[ ! -f $SentinelDir/${RunUid}.status.${Step}.${CurrentTargetNamePrefix}_pregenome_mapping ]]; then
             echo2 "Mapping to ${CurrentTargetName}"
             bash piPipes_map_smallRNA_to_target.sh \
-            && touch $SentinelDir/${RunUid}.status.${Step}.${CurrentTargetNamePrefix}_pregenome_mapping
+            && PDFs=$PdfDir/${CurrentTargetNamePrefix}/*pdf \
+            && gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite \
+                -sOutputFile=$PdfDir/PreGenome.${CurrentTargetNamePrefix}.pdf \
+                ${PDFs} \
+            && touch $SentinelDir/${RunUid}.status.${Step}.${CurrentTargetNamePrefix}_pregenome_mapping \
+            || echo2 "failed to run pre-genome mapping for ${CurrentTargetNamePrefix}" error
         else 
             echo2 "Mapping to ${CurrentTargetName} has been done previously" warning
         fi
@@ -426,8 +435,8 @@ let Step+=1
 CurrentMM=$Genome_MM
 CurrentTargetNamePrefix=${Genome}
 BowtieIndexName=genome
-GenomeAllmapBed2=$GenomeMappingDir/${CurrentInputNamePrefix}.genome_v${CurrentMM}a.bed2
-GenomeUniquemapBed2=$GenomeMappingDir/${CurrentInputNamePrefix}.genome_v${CurrentMM}a.unique.bed2
+declare -x GenomeAllmapBed2=$GenomeMappingDir/${CurrentInputNamePrefix}.genome_v${CurrentMM}a.bed2
+declare -x GenomeUniquemapBed2=$GenomeMappingDir/${CurrentInputNamePrefix}.genome_v${CurrentMM}a.unique.bed2
 GenomeAllmapLogFile=$LogDir/${CurrentInputNamePrefix}.genome_v${CurrentMM}a.log 
 NextInput=${CurrentInputPrefix}.x_${CurrentTargetNamePrefix}.insert
 
@@ -494,7 +503,12 @@ if [[ ! -z ${PostGenomeMappingFileList[@]+"${PostGenomeMappingFileList[@]}"} ]];
         if [[ ! -f $SentinelDir/${RunUid}.status.${Step}.${CurrentTargetNamePrefix}_postgenome_mapping ]]; then
             echo2 "Mapping to ${CurrentTargetName}"
             bash piPipes_map_smallRNA_to_target.sh \
-            && touch $SentinelDir/${RunUid}.status.${Step}.${CurrentTargetNamePrefix}_postgenome_mapping
+            && PDFs=$PdfDir/${CurrentTargetNamePrefix}/*pdf \
+            && gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite \
+                -sOutputFile=$PdfDir/PostGenome.${CurrentTargetNamePrefix}.pdf \
+                ${PDFs} \
+            && touch $SentinelDir/${RunUid}.status.${Step}.${CurrentTargetNamePrefix}_postgenome_mapping \
+            || echo2 "failed to run post-genome mapping for ${CurrentTargetNamePrefix}" error
         else 
             echo2 "Mapping to ${CurrentTargetName} has been done previously" warning
         fi
@@ -515,86 +529,94 @@ if [[ ! -f $SentinelDir/${RunUid}.status.${Step}.sep_length ]]; then
     para_file=${RANDOM}${RANDOM}.para && \
     echo "awk '\$3-\$2>=$siRNA_bot && \$3-\$2<=$siRNA_top' ${GenomeAllmapBed2} > ${GenomeAllmapSiRNABed}" > $para_file \
     && echo "awk '\$3-\$2>=$piRNA_bot && \$3-\$2<=$piRNA_top' ${GenomeAllmapBed2} > ${GenomeAllmapPiRNABed}" >> $para_file \
-    && ParaFly -c $para_file -CPU $Threads -failed_cmds ${para_file}.failedCommands \
+    && ParaFly -c $para_file -CPU $Threads -failed_cmds ${para_file}.failedCommands &>/dev/null \
     || echo2 "Failed to separate siRNA and piRNA from genomic bed file" error
     rm -rf ${para_file}* \
     && touch $SentinelDir/${RunUid}.status.${Step}.sep_length
 fi
 let Step+=1 
 
-exit
 # plotting length distribution
 echo2 "Plotting length distribution"
-[ ! -f .${RunUid}.status.${Step}.plotting_length_dis ] && \
-    awk '{a[$7]=$4}END{m=0; for (b in a){c[length(b)]+=a[b]; if (length(b)>m) m=length(b)} for (d=1;d<=m;++d) {print d"\t"(c[d]?c[d]:0)}}' ${GenomeAllmapBed2}  | sort -k1,1n > ${GenomeAllmapBed2}.lendis && \
-    awk '{a[$7]=$4}END{m=0; for (b in a){c[length(b)]+=a[b]; if (length(b)>m) m=length(b)} for (d=1;d<=m;++d) {print d"\t"(c[d]?c[d]:0)}}' ${GenomeUniquemapBed2}  | sort -k1,1n > ${GenomeUniquemapBed2}.lendis && \
-    Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_lendis.R ${GenomeAllmapBed2}.lendis $PdfDir/`basename ${GenomeAllmapBed2}`.x_hairpin 1>&2 && \
-    Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_lendis.R ${GenomeUniquemapBed2}.lendis $PdfDir/`basename ${GenomeUniquemapBed2}`.x_hairpin 1>&2 && \
-    awk '{ct[$1]+=$2}END{for (l in ct) {print l"\t"ct[l]}}' ${GenomeAllmapBed2}.lendis $HairpinLendis | sort -k1,1n > ${GenomeAllmapBed2}.+hairpin.lendis && \
-    awk '{ct[$1]+=$2}END{for (l in ct) {print l"\t"ct[l]}}' ${GenomeUniquemapBed2}.lendis $HairpinLendis | sort -k1,1n > ${GenomeUniquemapBed2}.+hairpin.lendis && \
-    Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_lendis.R ${GenomeAllmapBed2}.+hairpin.lendis $PdfDir/`basename ${GenomeAllmapBed2}`.+hairpin 1>&2 && \
-    Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_lendis.R ${GenomeUniquemapBed2}.+hairpin.lendis $PdfDir/`basename ${GenomeUniquemapBed2}`.+hairpin 1>&2 && \
-    touch .${RunUid}.status.${Step}.plotting_length_dis
-Step=$((Step+1))
+declare GenomeAllmapBase=$(basename $GenomeAllmapBed2)
+declare GenomeUniquemapBase=$(basename $GenomeUniquemapBed2)
+if [[ ! -f $SentinelDir/${RunUid}.status.${Step}.plotting_length_dis ]]; then
+    awk '{a[$7]=$4}END{m=0; for (b in a){c[length(b)]+=a[b]; if (length(b)>m) m=length(b)} for (d=1;d<=m;++d) {print d"\t"(c[d]?c[d]:0)}}' \
+        ${GenomeAllmapBed2} \
+    | sort -k1,1n > $TableDir/${GenomeAllmapBase}.lendis \
+    && awk '{a[$7]=$4}END{m=0; for (b in a){c[length(b)]+=a[b]; if (length(b)>m) m=length(b)} for (d=1;d<=m;++d) {print d"\t"(c[d]?c[d]:0)}}' \
+        ${GenomeUniquemapBed2} \
+    | sort -k1,1n > $TableDir/${GenomeUniquemapBase}.lendis \
+    && Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_lendis.R $TableDir/${GenomeAllmapBase}.lendis    $PdfDir/$(basename ${GenomeAllmapBed2%bed2})-hairpin &> /dev/null \
+    && Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_lendis.R $TableDir/${GenomeUniquemapBase}.lendis $PdfDir/$(basename ${GenomeUniquemapBed2%bed2})-hairpin &> /dev/null \
+    && awk '{ct[$1]+=$2}END{for (l in ct) {print l"\t"ct[l]}}' $TableDir/${GenomeAllmapBase}.lendis    $HairpinLendis | sort -k1,1n > $TableDir/${GenomeAllmapBase}.+hairpin.lendis \
+    && awk '{ct[$1]+=$2}END{for (l in ct) {print l"\t"ct[l]}}' $TableDir/${GenomeUniquemapBase}.lendis $HairpinLendis | sort -k1,1n > $TableDir/${GenomeUniquemapBase}.+hairpin.lendis \
+    && Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_lendis.R $TableDir/${GenomeAllmapBase}.+hairpin.lendis    $PdfDir/$(basename ${GenomeAllmapBed2%bed2})+hairpin &> /dev/null \
+    && Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_lendis.R $TableDir/${GenomeUniquemapBase}.+hairpin.lendis $PdfDir/$(basename ${GenomeUniquemapBed2%bed2})+hairpin &> /dev/null \
+    && touch $SentinelDir/${RunUid}.status.${Step}.plotting_length_dis
+fi
+let Step+=1
 
 ##################
 # Print to table #
 ##################
 # change dual library mode normalization method if change here
-echo -e "total reads as input of the pipeline\t${totalReads}" > $Table && \
-echo -e "rRNA reads with ${rRNA_MM} mismatches\t${rRNAReads}" >> $Table && \
-echo -e "miRNA hairpin reads\t${hairpinReads}" >> $Table && \
-echo -e "genome mapping reads (-rRNA; +miRNA_hairpin)\t$((totalMapCount+hairpinReads))" >> $Table && \
-echo -e "genome mapping reads (-rRNA; -miRNA_hairpin)\t${totalMapCount}" >> $Table && \
-echo -e "genome unique mapping reads (-rRNA; +miRNA_hairpin)\t$((uniqueMapCount+hairpinReads))" >> $Table && \
-echo -e "genome unique mapping reads (-rRNA; -miRNA_hairpin)\t${uniqueMapCount}" >> $Table && \
-echo -e "genome multiple mapping reads (-rRNA; -miRNA_hairpin)\t${multipMapCount}" >> $Table && \
-export TOTAL_GENOME_MAPPING_READS=$((totalMapCount+hairpinReads))
+   echo -e "$(basename ${InputFastq})\ttotal_input_reads\t${totalReads}" > $StatsTable \
+&& echo -e "$(basename ${InputFastq})\trRNA_reads\t${rRNAReads}" >> $StatsTable \
+&& echo -e "$(basename ${InputFastq})\tmiRNA_hairpin_reads\t${hairpinReads}" >> $StatsTable \
+&& echo -e "$(basename ${InputFastq})\tgenome_mapping\t$((totalGenomicMapCount+hairpinReads))" >> $StatsTable \
+&& echo -e "$(basename ${InputFastq})\tgenome_mapping_without_hairpin)\t${totalGenomicMapCount}" >> $StatsTable \
+&& echo -e "$(basename ${InputFastq})\tunique_genome_mapping\t$((uniqueGenomicMapCount+hairpinReads))" >> $StatsTable \
+&& echo -e "$(basename ${InputFastq})\tunique_genome_mapping_without_hairpin\t${uniqueGenomicMapCount}" >> $StatsTable \
+&& echo -e "$(basename ${InputFastq})\tmulti_genome_mapping_without_hairpin\t${multipGenomicMapCount}" >> $StatsTable
+declare -x GenomicHairpinReads=$((totalGenomicMapCount+hairpinReads))
 
 # normalization method
 # input | rRNA | unique | uniqueXmiRNA | all | allXmiRNA | miRNA
 case "$Normmethod" in
 input)
-    NormScale=`head -1 $Table | tail -1 | cut -f2 | awk '{print 1000000/$0}'`
+    NormScale=$(head -1 $StatsTable | tail -1 | awk '{print 1000000/$NF}')
 ;;
 rrna)
-    NormScale=`head -2 $Table | tail -1 | cut -f2 | awk '{print 1000000/$0}'`
+    NormScale=$(head -2 $StatsTable | tail -1 | awk '{print 1000000/$NF}')
 ;;
 mirna)
-    NormScale=`head -3 $Table | tail -1 | cut -f2 | awk '{print 1000000/$0}'`
+    NormScale=$(head -3 $StatsTable | tail -1 | awk '{print 1000000/$NF}')
 ;;
 all)
-    NormScale=`head -4 $Table | tail -1 | cut -f2 | awk '{print 1000000/$0}'`
+    NormScale=$(head -4 $StatsTable | tail -1 | awk '{print 1000000/$NF}')
 ;;
 allxmirna)
-    NormScale=`head -5 $Table | tail -1 | cut -f2 | awk '{print 1000000/$0}'`
+    NormScale=$(head -5 $StatsTable | tail -1 | awk '{print 1000000/$NF}')
 ;;
 unique)
-    NormScale=`head -6 $Table | tail -1 | cut -f2 | awk '{print 1000000/$0}'`
+    NormScale=$(head -6 $StatsTable | tail -1 | awk '{print 1000000/$NF}')
 ;;
 uniquexmirna)
-    NormScale=`head -7 $Table | tail -1 | cut -f2 | awk '{print 1000000/$0}'`
+    NormScale=$(head -7 $StatsTable | tail -1 | awk '{print 1000000/$NF}')
 ;;
 *)
-    echo2 "unrecognized normalization option: $Normmethod; using the default method" "warning"
-    NormScale=`head -6 $Table | tail -1 | cut -f2 | awk '{print 1000000/$0}'`
+    echo2 "unrecognized normalization option: $Normmethod; using the default method" warning
+    NormScale=$(head -6 $StatsTable | tail -1 | awk '{print 1000000/$NF}')
 ;;
 esac
-echo $NormScale > .depth
+echo $NormScale > $TableDir/${RunUid}.depth
 
 ####################################
 # Intersecting with GENOME Feature #
 ####################################
-echo2 "Intersecting with genomic features, make length distribution, nucleotide fraction for siRNA/piRNA assigned to each feature"
-[ ! -f .${RunUid}.status.${Step}.intersect_with_genomic_features ] && \
-bash $DEBUG piPipes_intersect_smallRNA_with_genomic_features.sh \
-    ${GenomeAllmapBed2} \
-    $SummaryDir/`basename ${GenomeAllmapBed2%.bed2}` \
-    $Threads \
-    $IntersectDir \
-    1>&2 && \
-    touch .${RunUid}.status.${Step}.intersect_with_genomic_features
-Step=$((Step+1))
+if [[ ! -f $SentinelDir/${RunUid}.status.${Step}.intersect_with_genomic_features ]]; then
+    echo2 "Intersecting with genomic features, make length distribution, nucleotide fraction for siRNA/piRNA assigned to each feature"
+    bash piPipes_intersect_smallRNA_with_genomic_features.sh \
+        $TableDir/${GenomeAllmapBase%.bed2} \
+        $IntersectDir \
+        1>&2 \
+        && touch $SentinelDir/${RunUid}.status.${Step}.intersect_with_genomic_features
+else 
+    echo2 "Intersecting with genomic features has been done previously" warning
+fi
+let Step+=1
+exit
 
 #######################
 # Making BigWig Files #

@@ -35,8 +35,6 @@ roundUp <- function(x, nice=c(1,2,4,5,6,8,10)) {
 
 # function to draw small RNA ggplot lendis
 draw_smRNA_lendis = function (file, main) {
-	print(file)
-	print(main)
     lendis = read_tsv (file,FALSE)
     if( all(dim(lendis)==0) ) {
         gg = ggplot() + geom_blank()
@@ -68,19 +66,15 @@ draw_smRNA_lendis = function (file, main) {
         theme_minimal() +
         geom_bar(position = "identity", stat = "identity", colour = NA, fill = "blue") +
         geom_bar(aes(pos,minus), position = "identity", stat = "identity", colour = NA, fill = "red") +
-        scale_x_discrete (breaks = c(minRow:maxRow)) +
+		scale_x_discrete(name = "Length (nt)", limits = lendis$pos, labels = lendis$pos) + 
         coord_cartesian(xlim = c(minRow, maxRow)) +
-        scale_y_continuous(breaks = seq(ru*-20, ru*20, 2*ru)) +
-        labs(title = paste("Length distribution for", main, sep = " ")) +
-        xlab("Length (nt)") +
-        ylab("Reads")
+        scale_y_continuous(name = "Reads", breaks = seq(ru*-20, ru*20, 2*ru)) +
+        labs(title = paste("Length distribution for", main, sep = " "))
     return (gg)
 }
 
 # function to draw ping pong
 draw_ping_pong = function (ppbedfile, main) {
-	print(ppbedfile)
-	print(main)
 	ppbed = read_tsv (ppbedfile, F)
 	colnames(ppbed)=c("pos", "score")
 	minRow = min(ppbed$pos)
@@ -89,31 +83,30 @@ draw_ping_pong = function (ppbedfile, main) {
 		gg = ggplot() + geom_blank()
 		return(gg) 
 	}
-	zScore = (ppbed[10,2]-mean(ppbed[-10,2]))/sd(ppbed[-10,2])
+	zScore = (ppbed[10,2]-mean(ppbed$score[-10]))/sd(ppbed$score[-10])
 	gg = ggplot (ppbed, aes (pos, score)) +
-	    theme_tufte () +
-	    theme( panel.grid.major=element_blank(),
-	           panel.grid.minor=element_blank(),
-	           axis.ticks.x=element_blank(),
-	           title=element_text(size=7, colour='black',family="Helvetica"),
-	           plot.margin=unit(c(1,1,0,0),"lines"),
-	           legend.margin=unit(0,"lines"),
-	           panel.margin=unit(0, "lines"),
-	           axis.ticks.margin=unit(0,"lines"),
-	           legend.key.size=unit(0.5,"lines"),
-	           legend.title=element_blank(),
-	           legend.position = "bottom",
-	           axis.text=element_text (size=5,family="Helvetica"),
-	           axis.text.x=element_text (size=5,family="Helvetica"),
-	           legend.text=element_text(size=5,family="Helvetica"),
-	           axis.title=element_text(size=6),
-	           axis.ticks=element_line(size = 0.5) ) +
-	    geom_bar (stat="identity") +
-	    scale_x_discrete (breaks=c(1,5,10,15,20,25)) +
-	    scale_y_continuous(labels = comma, breaks=seq(0,max(ppbed$V2),roundUp(max(ppbed$V2)/10))) +
-	    labs(title=paste("5' to 5' overlap,", main, paste("Z = ", signif (zScore,3),sep=""), sep="\t")) +
-	    xlab("Length(nt)") +
-	    ylab("Pairs");
+		theme_tufte () +
+		theme( panel.grid.major=element_blank(),
+			panel.grid.minor=element_blank(),
+			axis.ticks.x=element_blank(),
+			title=element_text(size=7, colour='black',family="Helvetica"),
+			plot.margin=unit(c(1,1,0,0),"lines"),
+			legend.margin=unit(0,"lines"),
+			panel.margin=unit(0, "lines"),
+			axis.ticks.margin=unit(0,"lines"),
+			legend.key.size=unit(0.5,"lines"),
+			legend.title=element_blank(),
+			legend.position = "bottom",
+			axis.text=element_text (size=5,family="Helvetica"),
+			axis.text.x=element_text (size=5,family="Helvetica"),
+			legend.text=element_text(size=5,family="Helvetica"),
+			axis.title=element_text(size=6),
+			axis.ticks=element_line(size = 0.5) ) +
+		geom_bar (stat="identity") +
+		scale_x_discrete(name = "Length (nt)", limits = c(1,5,10,15,20,25), labels = c(1,5,10,15,20,25)) + 
+		scale_y_continuous(name = "Pairs", breaks = seq(0,max(ppbed$score),roundUp(max(ppbed$score)/10))) +
+		coord_cartesian(xlim = c(minRow, maxRow)) +
+		labs(title=paste("5' to 5' overlap,", main, paste("Z = ", signif (zScore,3),sep=""), sep="\t")) 
 	return (gg)
 }
 
