@@ -18,41 +18,49 @@
 
 
 # this script takes 
-INPUT_BED2=$1 # input bed2 format
-INPUT_BED_NAME=`basename $INPUT_BED2`
-CHROM=$2 # file with chrom size information
-NormScale=$3 # normalization scale
-CPU=$4 # CPU to use
-OUTDIR=$5 && mkdir -p $OUTDIR # output dir
-para_file=$OUTDIR/${RANDOM}${RANDOM}${RANDOM}.make_bigWig.para
+input_bed2=$1 # input bed2 format
+input_bed_name=$(basename $input_bed2)
+input_bed_name_prefix=${input_bed_name%bed2}
+chrom_size_file=$2 # file with chrom size information
+norm_scale=$3 # normalization scale
+output_dir=$4 && mkdir -p $output_dir # output dir
+para_file=$output_dir/${RANDOM}${RANDOM}${RANDOM}.make_bigWig.para
 touch $para_file
 # sorting is required for bedtools genomecov; using sort supporing MT
-( sort --parallel=$CPU --temporary-directory=$OUTDIR -k1,1 $INPUT_BED2 | tee $OUTDIR/${INPUT_BED_NAME%bed2}sorted.bed2  | awk '$5==1' > $OUTDIR/${INPUT_BED_NAME%bed2}sorted.uniq.bed2 ) || \
-( sort                                               -k1,1 $INPUT_BED2 | tee $OUTDIR/${INPUT_BED_NAME%bed2}sorted.bed2  | awk '$5==1' > $OUTDIR/${INPUT_BED_NAME%bed2}sorted.uniq.bed2 )
+( sort \
+    --parallel=$Threads --temporary-directory=$output_dir \
+    -k1,1 $input_bed2 | tee $output_dir/${input_bed_name_prefix}sorted.bed2 | awk '$5==1' > $output_dir/${input_bed_name_prefix}sorted.uniq.bed2 ) \
+|| \
+( sort                                               \
+    -k1,1 $input_bed2 | tee $output_dir/${input_bed_name_prefix}sorted.bed2 | awk '$5==1' > $output_dir/${input_bed_name_prefix}sorted.uniq.bed2 ) \
+|| echo2 "Failed to sort $input_bed2 file" error
+
 # making bedgraph
-piPipes_bed2_to_bedGraph -i $OUTDIR/${INPUT_BED_NAME%bed2}sorted.bed2 -c $CHROM -p $CPU -o $OUTDIR/${INPUT_BED_NAME%bed2}sorted.
-piPipes_bed2_to_bedGraph -i $OUTDIR/${INPUT_BED_NAME%bed2}sorted.uniq.bed2 -c $CHROM -p $CPU  -o $OUTDIR/${INPUT_BED_NAME%bed2}sorted.uniq.
+piPipes_bed2_to_bedGraph -i $output_dir/${input_bed_name_prefix}sorted.bed2      -c $chrom_size_file -p $Threads  -o $output_dir/${input_bed_name_prefix}sorted.
+piPipes_bed2_to_bedGraph -i $output_dir/${input_bed_name_prefix}sorted.uniq.bed2 -c $chrom_size_file -p $Threads  -o $output_dir/${input_bed_name_prefix}sorted.uniq.
 # making bigWig
-if [[ -s $OUTDIR/${INPUT_BED_NAME%bed2}sorted.Watson.bedGraph ]]; then
-    echo -e "awk -v depth=$NormScale 'BEGIN{FS=OFS=\"\\\\t\"} {\$4*=depth; print}' $OUTDIR/${INPUT_BED_NAME%bed2}sorted.Watson.bedGraph > $OUTDIR/${INPUT_BED_NAME%bed2}sorted.Watson.bedGraph.normalized && bedGraphToBigWig $OUTDIR/${INPUT_BED_NAME%bed2}sorted.Watson.bedGraph.normalized $CHROM $OUTDIR/${INPUT_BED_NAME%bed2}sorted.Watson.bigWig" >> $para_file
-    echo -e "awk -v depth=$NormScale 'BEGIN{FS=OFS=\"\\\\t\"} {\$4*=depth; print}' $OUTDIR/${INPUT_BED_NAME%bed2}sorted.uniq.Watson.bedGraph > $OUTDIR/${INPUT_BED_NAME%bed2}sorted.uniq.Watson.bedGraph.normalized && bedGraphToBigWig $OUTDIR/${INPUT_BED_NAME%bed2}sorted.uniq.Watson.bedGraph.normalized $CHROM $OUTDIR/${INPUT_BED_NAME%bed2}sorted.uniq.Watson.bigWig" >> $para_file
+if [[ -s $output_dir/${input_bed_name_prefix}sorted.Watson.bedGraph ]]; then
+    echo -e "awk -v depth=$norm_scale 'BEGIN{FS=OFS=\"\\\\t\"} {\$4*=depth; print}' $output_dir/${input_bed_name_prefix}sorted.Watson.bedGraph > $output_dir/${input_bed_name_prefix}sorted.Watson.bedGraph.normalized && bedGraphToBigWig $output_dir/${input_bed_name_prefix}sorted.Watson.bedGraph.normalized $chrom_size_file $output_dir/${input_bed_name_prefix}Watson.bigWig" >> $para_file
+    echo -e "awk -v depth=$norm_scale 'BEGIN{FS=OFS=\"\\\\t\"} {\$4*=depth; print}' $output_dir/${input_bed_name_prefix}sorted.uniq.Watson.bedGraph > $output_dir/${input_bed_name_prefix}sorted.uniq.Watson.bedGraph.normalized && bedGraphToBigWig $output_dir/${input_bed_name_prefix}sorted.uniq.Watson.bedGraph.normalized $chrom_size_file $output_dir/${input_bed_name_prefix}uniq.Watson.bigWig" >> $para_file
 fi
-if [[ -s $OUTDIR/${INPUT_BED_NAME%bed2}sorted.Crick.bedGraph ]]; then
-    echo -e "awk -v depth=$NormScale 'BEGIN{FS=OFS=\"\\\\t\"} {\$4*=depth; print}' $OUTDIR/${INPUT_BED_NAME%bed2}sorted.Crick.bedGraph  > $OUTDIR/${INPUT_BED_NAME%bed2}sorted.Crick.bedGraph.normalized && bedGraphToBigWig $OUTDIR/${INPUT_BED_NAME%bed2}sorted.Crick.bedGraph.normalized $CHROM $OUTDIR/${INPUT_BED_NAME%bed2}sorted.Crick.bigWig" >> $para_file
-    echo -e "awk -v depth=$NormScale 'BEGIN{FS=OFS=\"\\\\t\"} {\$4*=depth; print}' $OUTDIR/${INPUT_BED_NAME%bed2}sorted.uniq.Crick.bedGraph  > $OUTDIR/${INPUT_BED_NAME%bed2}sorted.uniq.Crick.bedGraph.normalized && bedGraphToBigWig $OUTDIR/${INPUT_BED_NAME%bed2}sorted.uniq.Crick.bedGraph.normalized $CHROM $OUTDIR/${INPUT_BED_NAME%bed2}sorted.uniq.Crick.bigWig" >> $para_file
+if [[ -s $output_dir/${input_bed_name_prefix}sorted.Crick.bedGraph ]]; then
+    echo -e "awk -v depth=$norm_scale 'BEGIN{FS=OFS=\"\\\\t\"} {\$4*=depth; print}' $output_dir/${input_bed_name_prefix}sorted.Crick.bedGraph  > $output_dir/${input_bed_name_prefix}sorted.Crick.bedGraph.normalized && bedGraphToBigWig $output_dir/${input_bed_name_prefix}sorted.Crick.bedGraph.normalized $chrom_size_file $output_dir/${input_bed_name_prefix}Crick.bigWig" >> $para_file
+    echo -e "awk -v depth=$norm_scale 'BEGIN{FS=OFS=\"\\\\t\"} {\$4*=depth; print}' $output_dir/${input_bed_name_prefix}sorted.uniq.Crick.bedGraph  > $output_dir/${input_bed_name_prefix}sorted.uniq.Crick.bedGraph.normalized && bedGraphToBigWig $output_dir/${input_bed_name_prefix}sorted.uniq.Crick.bedGraph.normalized $chrom_size_file $output_dir/${input_bed_name_prefix}uniq.Crick.bigWig" >> $para_file
 fi
-if [[ ! -s $para_file ]]; then
-    ParaFly -c $para_file -CPU $CPU -failed_cmds ${para_file}.failedCommands &>/dev/null
+
+if [[ -s $para_file ]]; then
+    ParaFly -c $para_file -CPU $Threads -failed_cmds ${para_file}.failedCommands &>/dev/null \
+    || echo2 "Failed to generate bigWig files using ParaFly" error
 fi
 
 rm -rf $para_file ${para_file}".completed" \
-    $OUTDIR/${INPUT_BED_NAME%bed2}sorted.Watson.bedGraph \
-    $OUTDIR/${INPUT_BED_NAME%bed2}sorted.Crick.bedGraph \
-    $OUTDIR/${INPUT_BED_NAME%bed2}sorted.uniq.Watson.bedGraph  \
-    $OUTDIR/${INPUT_BED_NAME%bed2}sorted.uniq.Crick.bedGraph \
-    $OUTDIR/${INPUT_BED_NAME%bed2}sorted.Watson.bedGraph.normalized \
-    $OUTDIR/${INPUT_BED_NAME%bed2}sorted.Crick.bedGraph.normalized \
-    $OUTDIR/${INPUT_BED_NAME%bed2}sorted.uniq.Watson.bedGraph.normalized \
-    $OUTDIR/${INPUT_BED_NAME%bed2}sorted.uniq.Crick.bedGraph.normalized \
-    $OUTDIR/${INPUT_BED_NAME%bed2}sorted.bed2  \
-    $OUTDIR/${INPUT_BED_NAME%bed2}sorted.uniq.bed2
+    $output_dir/${input_bed_name_prefix}sorted.Watson.bedGraph \
+    $output_dir/${input_bed_name_prefix}sorted.Crick.bedGraph \
+    $output_dir/${input_bed_name_prefix}sorted.uniq.Watson.bedGraph  \
+    $output_dir/${input_bed_name_prefix}sorted.uniq.Crick.bedGraph \
+    $output_dir/${input_bed_name_prefix}sorted.Watson.bedGraph.normalized \
+    $output_dir/${input_bed_name_prefix}sorted.Crick.bedGraph.normalized \
+    $output_dir/${input_bed_name_prefix}sorted.uniq.Watson.bedGraph.normalized \
+    $output_dir/${input_bed_name_prefix}sorted.uniq.Crick.bedGraph.normalized \
+    $output_dir/${input_bed_name_prefix}sorted.bed2  \
+    $output_dir/${input_bed_name_prefix}sorted.uniq.bed2

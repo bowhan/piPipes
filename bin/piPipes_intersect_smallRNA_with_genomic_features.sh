@@ -16,7 +16,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 # check whether the required enviromental variables have been exported correctly
-declare -a ExportedVariableNames=(AnnotationDir GenomeAllmapBed2 PdfDir StatsTable CurrentInputNamePrefix GenomicHairpinReads)
+declare -a ExportedVariableNames=(AnnotationDir GenomeAllmapBed2 PdfDir StatsTable CurrentInputNamePrefix GenomicHairpinReads Step)
 for var in ${ExportedVariableNames[@]}; do
 	if [[ -z ${!var} ]]; then echo2 "env variable $var is not exported, make sure you run the piPipes as a whole" error; fi
 done
@@ -152,8 +152,9 @@ if [[ ! -f $SentinelDir/${RunUid}.status.${Step}.pie ]]; then
 				> ${StatsTable}.exclusive_genomic_feature.count1 \
 			&& mv ${StatsTable}.exclusive_genomic_feature.count1 ${StatsTable}.exclusive_genomic_feature.count \
 			&& Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_pie.R \
-				$PdfDir/${CurrentInputNamePrefix}.pie \
+				$PdfDir/${Step}.${CurrentInputNamePrefix}.pie \
 				${StatsTable}.exclusive_genomic_feature.count \
+				&> /dev/null \
 			&& awk -v siRNA_bot=$siRNA_bot -v siRNA_top=$siRNA_top '{l=$3-$2; if (l>=siRNA_bot && l<=siRNA_top) ct[$(NF-2)]+=$4/$5/$NF}END{for (f in ct) {print f"\t"ct[f]}}' \
 				${StatsTable}.exclusive_genomic_feature.bed \
 				> ${StatsTable}.exclusive_genomic_feature.siRNA.count \
@@ -163,8 +164,9 @@ if [[ ! -f $SentinelDir/${RunUid}.status.${Step}.pie ]]; then
 				> ${StatsTable}.exclusive_genomic_feature.siRNA.count1 \
 			&& mv ${StatsTable}.exclusive_genomic_feature.siRNA.count1 ${StatsTable}.exclusive_genomic_feature.siRNA.count \
 			&& Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_pie.R \
-				$PdfDir/${CurrentInputNamePrefix}.siRNA.pie \
+				$PdfDir/${Step}.${CurrentInputNamePrefix}.siRNA.pie \
 				${StatsTable}.exclusive_genomic_feature.siRNA.count \
+				&> /dev/null \
 			&& awk -v piRNA_bot=$piRNA_bot -v piRNA_top=$piRNA_top '{l=$3-$2; if (l>=piRNA_bot && l<=piRNA_top) ct[$(NF-2)]+=$4/$5/$NF}END{for (f in ct) {print f"\t"ct[f]}}' \
 				${StatsTable}.exclusive_genomic_feature.bed \
 				> ${StatsTable}.exclusive_genomic_feature.piRNA.count \
@@ -174,8 +176,9 @@ if [[ ! -f $SentinelDir/${RunUid}.status.${Step}.pie ]]; then
 				> ${StatsTable}.exclusive_genomic_feature.piRNA.count1 \
 			&& mv ${StatsTable}.exclusive_genomic_feature.piRNA.count1 ${StatsTable}.exclusive_genomic_feature.piRNA.count \
 			&& Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_pie.R \
-				$PdfDir/${CurrentInputNamePrefix}.piRNA.pie \
+				$PdfDir/${Step}.${CurrentInputNamePrefix}.piRNA.pie \
 				${StatsTable}.exclusive_genomic_feature.piRNA.count \
+				&> /dev/null \
 			&& rm -rf $_intersect_outdir/exclusive_genomic_feature.bed ${StatsTable}.exclusive_genomic_feature.order ${StatsTable}.exclusive_genomic_feature.bed \
 			&& touch $SentinelDir/${RunUid}.status.${Step}.pie \
 			|| echo2 "failed to generate pie plot"
@@ -187,7 +190,7 @@ fi
 
 if [[ ! -f $SentinelDir/${RunUid}.status.${Step}.combine_feature_pdf \
    && ! -z ${_pdfs} ]]; then
-	gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=$PdfDir/${CurrentInputNamePrefix}.features.pdf ${_pdfs} \
+	gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=$PdfDir/${Step}.${CurrentInputNamePrefix}.features.pdf ${_pdfs} \
 	&& rm -rf ${_pdfs} \
 	&& touch $SentinelDir/${RunUid}.status.${Step}.combine_feature_pdf \
 	|| echo2 "Failed to merge pdf from features intersecting... check gs... Or use your favorarite pdf merge tool by editing line$LINENO in $0" warning

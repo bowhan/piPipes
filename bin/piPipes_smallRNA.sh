@@ -390,6 +390,7 @@ else
     echo2 "Calculate microRNA heterogeneity has been done previously" warning
 fi
 let Step+=1 
+declare PostFilterInput=$CurrentInput # for transposon direct mapping
 
 #############################
 # custom pre-genome mapping #
@@ -547,12 +548,12 @@ if [[ ! -f $SentinelDir/${RunUid}.status.${Step}.plotting_length_dis ]]; then
     && awk '{a[$7]=$4}END{m=0; for (b in a){c[length(b)]+=a[b]; if (length(b)>m) m=length(b)} for (d=1;d<=m;++d) {print d"\t"(c[d]?c[d]:0)}}' \
         ${GenomeUniquemapBed2} \
     | sort -k1,1n > $TableDir/${GenomeUniquemapBase}.lendis \
-    && Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_lendis.R $TableDir/${GenomeAllmapBase}.lendis    $PdfDir/$(basename ${GenomeAllmapBed2%bed2})-hairpin &> /dev/null \
-    && Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_lendis.R $TableDir/${GenomeUniquemapBase}.lendis $PdfDir/$(basename ${GenomeUniquemapBed2%bed2})-hairpin &> /dev/null \
+    && Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_lendis.R $TableDir/${GenomeAllmapBase}.lendis    $PdfDir/${Step}.$(basename ${GenomeAllmapBed2%bed2})-hairpin &> /dev/null \
+    && Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_lendis.R $TableDir/${GenomeUniquemapBase}.lendis $PdfDir/${Step}.$(basename ${GenomeUniquemapBed2%bed2})-hairpin &> /dev/null \
     && awk '{ct[$1]+=$2}END{for (l in ct) {print l"\t"ct[l]}}' $TableDir/${GenomeAllmapBase}.lendis    $HairpinLendis | sort -k1,1n > $TableDir/${GenomeAllmapBase}.+hairpin.lendis \
     && awk '{ct[$1]+=$2}END{for (l in ct) {print l"\t"ct[l]}}' $TableDir/${GenomeUniquemapBase}.lendis $HairpinLendis | sort -k1,1n > $TableDir/${GenomeUniquemapBase}.+hairpin.lendis \
-    && Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_lendis.R $TableDir/${GenomeAllmapBase}.+hairpin.lendis    $PdfDir/$(basename ${GenomeAllmapBed2%bed2})+hairpin &> /dev/null \
-    && Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_lendis.R $TableDir/${GenomeUniquemapBase}.+hairpin.lendis $PdfDir/$(basename ${GenomeUniquemapBed2%bed2})+hairpin &> /dev/null \
+    && Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_lendis.R $TableDir/${GenomeAllmapBase}.+hairpin.lendis    $PdfDir/${Step}.$(basename ${GenomeAllmapBed2%bed2})+hairpin &> /dev/null \
+    && Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_lendis.R $TableDir/${GenomeUniquemapBase}.+hairpin.lendis $PdfDir/${Step}.$(basename ${GenomeUniquemapBed2%bed2})+hairpin &> /dev/null \
     && touch $SentinelDir/${RunUid}.status.${Step}.plotting_length_dis
 fi
 let Step+=1
@@ -565,7 +566,7 @@ let Step+=1
 && echo -e "$(basename ${InputFastq})\trRNA_reads\t${rRNAReads}" >> $StatsTable \
 && echo -e "$(basename ${InputFastq})\tmiRNA_hairpin_reads\t${hairpinReads}" >> $StatsTable \
 && echo -e "$(basename ${InputFastq})\tgenome_mapping\t$((totalGenomicMapCount+hairpinReads))" >> $StatsTable \
-&& echo -e "$(basename ${InputFastq})\tgenome_mapping_without_hairpin)\t${totalGenomicMapCount}" >> $StatsTable \
+&& echo -e "$(basename ${InputFastq})\tgenome_mapping_without_hairpin\t${totalGenomicMapCount}" >> $StatsTable \
 && echo -e "$(basename ${InputFastq})\tunique_genome_mapping\t$((uniqueGenomicMapCount+hairpinReads))" >> $StatsTable \
 && echo -e "$(basename ${InputFastq})\tunique_genome_mapping_without_hairpin\t${uniqueGenomicMapCount}" >> $StatsTable \
 && echo -e "$(basename ${InputFastq})\tmulti_genome_mapping_without_hairpin\t${multipGenomicMapCount}" >> $StatsTable
@@ -616,101 +617,106 @@ else
     echo2 "Intersecting with genomic features has been done previously" warning
 fi
 let Step+=1
-exit
 
 #######################
 # Making BigWig Files #
 #######################
-# make BW files
-echo2 "Making bigWig files for genome browser"
-[ ! -f .${RunUid}.status.${Step}.make_bigWig_normalized_by_$Normmethod ] && \
-    bash $DEBUG piPipes_smallRNA_bed2_to_bw.sh \
+if [[ ! -f $SentinelDir/${RunUid}.status.${Step}.bigWig_$Normmethod ]]; then
+    echo2 "Making bigWig files for genome browser"
+    bash piPipes_smallRNA_bed2_to_bw.sh \
         ${GenomeAllmapBed2} \
         ${ChromSize} \
         ${NormScale} \
-        $Threads \
-        $BigwigDir && \
-    bash $DEBUG piPipes_smallRNA_bed2_to_bw.sh \
+        $BigwigDir \
+    && bash piPipes_smallRNA_bed2_to_bw.sh \
         ${GenomeAllmapBed2%bed2}piRNA.bed2 \
         ${ChromSize} \
         ${NormScale} \
-        $Threads \
-        $BigwigDir && \
-    touch .${RunUid}.status.${Step}.make_bigWig_normalized_by_$Normmethod
-Step=$((Step+1))
+        $BigwigDir \
+    && touch $SentinelDir/${RunUid}.status.${Step}.bigWig_$Normmethod
+else 
+    echo2 "bigWig files have already been made previously" warning
+fi
+let Step+=1
 
 ##############################################
 # Direct mapping to transposon/piRNA cluster #
 ##############################################
-echo2 "Direct mapping to transposon and piRNA cluster and make distribution plot"
-. $CommonFolder/genomic_features
-Insert=`basename $x_rRNA_Insert`
-[ ! -f .${RunUid}.status.${Step}.direct_mapping_normalized_by_$Normmethod ] && \
-for t in "${DIRECT_MAPPING[@]}"; do \
-    bowtie -r -v ${transposon_MM} -a --best --strata -p $Threads \
-        -S \
-        ${t} \
-        ${x_rRNA_Insert} \
-        2> ${TransposonDir}/${t}.log | \
-    samtools view -uS -F0x4 - 2>/dev/null | \
-    samtools sort -o -@ $Threads - foo | \
-    bedtools_piPipes bamtobed -i - > $TransposonDir/${Insert%.insert}.${t}.a${transposon_MM}.insert.bed && \
-    piPipes_insertBed_to_bed2 $x_rRNA_Insert $TransposonDir/${Insert%.insert}.${t}.a${transposon_MM}.insert.bed > $TransposonDir/${Insert%.insert}.${t}.a${transposon_MM}.insert.bed2 && \
-    piPipes_bed2Summary -5 -i $TransposonDir/${Insert%.insert}.${t}.a${transposon_MM}.insert.bed2 -c $CommonFolder/BowtieIndex/${t}.sizes -o $TransposonDir/${Insert%.insert}.${t}.a${transposon_MM}.summary && \
-    Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_summary.R $TransposonDir/${Insert%.insert}.${t}.a${transposon_MM}.summary $TransposonDir/${Insert%.insert}.${t}.a${transposon_MM}.normalized_by_$Normmethod $Threads $NormScale 1>&2 && \
-    PDFs=$TransposonDir/${Insert%.insert}.${t}.a${transposon_MM}.normalized_by_${Normmethod}*pdf && \
-    gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=$PdfDir/${Insert%.insert}.${t}.pdf ${PDFs} && \
-    rm -rf $PDFs && \
-    rm -rf $TransposonDir/${Insert%.insert}.${t}.a${transposon_MM}.insert.bed
-done && \
-touch .${RunUid}.status.${Step}.direct_mapping_normalized_by_$Normmethod
-Step=$((Step+1))
+CurrentInput=$PostFilterInput # use post-filtering/post-miRNA reads
+CurrentInputPrefix=${CurrentInput%.insert}
+CurrentInputName=$(basename $CurrentInput) 
+CurrentInputNamePrefix=${CurrentInputName%.*}
+CurrentMM=transposon_MM
+if [[ ! -f $SentinelDir/${RunUid}.status.${Step}.direct_transposon_mapping ]]; then
+    echo2 "Direct mapping to transposon and piRNA cluster and make distribution plot"
+    . $CommonFolder/genomic_features
+    if [[ ! -z ${PreGenomeMappingFileList[@]+"${PreGenomeMappingFileList[@]}"} ]]; then 
+        for BowtieIndexName in "${DIRECT_MAPPING[@]}"; do \
+            echo2 "Direct mapping to $BowtieIndexName"
+            CurrentTargetNamePrefix=${BowtieIndexName}
+            CurrentOutdir=$TransposonDir/${CurrentTargetNamePrefix} \
+            && mkdir -p $CurrentOutdir || echo2 "Cannot create directory $CurrentOutdir, please check the permission. And try to only use letter and number to name the Fasta file" error
+            CurrentTargetSize=$CommonFolder/${CurrentTargetNamePrefix}.sizes 
+            if [[ ! -s $CurrentTargetSize ]]; then echo2 "Cannot find size file for ${BowtieIndexName}" error; fi
+            LogFile=${LogDir}/${CurrentInputNamePrefix}.bowtie2${CurrentTargetNamePrefix}.log
+
+            bowtie -r -a --best --strata \
+                -v ${CurrentMM} \
+                -p $Threads \
+                -S \
+                ${BowtieIndexName} \
+                ${CurrentInput} \
+                2> ${LogFile} \
+            | samtools view -uS -F0x4 - 2>/dev/null \
+            | samtools sort -o -@ $Threads - foo 2>/dev/null \
+            | bedtools_piPipes bamtobed -i - \
+                > $CurrentOutdir/${CurrentInputNamePrefix}.bowtie2${CurrentTargetNamePrefix}.bed \
+            && piPipes_insertBed_to_bed2 \
+                $CurrentInput \
+                $CurrentOutdir/${CurrentInputNamePrefix}.bowtie2${CurrentTargetNamePrefix}.bed \
+                > $CurrentOutdir/${CurrentInputNamePrefix}.bowtie2${CurrentTargetNamePrefix}.bed2 \
+            && rm $CurrentOutdir/${CurrentInputNamePrefix}.bowtie2${CurrentTargetNamePrefix}.bed \
+            && piPipes_bed2Summary \
+                -5 \
+                -i $CurrentOutdir/${CurrentInputNamePrefix}.bowtie2${CurrentTargetNamePrefix}.bed2 \
+                -c $CurrentTargetSize \
+                -o $CurrentOutdir/${CurrentInputNamePrefix}.bowtie2${CurrentTargetNamePrefix}.summary \
+            && Rscript --slave ${PIPELINE_DIRECTORY}/bin/piPipes_draw_summary.R \
+                $CurrentOutdir/${CurrentInputNamePrefix}.bowtie2${CurrentTargetNamePrefix}.summary \
+                $CurrentOutdir/${CurrentInputNamePrefix} \
+                $Threads \
+                $NormScale \
+                &> /dev/null \
+            && PDFs=$CurrentOutdir/${CurrentInputNamePrefix}*pdf \
+            && gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=$PdfDir/${Step}.${CurrentInputNamePrefix}.${CurrentTargetNamePrefix}.pdf ${PDFs} \
+            || echo2 "Mapping to ${BowtieIndexName} failed" error
+        done
+    else 
+        echo2 "DIRECT_MAPPING is empty, please edit your $CommonFolder/genomic_features file" warning
+    fi
+    touch $SentinelDir/${RunUid}.status.${Step}.direct_transposon_mapping
+else 
+    echo2 "Direct mapping has been done previously" warning
+fi 
+let Step+=1
 
 ################
 # Joining Pdfs #
 ################
-echo2 "Merging pdfs"
-if [ -f $PdfDir/${Prefix}.features.pdf ]
-then
-    [ ! -f .${RunUid}.status.${Step}.merge_pdfs ] && \
-        gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=$PdfDir/${Prefix}.${PACKAGE_NAME}.small_RNA_pipeline.${PROG_VERSION}.pdf \
-            $PdfDir/${Prefix}.pie.pdf \
-            $PdfDir/${Prefix}.siRNA.pie.pdf \
-            $PdfDir/${Prefix}.piRNA.pie.pdf \
-            $PdfDir/`basename ${GenomeUniquemapBed2}`.+hairpin.lendis.pdf \
-            $PdfDir/`basename ${GenomeAllmapBed2}`.+hairpin.lendis.pdf \
-            $PdfDir/`basename ${GenomeUniquemapBed2}`.x_hairpin.lendis.pdf \
-            $PdfDir/`basename ${GenomeAllmapBed2}`.x_hairpin.lendis.pdf  \
-            $PdfDir/${Prefix}.features.pdf  && \
-        rm -rf $PdfDir/`basename ${GenomeUniquemapBed2}`.+hairpin.lendis.pdf \
-            $PdfDir/`basename ${GenomeAllmapBed2}`.+hairpin.lendis.pdf \
-            $PdfDir/`basename ${GenomeUniquemapBed2}`.x_hairpin.lendis.pdf \
-            $PdfDir/`basename ${GenomeAllmapBed2}`.x_hairpin.lendis.pdf  \
-            $PdfDir/${Prefix}.pie.pdf \
-            $PdfDir/${Prefix}.siRNA.pie.pdf \
-            $PdfDir/${Prefix}.piRNA.pie.pdf \
-            $PdfDir/${Prefix}.features.pdf && \
-        touch .${RunUid}.status.${Step}.merge_pdfs
-else
-    [ ! -f .${RunUid}.status.${Step}.merge_pdfs ] && \
-        gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=$PdfDir/${Prefix}.${PACKAGE_NAME}.small_RNA_pipeline.${PROG_VERSION}.pdf \
-            $PdfDir/`basename ${GenomeUniquemapBed2}`.+hairpin.lendis.pdf \
-            $PdfDir/`basename ${GenomeAllmapBed2}`.+hairpin.lendis.pdf \
-            $PdfDir/`basename ${GenomeUniquemapBed2}`.x_hairpin.lendis.pdf \
-            $PdfDir/`basename ${GenomeAllmapBed2}`.x_hairpin.lendis.pdf  && \
-        rm -rf $PdfDir/`basename ${GenomeUniquemapBed2}`.+hairpin.lendis.pdf \
-            $PdfDir/`basename ${GenomeAllmapBed2}`.+hairpin.lendis.pdf \
-            $PdfDir/`basename ${GenomeUniquemapBed2}`.x_hairpin.lendis.pdf \
-            $PdfDir/`basename ${GenomeAllmapBed2}`.x_hairpin.lendis.pdf  && \
-        touch .${RunUid}.status.${Step}.merge_pdfs
+if [[ ! -f $SentinelDir/${RunUid}.status.${Step}.merge_pdfs ]]; then
+    echo2 "Merging pdfs"
+    Pdfs=$PdfDir/*pdf \
+    && gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite \
+        -sOutputFile=$PdfDir/${Prefix}.${Genome}.small_RNA_pipeline.v${SmallRnaModuleVersion}.pdf \
+        ${Pdfs} \
+    && touch $SentinelDir/${RunUid}.status.${Step}.merge_pdfs
+else 
+    echo2 "Pdf merging has been done before" warning
 fi
-Step=$((Step+1))
 
 #############
 # finishing #
 #############
-rm -f $GenomeMappingDir/*bed2
-rm -f $TransposonDir/*bed2
 echo2 "Finished running ${PACKAGE_NAME} small RNA pipeline version $SmallRnaModuleVersion"
 echo2 "---------------------------------------------------------------------------------"
-touch .${Genome}.${PROG_VERSION}
+touch ${SentinelDir}/${FqName}.${Genome}.${SmallRnaModuleVersion}
