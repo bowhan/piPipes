@@ -10,12 +10,12 @@ template <typename T, char S>
 class bed2_bedgraph_converter {
 private:
     std::string infile_;
-    std::ostream* outtream_;
+    std::ostream *outtream_;
     unsigned long max_size_;
-    std::unordered_map<std::string, unsigned long>* sz_table_;
+    std::unordered_map<std::string, unsigned long> *sz_table_;
 public:
-    bed2_bedgraph_converter(std::string in_file, std::ostream* out, unsigned long size
-                            , std::unordered_map<std::string, unsigned long>* size_table
+    bed2_bedgraph_converter(std::string in_file, std::ostream *out, unsigned long size
+                            , std::unordered_map<std::string, unsigned long> *size_table
                            )
         :
         infile_{in_file}, outtream_{out}, max_size_{size}, sz_table_{size_table} {
@@ -26,13 +26,13 @@ public:
 
 template <typename T, char S>
 void
-bed2_bedgraph_converter<T,S>::operator()() {
+bed2_bedgraph_converter<T, S>::operator()() {
     using namespace std;
     *outtream_ << std::setprecision(5);
     *outtream_ << std::fixed;
-    ifstream* _in = new ifstream{infile_};
-    T* _container = new T[max_size_];
-    T* p = _container;
+    ifstream *_in = new ifstream{infile_};
+    T *_container = new T[max_size_];
+    T *p = _container;
     T previous_value{};
     unsigned long start_point{};
     for (unsigned long i = 0; i < max_size_; ++i)
@@ -78,7 +78,7 @@ bed2_bedgraph_converter<T,S>::operator()() {
                         *outtream_ << chr << '\t' << start_point << '\t' << i << "\t-" << previous_value << '\n';
                 }
                 /* end of output */
-                for (; i < (*sz_table_)[fields[0]]; ++i) /// continue to blank container
+                for (i = 0, p = _container; i < (*sz_table_)[fields[0]]; ++i) /// continue to blank container
                     *p++ = T{};
                 chr = fields[0];
             }

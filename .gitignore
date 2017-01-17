@@ -11,3 +11,5 @@ lib64
 share
 lib
 src
+.idea/
+cmake-build-debug/
