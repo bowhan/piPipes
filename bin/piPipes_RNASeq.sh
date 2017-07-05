@@ -260,7 +260,7 @@ if [[ $umi == 'TRUE' ]]; then
 	xrRNA_LEFT_FQ=${READS_DIR}/${PREFIX}.x_rRNA.fq.1.gz && \
 	xrRNA_RIGHT_FQ=${READS_DIR}/${PREFIX}.x_rRNA.fq.2.gz && \
 	xrRNA_rf_LEFT_FQ=${READS_DIR}/${PREFIX}.x_rRNA.fq.rf.1.gz && \
-	xrRNA_rf_RIGHT_FQ=${READS_DIR}/${PREFIX}.x_rRNA.fq.rf.2.gz && \		
+	xrRNA_rf_RIGHT_FQ=${READS_DIR}/${PREFIX}.x_rRNA.fq.rf.2.gz && \
 	reformat_fastq -l $xrRNA_LEFT_FQ -r $xrRNA_RIGHT_FQ -L $xrRNA_rf_LEFT_FQ -R $xrRNA_rf_RIGHT_FQ 2>&1 |tee ${READS_DIR}/run.reformat.${PREFIX}.log && \		
 	[ ! -f .${JOBUID}.status.${STEP}.genome_mapping ] && \
 	STAR \
@@ -310,7 +310,7 @@ if [[ $umi == 'TRUE' ]]; then
 	echo2 "Processing mapping results"
 	[ ! -f .${JOBUID}.status.${STEP}.genome_bam_processing ] && \
 		samtools view -bS ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.Aligned.out.sam > ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.Aligned.out.bam && \
-		samtools sort -@ $CPU ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.Aligned.out.bam ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.sorted && \
+		samtools sort -@ $CPU ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.Aligned.out.bam ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.raw.sorted && \
 		samtools index ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.raw.sorted.bam && \
 		rm -rf  ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.Aligned.out.bam && \
 		mark_duplicates -f ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.raw.sorted.bam -p $CPU && samtools view -b -h -F 0x400 - > ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.bam && \
