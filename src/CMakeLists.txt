@@ -1,59 +1,43 @@
-cmake_minimum_required(VERSION 3.0)
-project(piPipes_src)
+include(files.cmake)
 
-find_package(Threads)
-find_package(Boost COMPONENTS system iostreams program_options REQUIRED)
-include_directories(${Boost_INCLUDE_DIRS})
-find_package(ZLIB REQUIRED)
-find_package(BZip2 REQUIRED)
+add_library(piPipesLib SHARED ${HEADER_FILES} ${SOURCE_FILES})
+target_include_directories(piPipesLib PUBLIC ${piPipes_INCLUDEDIR})
+
+target_link_libraries(piPipesLib
+        ${ZLIB_LIBRARIES}
+        ${Bzlib2_LIBRARIES}
+        ${CMAKE_THREAD_LIBS_INIT}
+        ${Boost_LIBRARIES}
+        )
+
+
 
 add_executable(piPipes_fastq_to_insert piPipes_fastq_to_insert.cpp)
-target_link_libraries(piPipes_fastq_to_insert
-        boost_iostreams z bz2)
+target_link_libraries(piPipes_fastq_to_insert PRIVATE piPipesLib)
 
-add_executable(piPipes_bed2_to_bedGraph
-        ${piPipes_INCLUDEDIR}/piPipes_bed2_to_bedgraph.hpp
-        piPipes_bed2_to_bedGraph.cpp)
-target_link_libraries(piPipes_bed2_to_bedGraph
-        boost_system boost_program_options ${CMAKE_THREAD_LIBS_INIT})
+add_executable(piPipes_bed2_to_bedGraph piPipes_bed2_to_bedGraph.cpp)
+target_link_libraries(piPipes_bed2_to_bedGraph PRIVATE piPipesLib)
 
 add_executable(piPipes_bed2Summary piPipes_bed2Summary.cpp)
-target_link_libraries(piPipes_bed2Summary
-        boost_system boost_program_options)
+target_link_libraries(piPipes_bed2Summary PRIVATE piPipesLib)
 
-add_executable(piPipes_calculate_miRNA_heterogeneity
-        ${piPipes_INCLUDEDIR}/piPipes_hairpin.hpp
-        piPipes_hairpin.cpp
-        piPipes_calculate_miRNA_heterogeneity.cpp)
+add_executable(piPipes_calculate_miRNA_heterogeneity piPipes_calculate_miRNA_heterogeneity.cpp)
+target_link_libraries(piPipes_calculate_miRNA_heterogeneity PRIVATE piPipesLib)
 
-add_executable(piPipes_filter_CIGAR
-        ${piPipes_INCLUDEDIR}/piPipes_sam.hpp
-        piPipes_sam.cpp
-        piPipes_filter_CIGAR.cpp)
-target_link_libraries(piPipes_filter_CIGAR
-        boost_system boost_program_options)
+add_executable(piPipes_filter_CIGAR piPipes_filter_CIGAR.cpp)
+target_link_libraries(piPipes_filter_CIGAR PRIVATE piPipesLib)
+
 
 add_executable(piPipes_insertBed_to_bed2 piPipes_insertBed_to_bed2.cpp)
 
-add_executable(piPipes_local_ping_pong
-        ${piPipes_INCLUDEDIR}/piPipes_ping_pong.hpp
-        ${piPipes_INCLUDEDIR}/piPipes_common.hpp
-        piPipes_common.cpp
-        piPipes_ping_pong.cpp
-        piPipes_local_ping_pong.cpp)
-target_link_libraries(piPipes_local_ping_pong
-        boost_system boost_program_options ${CMAKE_THREAD_LIBS_INIT})
+add_executable(piPipes_local_ping_pong piPipes_local_ping_pong.cpp)
+target_link_libraries(piPipes_local_ping_pong PRIVATE piPipesLib)
 
-add_executable(piPipes_phasing
-        ${piPipes_INCLUDEDIR}/piPipes_ping_pong.hpp
-        ${piPipes_INCLUDEDIR}/piPipes_common.hpp
-        piPipes_common.cpp
-        piPipes_ping_pong.cpp
-        piPipes_phasing.cpp)
-target_link_libraries(piPipes_phasing
-        boost_system boost_program_options ${CMAKE_THREAD_LIBS_INIT})
+add_executable(piPipes_phasing piPipes_phasing.cpp)
+target_link_libraries(piPipes_phasing PRIVATE piPipesLib)
 
-set_target_properties(
+install(TARGETS
+        piPipesLib
         piPipes_fastq_to_insert
         piPipes_bed2_to_bedGraph
         piPipes_bed2Summary
@@ -61,6 +45,8 @@ set_target_properties(
         piPipes_insertBed_to_bed2
         piPipes_local_ping_pong
         piPipes_phasing
-        PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY ${piPipes_BINDIR}
-)
+        PUBLIC_HEADER DESTINATION include
+        ARCHIVE DESTINATION lib
+        LIBRARY DESTINATION lib
+        RUNTIME DESTINATION bin
+        )
