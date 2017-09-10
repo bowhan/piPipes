@@ -15,6 +15,9 @@ set(piPipes_SOURCEDIR ${piPipes_ROOTDIR}/src)
 set(piPipes_LIBDIR ${piPipes_ROOTDIR}/lib)
 set(piPipes_BINDIR ${piPipes_ROOTDIR}/bin)
 
+SET(CMAKE_INSTALL_RPATH ${CMAKE_INSTALL_PREFIX}/lib)
+SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+
 find_package(Threads)
 find_package(Boost COMPONENTS system iostreams program_options REQUIRED)
 find_package(ZLIB REQUIRED)
