@@ -375,7 +375,7 @@ esac
 
 # unzipping the UCSC.RepeatMask.bed.gz shipped with the pipeline
 # if the piPipes already has this in the github, just unzip it
-[ ! -s UCSC.RepeatMask.bed -a -s UCSC.RepeatMask.bed.gz ] && gunzip UCSC.RepeatMask.bed.gz
+[ ! -s UCSC.RepeatMask.bed -a -s UCSC.RepeatMask.bed.gz ] && gunzip -f UCSC.RepeatMask.bed.gz
 # if the piPipes does not have it, download it from UCSC
 [ ! -s UCSC.RepeatMask.bed -a ! -s UCSC.RepeatMask.bed.gz ] && \
 	mkdir -p rmsk && \
