@@ -87,10 +87,10 @@ draw_ping_pong = function (ppbedfile, main) {
 	           panel.grid.minor=element_blank(),
 	           axis.ticks.x=element_blank(),
 	           title=element_text(size=7, colour='black',family="Helvetica"),
-	           plot.margin=unit(c(1,1,0,0),"lines"),
-	           legend.margin=unit(0,"lines"),
-	           panel.margin=unit(0, "lines"),
-	           axis.ticks.margin=unit(0,"lines"),
+	           plot.margin=margin(1,1,0,0, unit = "lines"),
+	           legend.margin=margin(0,0,0,0, unit = "lines"),
+	           panel.margin=margin(0,0,0,0, unit = "lines"),
+	           axis.ticks.margin=margin(0,0,0,0, unit = "lines"),
 	           legend.key.size=unit(0.5,"lines"),
 	           legend.title=element_blank(),
 	           legend.position = "bottom",
@@ -100,9 +100,9 @@ draw_ping_pong = function (ppbedfile, main) {
 	           axis.title=element_text(size=6),
 	           axis.ticks=element_line(size = 0.5) ) +
 	    geom_bar (stat="identity") +
-	    scale_x_discrete (breaks=c(1,5,10,15,20,25)) +
+	    scale_x_continuous(breaks=sort(c(1,(seq(minRow,maxRow+1,5)-1)))[-1]) +
 	    scale_y_continuous(labels = comma, breaks=seq(0,max(ppbed$V2),roundUp(max(ppbed$V2)/10))) +
-	    labs(title=paste("5' to 5' overlap,", main, paste("Z = ", signif (zScore,3),sep=""), sep="\t")) +
+	    labs(title=paste("5' to 5' overlap,", main, paste("Z = ", signif (zScore,3),sep=""), sep=" ")) +
 	    xlab("Length(nt)") +
 	    ylab("Pairs");
 	return (gg)
