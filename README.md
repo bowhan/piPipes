@@ -136,14 +136,14 @@ $PATH_TO_piPipes/piPipes	dna -l left.fq -r right.fq -g dm3 -c 24 -D 100
 
 Find more detailed information on [Wiki](https://github.com/bowhan/piPipes/wiki)
 
-###*install* : to install genome assembly
+### *install* : to install genome assembly
 Due to the limitation on the size of file by github, piPipes doesn't ship with the genome sequences and annotation. Alternatively, we provide scrips to download genome assemly files from iGenome project of illumina. Please make sure internet is available during this process.  **piPipes** provides an option to separate downloading from other processes, in case the machine/node with internet access is not appropriate for building index and other works.     
 Except for the genome, this pipeline will also install unavailable R packages under the pipeline directory. The downloading and installation can be separated using -D option, in case the head node is not supposed to be used for heavy computational work, like building indexes.      
 Currently, **piPipes** comes with annotation files for *Drosophila melanogaster (dm3 and BDGP6)*, *Mus musculus (mm9)*, *Homo sapiens (hg19)*, *Danio rerio (danRer7)*, *Rattus norvegicus (rn5)*, and *Bos taurus (bosTau7)*. *Arabidopsis thaliana (TARI10)* is also included (but not rigorously tested), though no piRNA has been described in plants.
 
 A more detailed explanation can be found [here](https://github.com/bowhan/piPipes/wiki/installation).  
 
-###*small* : small RNA pipeline
+### *small* : small RNA pipeline
 small RNA library typically clones 18–40nt small RNAs, including miRNA, siRNA and
 piRNA. This pipeline maps those reads to rRNA, microRNA hairpin, genome, repbase
 annotated  transposons, piRNA clusters with bowtie and uses bedtools to assign
@@ -154,7 +154,7 @@ For small RNA tailing analysis, please use [Tailor](http://jhhung.github.io/Tail
 
 A more detailed explanation can be found [here](https://github.com/bowhan/piPipes/wiki/smallRNA-seq).
 
-###*rnaseq* : RNASeq pipeline
+### *rnaseq* : RNASeq pipeline
 RNASeq pipeline can be used for both dUTR or ligation based RNASeq.
 It uses bowtie2 to aligns paired-end reads to rRNA and STAR[4] to align the unmapped reads
 to genome; Then it uses Cufflinks for quantification of transcripts from the genomic coordinates. It
@@ -164,7 +164,7 @@ was done using eXpress. Library is normalized by gene transcriptome compatible r
 
 A more detailed explanation can be found [here](https://github.com/bowhan/piPipes/wiki/RNA-seq).  
 
-###*cage/deg* : CAGE & Degradome pipeline
+### *cage/deg* : CAGE & Degradome pipeline
 Both types of libraries are designed to gather the information of the 5' end of RNAs
 CAGE clones RNAs with Cap and Degradome clones RNAs with 5' monophosphate.
 The pipeline will align reads to rRNA with bowtie2, genome using STAR.
@@ -173,7 +173,7 @@ composition surrounding the 5' end of the reads are given, like in small RNA lib
 
 A more detailed explanation can be found [here](https://github.com/bowhan/piPipes/wiki/Degradome-seq).
 
-###*chip* : ChIP-Seq pipeline
+### *chip* : ChIP-Seq pipeline
 ChIP Seq pipeline aligns both input and ChIP data to genome with Bowtie2 (-u or -m) or Bowtie (-e). Peak calling was done
 using MASC2. Signal is normalized in three different methods (ppois, FE and logLR). TSS/TES/meta plots are drawn using bwtool.
 In the dual-sample mode, peak calling is redone for each sample without inter-library normalization,
@@ -182,25 +182,25 @@ TSS/TES/meta plots are drawn for those loci using the normalized signal.
 
 A more detailed explanation can be found [here](https://github.com/bowhan/piPipes/wiki/ChIP-seq).
 
-###*dna* : Genomic Seq pipeline
+### *dna* : Genomic Seq pipeline
 Genomic Seq pipelines aligns the paired-end reads to genome with BWA-MEM and mrFast (for VariationHunder, optional).
 Variations were called using different algorithms.
 
 A more detailed explanation can be found [here](https://github.com/bowhan/piPipes/wiki/Genome-seq).
 
-##CITATION
+## CITATION
 
 Han, B. W., Wang, W., Zamore, P. D., and Weng, Z. (2015). [piPipes: a set of pipelines for piRNA and transposon analysis via small RNA-seq, RNA-seq, degradome- and CAGE-seq, ChIP-seq and genomic DNA sequencing. Bioinformatics 31, 593-595.](http://bioinformatics.oxfordjournals.org/content/31/4/593)
 
-##CONTACT
+## CONTACT
 
 Please send questions and bugs to piPipesQ@gmail.com.
 **For bugs reporting, please run `piPipes_debug` in a clean directory and paste stderr.**
 
-##LICENSE
+## LICENSE
 **piPipes** is released under the [GNU General Public License version 3](https://www.gnu.org/licenses/gpl.html).		
 
-##REFERENCES
+## REFERENCES
 ```
 [1] Li H and Durbin R. 2009. Fast and accurate short read alignment with Burrows-Wheeler transform. Bioinformatics 25: 1754-1760.
 [2] Langmead B, Trapnell C, Pop M and Salzberg SL. 2009. Ultrafast and memory-efficient alignment of short DNA sequences to the human genome. Genome Biol 10: R25.
