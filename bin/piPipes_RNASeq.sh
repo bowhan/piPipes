@@ -66,6 +66,7 @@ ${OPTIONAL}[ optional ]
 	-o      Output directory, default: current directory $PWD
 	-c      Number of CPUs to use, default: 8
 	-B      How many rounds of batch algorithm to run for eXpress, default: 21
+	-u      [TRUE|FALSE]: use UMI to remove PCR duplicate [default:TRUE]
 	-D      Delete large bed/bam files after pipeline finishes to save space (this step can also be ran separately), default: false
 EOF
 echo -e "${COLOR_END}"
@@ -74,7 +75,7 @@ echo -e "${COLOR_END}"
 #############################
 # ARGS reading and checking #
 #############################
-while getopts "hl:r:i:c:o:g:B:xvLD" OPTION; do
+while getopts "hl:r:i:c:o:g:B:u:xvLD" OPTION; do
 	case $OPTION in
 		h)	usage && exit 0 ;;
 		l)	LEFT_FASTQ=`readlink -f ${OPTARG}`;  PE_MODE=1 ;;
@@ -87,6 +88,7 @@ while getopts "hl:r:i:c:o:g:B:xvLD" OPTION; do
 		v)	echo2 "RNASEQ_VERSION: v$RNASEQ_VERSION" && exit 0 ;;
 		L)	LIGATIONLIB=1 ;; # ligation based
 		B)	eXpressBATCH=$OPTARG ;;
+		u)	umi=$OPTARG ;;
 		D)	CLEAN=1;;
 		*)	usage && exit 1 ;;
 	esac
@@ -112,6 +114,7 @@ fi
 check_genome $GENOME
 [ ! -z "${CPU##*[!0-9]*}" ] || CPU=8
 [ ! -z "${eXpressBATCH##*[!0-9]*}" ] || eXpressBATCH=21
+[ ! -z "${umi}" ] || umi=TRUE
 [ ! -z ${OUTDIR} ] || OUTDIR=$PWD # if -o is not specified, use current directory
 [ "${OUTDIR}" != `readlink -f $PWD` ] && (mkdir -p "${OUTDIR}" || echo2 "Cannot create directory ${OUTDIR}" "warning")
 cd ${OUTDIR} || (echo2 "Cannot access directory ${OUTDIR}... Exiting..." "error")
@@ -163,6 +166,8 @@ checkBin "bedtools_piPipes"
 checkBin "bedGraphToBigWig"
 checkBin "express"
 checkBin "cufflinks"
+checkBin "reformat_fastq"
+checkBin "mark_duplicates"
 
 #############
 # Variables #
@@ -234,7 +239,7 @@ if [[ -n $PE_MODE ]]; then
 		-k 1 \
 		--no-mixed \
 		--no-discordant \
-		--un-conc ${READS_DIR}/${PREFIX}.x_rRNA.fq \
+		--un-conc-gz ${READS_DIR}/${PREFIX}.x_rRNA.fq.gz \
 		-p $CPU \
 		-S /dev/null \
 		2> ${rRNA_DIR}/${PREFIX}.rRNA.log && \
@@ -245,18 +250,85 @@ if [[ -n $PE_MODE ]]; then
 	rRNAReads=`head -4 ${rRNA_DIR}/${PREFIX}.rRNA.log | tail -1 | awk '{print $1}'`
 	echo -e "total_input_reads:\t${InputReads}" > $TABLE
 	echo -e "rRNA_reads:\t${rRNAReads}" >> $TABLE
-
+	
+##UMI mode	
+if [[ $umi == 'TRUE' ]]; then
 	###########################
 	# map to genome with STAR #
 	###########################
-	echo2 "Mapping non-rRNA reads to genome $GENOME with STAR"
-	xrRNA_LEFT_FQ=${READS_DIR}/${PREFIX}.x_rRNA.1.fq && \
-	xrRNA_RIGHT_FQ=${READS_DIR}/${PREFIX}.x_rRNA.2.fq && \
+	echo2 "Reformat non-rRNA fastq files and Mapping non-rRNA reads to genome $GENOME with STAR"
+	xrRNA_LEFT_FQ=${READS_DIR}/${PREFIX}.x_rRNA.fq.1.gz && \
+	xrRNA_RIGHT_FQ=${READS_DIR}/${PREFIX}.x_rRNA.fq.2.gz && \
+	xrRNA_rf_LEFT_FQ=${READS_DIR}/${PREFIX}.x_rRNA.fq.rf.1.gz && \
+	xrRNA_rf_RIGHT_FQ=${READS_DIR}/${PREFIX}.x_rRNA.fq.rf.2.gz && \
+	reformat_fastq -l $xrRNA_LEFT_FQ -r $xrRNA_RIGHT_FQ -L $xrRNA_rf_LEFT_FQ -R $xrRNA_rf_RIGHT_FQ 2>&1 |tee ${READS_DIR}/run.reformat.${PREFIX}.log && \		
 	[ ! -f .${JOBUID}.status.${STEP}.genome_mapping ] && \
 	STAR \
 		--runMode alignReads \
 		--limitOutSAMoneReadBytes 1000000 \
 		--genomeDir $STARINDEX \
+		--readFilesCommand zcat \
+		--readFilesIn ${xrRNA_rf_LEFT_FQ} ${xrRNA_rf_RIGHT_FQ} \
+		--runThreadN $CPU \
+		--outFilterScoreMin 0 \
+		--outFilterScoreMinOverLread 0.72 \
+		--outFilterMatchNmin 0 \
+		--outFilterMatchNminOverLread 0.72 \
+		--outFilterMultimapScoreRange 1 \
+		--outFilterMultimapNmax -1 \
+		--outFilterMismatchNmax 10 \
+		--outFilterMismatchNoverLmax 0.05 \
+		--alignIntronMax 0 \
+		--alignIntronMin 21 \
+		--outFilterIntronMotifs RemoveNoncanonicalUnannotated \
+		--genomeLoad NoSharedMemory \
+		--outFileNamePrefix $GENOMIC_MAPPING_DIR/${PREFIX}.x_rRNA.${GENOME}. \
+		--outSAMunmapped None \
+		--outReadsUnmapped Fastx \
+		--outSJfilterReads Unique \
+		--seedSearchStartLmax 20 \
+		--seedSearchStartLmaxOverLread 1.0 \
+		--chimSegmentMin 0 2>&1 1> $GENOMIC_MAPPING_DIR/${PREFIX}.x_rRNA.${GENOME}.STAR.log && \
+	touch .${JOBUID}.status.${STEP}.genome_mapping
+	[ ! -f .${JOBUID}.status.${STEP}.genome_mapping ] && echo2 "Failed to map to genome" "error"
+	STEP=$((STEP+1))
+
+	# getting statistics
+	InputReads=`grep 'Number of input reads' $GENOMIC_MAPPING_DIR/${PREFIX}.x_rRNA.${GENOME}.Log.final.out | awk '{print $NF}'`
+	UniquReads=`grep 'Uniquely mapped reads number' $GENOMIC_MAPPING_DIR/${PREFIX}.x_rRNA.${GENOME}.Log.final.out | awk '{print $NF}'`
+	MultiReads=`grep 'Number of reads mapped to multiple loci' $GENOMIC_MAPPING_DIR/${PREFIX}.x_rRNA.${GENOME}.Log.final.out | awk '{print $NF}'`
+	AllMapReads=$((UniquReads+MultiReads))
+	UnMapReads=$((InputReads-UniquReads-MultiReads))
+	echo -e "genomic_mapper_reads:\t${AllMapReads}" >> $TABLE
+	echo -e "genomic_unique_mapper_reads:\t${UniquReads}" >> $TABLE
+	echo -e "genomic_multiple_mapper_reads:\t${MultiReads}" >> $TABLE
+	echo -e "genomic_unmappable_reads:\t${UnMapReads}" >> $TABLE
+
+	#######################
+	# Processing sam file #
+	#######################
+	echo2 "Processing mapping results"
+	[ ! -f .${JOBUID}.status.${STEP}.genome_bam_processing ] && \
+		samtools view -bS ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.Aligned.out.sam > ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.Aligned.out.bam && \
+		samtools sort -@ $CPU ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.Aligned.out.bam ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.raw.sorted && \
+		samtools index ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.raw.sorted.bam && \
+		rm -rf  ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.Aligned.out.bam && \
+		mark_duplicates -f ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.raw.sorted.bam -p $CPU && samtools view -b -h -F 0x400 - > ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.sorted.bam && \
+		touch .${JOBUID}.status.${STEP}.genome_bam_processing
+	STEP=$((STEP+1))
+else
+	###########################
+	# map to genome with STAR #
+	###########################
+	echo2 "Mapping non-rRNA reads to genome $GENOME with STAR"
+	xrRNA_LEFT_FQ=${READS_DIR}/${PREFIX}.x_rRNA.fq.1.gz && \
+	xrRNA_RIGHT_FQ=${READS_DIR}/${PREFIX}.x_rRNA.fq.2.gz && \
+	[ ! -f .${JOBUID}.status.${STEP}.genome_mapping ] && \
+	STAR \
+		--runMode alignReads \
+		--limitOutSAMoneReadBytes 1000000 \
+		--genomeDir $STARINDEX \
+		--readFilesCommand zcat \
 		--readFilesIn ${xrRNA_LEFT_FQ} ${xrRNA_RIGHT_FQ} \
 		--runThreadN $CPU \
 		--outFilterScoreMin 0 \
@@ -304,7 +376,9 @@ if [[ -n $PE_MODE ]]; then
 		rm -rf  ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.Aligned.out.bam && \
 		touch .${JOBUID}.status.${STEP}.genome_bam_processing
 	STEP=$((STEP+1))
+	
 
+fi
 	###################################################
 	# Transcripts abundance estimation with Cufflinks #
 	###################################################
@@ -350,21 +424,21 @@ if [[ -n $PE_MODE ]]; then
 	#############################################
 	# genomic feature counting with htSeq-count #
 	#############################################
-	# echo2 "Quantifying genomic features from genomic mapping using HTSeq-count"
-	# [ ! -f .${JOBUID}.status.${STEP}.htseq_count ] && \
-	# 	. $COMMON_FOLDER/genomic_features && \
-	# 	[ ! -z $HTSEQ_TARGETS ] && \
-	# 	para_file=$HTSEQ_DIR/${RANDOM}${RANDOM}.para && \
-	# 	for t in "${HTSEQ_TARGETS[@]}"; do \
-	# 		echo "htseq-count -m intersection-strict -s $SENSE_HTSEQ_OPT -t exon -i transcript_id -q ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.Aligned.out.sam ${!t} | awk 'BEGIN{FS=OFS=\"\t\"}{n=split (\$1,a,\".\"); ct[a[1]]+=\$2; }END{for (x in ct) {print x, ct[x]}}' | sort -k1,1 > ${HTSEQ_DIR}/${PREFIX}.x_rRNA.${GENOME}.${t}.htseqcount.strict.S.out" >> $para_file
-	# 		echo "htseq-count -m intersection-strict -s $ANTISENSE_HTSEQ_OPT -t exon -i transcript_id -q ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.Aligned.out.sam ${!t} | awk 'BEGIN{FS=OFS=\"\t\"}{n=split (\$1,a,\".\"); ct[a[1]]+=\$2; }END{for (x in ct) {print x, ct[x]}}' | sort -k1,1 > ${HTSEQ_DIR}/${PREFIX}.x_rRNA.${GENOME}.${t}.htseqcount.strict.AS.out" >> $para_file
-	# 		echo "htseq-count -m union -s $SENSE_HTSEQ_OPT -t exon -i transcript_id -q ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.Aligned.out.sam ${!t} | awk 'BEGIN{FS=OFS=\"\t\"}{n=split (\$1,a,\".\"); ct[a[1]]+=\$2; }END{for (x in ct) {print x, ct[x]}}' | sort -k1,1 > ${HTSEQ_DIR}/${PREFIX}.x_rRNA.${GENOME}.${t}.htseqcount.union.S.out" >> $para_file
-	# 		echo "htseq-count -m union -s $ANTISENSE_HTSEQ_OPT -t exon -i transcript_id -q ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.Aligned.out.sam ${!t} | awk 'BEGIN{FS=OFS=\"\t\"}{n=split (\$1,a,\".\"); ct[a[1]]+=\$2; }END{for (x in ct) {print x, ct[x]}}' | sort -k1,1 > ${HTSEQ_DIR}/${PREFIX}.x_rRNA.${GENOME}.${t}.htseqcount.union.AS.out" >> $para_file
-	# 	done && \
-	# ParaFly -c $para_file -CPU $CPU -failed_cmds ${para_file}.failedCommands 1>&2 && \
-	# rm -rf ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.Aligned.out.sam && \
-	# touch .${JOBUID}.status.${STEP}.htseq_count
-	# STEP=$((STEP+1))
+	 echo2 "Quantifying genomic features from genomic mapping using HTSeq-count"
+	 [ ! -f .${JOBUID}.status.${STEP}.htseq_count ] && \
+	 	. $COMMON_FOLDER/genomic_features && \
+	 	[ ! -z $HTSEQ_TARGETS ] && \
+	 	para_file=$HTSEQ_DIR/${RANDOM}${RANDOM}.para && \
+	 	for t in "${HTSEQ_TARGETS[@]}"; do \
+	 		echo "htseq-count -f sam -m intersection-strict -s $SENSE_HTSEQ_OPT -t exon -i transcript_id -q ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.Aligned.out.sam ${!t} | awk 'BEGIN{FS=OFS=\"\t\"}{n=split (\$1,a,\".\"); ct[a[1]]+=\$2; }END{for (x in ct) {print x, ct[x]}}' | sort -k1,1 > ${HTSEQ_DIR}/${PREFIX}.x_rRNA.${GENOME}.${t}.htseqcount.strict.S.out" >> $para_file
+	 		echo "htseq-count -f sam -m intersection-strict -s $ANTISENSE_HTSEQ_OPT -t exon -i transcript_id -q ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.Aligned.out.sam ${!t} | awk 'BEGIN{FS=OFS=\"\t\"}{n=split (\$1,a,\".\"); ct[a[1]]+=\$2; }END{for (x in ct) {print x, ct[x]}}' | sort -k1,1 > ${HTSEQ_DIR}/${PREFIX}.x_rRNA.${GENOME}.${t}.htseqcount.strict.AS.out" >> $para_file
+	 		echo "htseq-count -f sam -m union -s $SENSE_HTSEQ_OPT -t exon -i transcript_id -q ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.Aligned.out.sam ${!t} | awk 'BEGIN{FS=OFS=\"\t\"}{n=split (\$1,a,\".\"); ct[a[1]]+=\$2; }END{for (x in ct) {print x, ct[x]}}' | sort -k1,1 > ${HTSEQ_DIR}/${PREFIX}.x_rRNA.${GENOME}.${t}.htseqcount.union.S.out" >> $para_file
+	 		echo "htseq-count -f sam -m union -s $ANTISENSE_HTSEQ_OPT -t exon -i transcript_id -q ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.Aligned.out.sam ${!t} | awk 'BEGIN{FS=OFS=\"\t\"}{n=split (\$1,a,\".\"); ct[a[1]]+=\$2; }END{for (x in ct) {print x, ct[x]}}' | sort -k1,1 > ${HTSEQ_DIR}/${PREFIX}.x_rRNA.${GENOME}.${t}.htseqcount.union.AS.out" >> $para_file
+	 	done && \
+	 ParaFly -c $para_file -CPU $CPU -failed_cmds ${para_file}.failedCommands 1>&2 && \
+	 #rm -rf ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.Aligned.out.sam && \
+	 touch .${JOBUID}.status.${STEP}.htseq_count
+	 STEP=$((STEP+1))
 
 	##################################################
 	# direct mapping and quantification with eXpress #
@@ -373,9 +447,9 @@ if [[ -n $PE_MODE ]]; then
 	. $COMMON_FOLDER/genomic_features
 	if [ "$GENOME" == "dm3" -o "$GENOME" == "dm6" ]; then
 	# for fly genome, the transcripts from piRNA cluster are usually undetectable. including them in eXpress will actually have negative influence.
-		TRANSCRIPTOME_INDEX="gene+transposon"
-	else
 		TRANSCRIPTOME_INDEX="gene+cluster+repBase"
+	else
+		TRANSCRIPTOME_INDEX="gene+transposon"
 	fi
 	TRANSCRIPTOME_SIZES=$BOWTIE2_INDEXES/${TRANSCRIPTOME_INDEX}.sizes
 
@@ -396,7 +470,7 @@ if [[ -n $PE_MODE ]]; then
 	bedtools_piPipes bamtobed -i - | \
 	awk -v etr=$END_TO_REVERSE_STRAND -v MAPQ=10 'BEGIN{FS=OFS="\t"}{l=split($4,arr,""); if (arr[l]==etr) $6=($6=="+"?"-":"+"); if ($5 > MAPQ) print $0}' > ${DIRECTMAPPING_DIR}/${PREFIX}.${TRANSCRIPTOME_INDEX}.sorted.unique.bed && \
 	touch .${JOBUID}.status.${STEP}.direct_mapping
-
+	STEP=$((STEP+1))
 	echo2 "Making summary graph"
 	[ ! -f .${JOBUID}.status.${STEP}.make_direct_mapping_sum ] && \
 	grep -v 'NM_' $TRANSCRIPTOME_SIZES | grep -v 'NR_' | grep -v 'FBtr' > ${DIRECTMAPPING_DIR}/transposon.sizes && \
@@ -428,7 +502,7 @@ if [[ -n $PE_MODE ]]; then
 	gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=$PDF_DIR/${PREFIX}.${TRANSCRIPTOME_INDEX}.sorted.unique.pdf ${PDFs} && \
 	rm -rf ${PDFs} && \
 	touch .${JOBUID}.status.${STEP}.make_direct_mapping_sum
-
+	STEP=$((STEP+1))
 	[ ! -f .${JOBUID}.status.${STEP}.eXpress_quantification ] && \
 	express \
 		$EXPRESS_OPTION_PE \
@@ -479,7 +553,7 @@ else # Single-End
 		$bowtie2PhredOption \
 		--very-fast \
 		-k 1 \
-		--un ${READS_DIR}/${PREFIX}.x_rRNA.fq \
+		--un-gz ${READS_DIR}/${PREFIX}.x_rRNA.fq.gz \
 		-p $CPU \
 		-S /dev/null \
 		2> ${rRNA_DIR}/${PREFIX}.rRNA.log && \
@@ -495,12 +569,13 @@ else # Single-End
 	# map to genome with STAR #
 	###########################
 	echo2 "Mapping non-rRNA reads to genome $GENOME with STAR"
-	xrRNA_FQ=${READS_DIR}/${PREFIX}.x_rRNA.fq && \
+	xrRNA_FQ=${READS_DIR}/${PREFIX}.x_rRNA.fq.gz && \
 	[ ! -f .${JOBUID}.status.${STEP}.genome_mapping ] && \
 	STAR \
 		--runMode alignReads \
 		--limitOutSAMoneReadBytes 1000000 \
 		--genomeDir $STARINDEX \
+		--readFilesCommand zcat
 		--readFilesIn ${xrRNA_FQ} \
 		--runThreadN $CPU \
 		--outFilterScoreMin 0 \
@@ -599,21 +674,21 @@ else # Single-End
 	#############################################
 	# genomic feature counting with htSeq-count #
 	#############################################
-	# echo2 "Quantifying genomic features from genomic mapping using HTSeq-count"
-	# [ ! -f .${JOBUID}.status.${STEP}.htseq_count ] && \
-	# 	. $COMMON_FOLDER/genomic_features && \
-	# 	[ ! -z $HTSEQ_TARGETS ] && \
-	# 	para_file=$HTSEQ_DIR/${RANDOM}${RANDOM}.para && \
-	# 	for t in "${HTSEQ_TARGETS[@]}"; do \
-	# 		echo "htseq-count -m intersection-strict -s $SENSE_HTSEQ_OPT -t exon -i transcript_id -q ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.Aligned.out.sam ${!t} | awk 'BEGIN{FS=OFS=\"\t\"}{n=split (\$1,a,\".\"); ct[a[1]]+=\$2; }END{for (x in ct) {print x, ct[x]}}' | sort -k1,1 > ${HTSEQ_DIR}/${PREFIX}.x_rRNA.${GENOME}.${t}.htseqcount.strict.S.out" >> $para_file
-	# 		echo "htseq-count -m intersection-strict -s $ANTISENSE_HTSEQ_OPT -t exon -i transcript_id -q ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.Aligned.out.sam ${!t} | awk 'BEGIN{FS=OFS=\"\t\"}{n=split (\$1,a,\".\"); ct[a[1]]+=\$2; }END{for (x in ct) {print x, ct[x]}}' | sort -k1,1 > ${HTSEQ_DIR}/${PREFIX}.x_rRNA.${GENOME}.${t}.htseqcount.strict.AS.out" >> $para_file
-	# 		echo "htseq-count -m union -s $SENSE_HTSEQ_OPT -t exon -i transcript_id -q ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.Aligned.out.sam ${!t} | awk 'BEGIN{FS=OFS=\"\t\"}{n=split (\$1,a,\".\"); ct[a[1]]+=\$2; }END{for (x in ct) {print x, ct[x]}}' | sort -k1,1 > ${HTSEQ_DIR}/${PREFIX}.x_rRNA.${GENOME}.${t}.htseqcount.union.S.out" >> $para_file
-	# 		echo "htseq-count -m union -s $ANTISENSE_HTSEQ_OPT -t exon -i transcript_id -q ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.Aligned.out.sam ${!t} | awk 'BEGIN{FS=OFS=\"\t\"}{n=split (\$1,a,\".\"); ct[a[1]]+=\$2; }END{for (x in ct) {print x, ct[x]}}' | sort -k1,1 > ${HTSEQ_DIR}/${PREFIX}.x_rRNA.${GENOME}.${t}.htseqcount.union.AS.out" >> $para_file
-	# 	done && \
-	# ParaFly -c $para_file -CPU $CPU -failed_cmds ${para_file}.failedCommands 1>&2 && \
-	# rm -rf ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.Aligned.out.sam && \
-	# touch .${JOBUID}.status.${STEP}.htseq_count
-	# STEP=$((STEP+1))
+	echo2 "Quantifying genomic features from genomic mapping using HTSeq-count"
+	[ ! -f .${JOBUID}.status.${STEP}.htseq_count ] && \
+		. $COMMON_FOLDER/genomic_features && \
+		[ ! -z $HTSEQ_TARGETS ] && \
+		para_file=$HTSEQ_DIR/${RANDOM}${RANDOM}.para && \
+		for t in "${HTSEQ_TARGETS[@]}"; do \
+			echo "htseq-count -m intersection-strict -s $SENSE_HTSEQ_OPT -t exon -i transcript_id -q ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.Aligned.out.sam ${!t} | awk 'BEGIN{FS=OFS=\"\t\"}{n=split (\$1,a,\".\"); ct[a[1]]+=\$2; }END{for (x in ct) {print x, ct[x]}}' | sort -k1,1 > ${HTSEQ_DIR}/${PREFIX}.x_rRNA.${GENOME}.${t}.htseqcount.strict.S.out" >> $para_file
+			echo "htseq-count -m intersection-strict -s $ANTISENSE_HTSEQ_OPT -t exon -i transcript_id -q ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.Aligned.out.sam ${!t} | awk 'BEGIN{FS=OFS=\"\t\"}{n=split (\$1,a,\".\"); ct[a[1]]+=\$2; }END{for (x in ct) {print x, ct[x]}}' | sort -k1,1 > ${HTSEQ_DIR}/${PREFIX}.x_rRNA.${GENOME}.${t}.htseqcount.strict.AS.out" >> $para_file
+			echo "htseq-count -m union -s $SENSE_HTSEQ_OPT -t exon -i transcript_id -q ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.Aligned.out.sam ${!t} | awk 'BEGIN{FS=OFS=\"\t\"}{n=split (\$1,a,\".\"); ct[a[1]]+=\$2; }END{for (x in ct) {print x, ct[x]}}' | sort -k1,1 > ${HTSEQ_DIR}/${PREFIX}.x_rRNA.${GENOME}.${t}.htseqcount.union.S.out" >> $para_file
+			echo "htseq-count -m union -s $ANTISENSE_HTSEQ_OPT -t exon -i transcript_id -q ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.Aligned.out.sam ${!t} | awk 'BEGIN{FS=OFS=\"\t\"}{n=split (\$1,a,\".\"); ct[a[1]]+=\$2; }END{for (x in ct) {print x, ct[x]}}' | sort -k1,1 > ${HTSEQ_DIR}/${PREFIX}.x_rRNA.${GENOME}.${t}.htseqcount.union.AS.out" >> $para_file
+		done && \
+	ParaFly -c $para_file -CPU $CPU -failed_cmds ${para_file}.failedCommands 1>&2 && \
+	rm -rf ${GENOMIC_MAPPING_DIR}/${PREFIX}.x_rRNA.${GENOME}.Aligned.out.sam && \
+	touch .${JOBUID}.status.${STEP}.htseq_count
+	STEP=$((STEP+1))
 
 	##################################################
 	# direct mapping and quantification with eXpress #
@@ -622,9 +697,9 @@ else # Single-End
 	. $COMMON_FOLDER/genomic_features
 	# for fly genome, the transcripts from piRNA cluster are usually undetectable. including them in eXpress will actually have negative influence.
 	if [ "$GENOME" == "dm3" -o "$GENOME" == "dm6" ]; then
-		TRANSCRIPTOME_INDEX="gene+transposon"
-	else
 		TRANSCRIPTOME_INDEX="gene+cluster+repBase"
+	else
+		TRANSCRIPTOME_INDEX="gene+transposon"
 	fi
 	TRANSCRIPTOME_SIZES=$BOWTIE2_INDEXES/${TRANSCRIPTOME_INDEX}.sizes
 
@@ -649,7 +724,7 @@ else # Single-End
 		awk -v MAPQ=10 'BEGIN{FS=OFS="\t"}{ $6=($6=="+"?"-":"+"); if ($5 > MAPQ) print $0}' > ${DIRECTMAPPING_DIR}/${PREFIX}.${TRANSCRIPTOME_INDEX}.sorted.unique.bed && \
 		touch .${JOBUID}.status.${STEP}.direct_mapping
 	fi
-
+	STEP=$((STEP+1))
 	echo2 "Making summary graph"
 	[ ! -f .${JOBUID}.status.${STEP}.make_direct_mapping_sum ] && \
 	grep -v 'NM_' $TRANSCRIPTOME_SIZES | grep -v 'NR_' | grep -v 'FBtr' > ${DIRECTMAPPING_DIR}/transposon.sizes && \
@@ -681,7 +756,7 @@ else # Single-End
 	gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=$PDF_DIR/${PREFIX}.${TRANSCRIPTOME_INDEX}.sorted.unique.pdf ${PDFs} && \
 	rm -rf ${PDFs} && \
 	touch .${JOBUID}.status.${STEP}.make_direct_mapping_sum
-
+	STEP=$((STEP+1))
 	# we currently don't specify the direction for eXpress to allow counting of antisense transcripts;
 	[ ! -f .${JOBUID}.status.${STEP}.eXpress_quantification ] && \
 	express \
